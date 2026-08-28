@@ -5,8 +5,8 @@ Agent reviews a diff against a green-suite library and proves the bug: a test th
 ## phases
 
 - [x] scaffold: agent loop over OpenRouter, trajectory JSONL, HTML renderer, 14 tests, live smoke on z-ai/glm-5.3-flash
-- [ ] corpus: 12 cases + 3 equivalent-refactor controls from pinned tags (ms@2.1.3 backbone, js-yaml targeted regions, bytes.js if it spikes green), differential probe script, `npm run corpus:verify` green
-- [ ] notebook design applied to trajectory renderer (tokens + structure; witness lines only from checkpoint events)
+- [x] corpus: 12 cases + 3 equivalent-refactor controls from pinned tags (ms@2.1.3 backbone, js-yaml targeted regions, bytes.js if it spikes green), differential probe script, `npm run corpus:verify` green
+- [x] notebook design applied to trajectory renderer (tokens + structure; witness lines only from checkpoint events)
 - [ ] stage 0: baseline 1 (single prompt, no execution) over full corpus — record scores in CHANGELOG.md
 - [ ] stage 0b: baseline 2 (agent with read/bash tools, no verification contract) — record
 - [ ] stage 1: prover loop with double-run gate, max 3 retries — measure, record
