@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>trajectory — demo-refund-triage</title>
+<style>
+:root {
+  --color-bg: #f6f6f4;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f0f0ed;
+  --color-text: #1a1a18;
+  --color-text-muted: #6b6b66;
+  --color-border: #dcdcd6;
+  --color-accent: #2f5fd0;
+  --color-tool: #0f7a5a;
+  --color-retry: #b06a00;
+  --color-checkpoint: #7a3fbf;
+  --color-bad: #c0392b;
+  --color-good: #0f7a5a;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-size-base: 15px;
+  --font-size-small: 12.5px;
+  --font-size-title: 25px;
+  --line-height: 1.55;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 18px;
+  --space-5: 28px;
+  --space-6: 44px;
+
+  --radius: 8px;
+  --border-width: 1px;
+  --rail-width: 2px;
+  --page-width: 860px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
+}
+
+.page {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+h1 { font-size: var(--font-size-title); margin: 0; }
+h2 {
+  font-size: var(--font-size-small);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-3);
+}
+
+.header {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.source { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-family: var(--font-mono); font-size: var(--font-size-small); }
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+}
+.fact dt { font-size: var(--font-size-small); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.fact dd { margin: var(--space-1) 0 0; font-family: var(--font-mono); }
+.fact.is-good dd { color: var(--color-good); }
+.fact.is-bad dd { color: var(--color-bad); }
+
+.panel {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.tools { margin: var(--space-3) 0 0; color: var(--color-text-muted); font-size: var(--font-size-small); }
+.tools code { font-family: var(--font-mono); background: var(--color-surface-alt); padding: 0 var(--space-1); border-radius: var(--radius); }
+
+.chain {
+  border-left: var(--rail-width) solid var(--color-border);
+  padding-left: var(--space-4);
+  margin: 0 0 var(--space-4) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.event {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-left: var(--rail-width) solid var(--color-accent);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+}
+.event-tool { border-left-color: var(--color-tool); background: var(--color-surface-alt); }
+.event-retry { border-left-color: var(--color-retry); }
+.event-checkpoint { border-left-color: var(--color-checkpoint); }
+.event.is-bad { border-left-color: var(--color-bad); }
+
+.event-head { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+.badge {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-accent);
+}
+.badge-tool { color: var(--color-tool); }
+.badge-retry { color: var(--color-retry); }
+.badge-checkpoint { color: var(--color-checkpoint); }
+.meta { font-size: var(--font-size-small); color: var(--color-text-muted); font-family: var(--font-mono); }
+
+.prose { margin: var(--space-2) 0 0; white-space: pre-wrap; word-wrap: break-word; font-family: inherit; }
+.note { color: var(--color-text-muted); }
+.code {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+}
+.event-tool .code { background: var(--color-surface); }
+
+.call { margin-top: var(--space-2); }
+.call-name { font-family: var(--font-mono); font-size: var(--font-size-small); color: var(--color-accent); }
+
+.result pre { font-family: inherit; }
+.result-error { border-color: var(--color-bad); }
+.result-error pre { color: var(--color-bad); }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="header">
+    <div class="header-title">
+      <h1>demo-refund-triage</h1>
+      <p class="source">demo.jsonl</p>
+    </div>
+    <dl class="facts">
+      <div class="fact"><dt>model</dt><dd>mock/scripted-model</dd></div>
+      <div class="fact"><dt>started</dt><dd>2026-08-28 17:12:24 UTC</dd></div>
+      <div class="fact"><dt>wall time</dt><dd>0.0s</dd></div>
+      <div class="fact"><dt>steps</dt><dd>3 / 6</dd></div>
+      <div class="fact"><dt>tokens</dt><dd>1668 (1560 in / 108 out)</dd></div>
+      
+      <div class="fact is-good"><dt>outcome</dt><dd>final</dd></div>
+    </dl>
+  </header>
+
+  <section class="panel">
+    <h2>instructions</h2>
+    <pre class="prose">You are a support agent. Look up the customer order, decide whether it warrants a refund, and explain the outcome in plain language. Refunds need human approval.</pre>
+    <p class="tools">tools: <code>search-orders</code> <code>issue-refund</code></p>
+  </section>
+
+  <section class="chain">
+    <article class="event event-step">
+  <div class="event-head"><span class="badge">step 1</span><span class="meta">tool_calls</span><span class="meta">408 (380 in / 28 out)</span></div>
+  <pre class="prose">Looking up the order first.</pre>
+  <div class="call"><span class="call-name">→ search-orders</span>
+    <pre class="code">{
+  &quot;email&quot;: &quot;ada@example.com&quot;
+}</pre></div>
+</article>
+<article class="event event-tool ">
+  <div class="event-head"><span class="badge badge-tool">search-orders</span><span class="meta">ok · 0ms</span></div>
+  <pre class="code">[{&quot;id&quot;:&quot;A-1042&quot;,&quot;email&quot;:&quot;ada@example.com&quot;,&quot;status&quot;:&quot;stuck-in-transit&quot;,&quot;total&quot;:89.5}]</pre>
+</article>
+<article class="event event-retry">
+  <div class="event-head"><span class="badge badge-retry">retry 1</span><span class="meta">backoff 500ms</span></div>
+  <p class="prose">HTTP 503: upstream temporarily unavailable</p>
+</article>
+<article class="event event-step">
+  <div class="event-head"><span class="badge">step 2</span><span class="meta">tool_calls</span><span class="meta">554 (520 in / 34 out)</span></div>
+  <pre class="prose">The order is stuck in transit. Refunding it.</pre>
+  <div class="call"><span class="call-name">→ issue-refund</span>
+    <pre class="code">{
+  &quot;orderId&quot;: &quot;A-1042&quot;,
+  &quot;amount&quot;: 89.5
+}</pre></div>
+</article>
+<article class="event event-checkpoint">
+  <div class="event-head"><span class="badge badge-checkpoint">checkpoint</span><span class="meta">approve</span></div>
+  <p class="prose">approve calling issue-refund with {&quot;orderId&quot;:&quot;A-1042&quot;,&quot;amount&quot;:89.5}?</p>
+  <p class="prose note">auto-approved by demo operator</p>
+</article>
+<article class="event event-tool ">
+  <div class="event-head"><span class="badge badge-tool">issue-refund</span><span class="meta">ok · 0ms</span></div>
+  <pre class="code">{&quot;refunded&quot;:true,&quot;orderId&quot;:&quot;A-1042&quot;,&quot;amount&quot;:89.5}</pre>
+</article>
+<article class="event event-step">
+  <div class="event-head"><span class="badge">step 3</span><span class="meta">stop</span><span class="meta">706 (660 in / 46 out)</span></div>
+  <pre class="prose">Order A-1042 was stuck in transit, so I refunded it in full ($89.50) after approval. Ada should see the refund within 3-5 business days.</pre>
+  
+</article>
+  </section>
+
+  <section class="panel result ">
+    <h2>result</h2>
+    <pre class="prose">Order A-1042 was stuck in transit, so I refunded it in full ($89.50) after approval. Ada should see the refund within 3-5 business days.</pre>
+  </section>
+</main>
+</body>
+</html>

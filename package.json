@@ -1,0 +1,13 @@
+{
+  "name": "micro1-hackathon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "demo": "node scripts/demo.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "node --test",
+    "render": "node src/render-trajectory.mjs"
+  }
+}
