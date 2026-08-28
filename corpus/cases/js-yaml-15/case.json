@@ -1,0 +1,31 @@
+{
+  "id": "js-yaml-15",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "character-class",
+  "source": "StrykerJS mutant #15 (Regex), reproduced from the spike report",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "start": {
+        "line": 241,
+        "column": 71
+      },
+      "end": {
+        "line": 241,
+        "column": 84
+      }
+    },
+    "original": "[-+]?0b[0-1]+",
+    "replacement": "[^-+]?0b[0-1]+"
+  },
+  "distinguishingInput": "load('a: !!int -0b101')",
+  "expected": {
+    "pristine": "value: { a: -5 }",
+    "mutant": "throws: cannot resolve a node with !<tag:yaml.org,2002:int> explicit tag (1:4)\n\n 1 | a: !!int -0b101\n--------^"
+  },
+  "divergingProbes": 4,
+  "note": "In the explicit-integer pattern the binary alternative's optional sign becomes a negated class, so an explicitly tagged signed binary integer no longer resolves and the loader reports an unresolvable node. Reaching it needs an explicit `!!int` tag carrying a signed non-decimal literal, an input class the 314-test suite never generates."
+}

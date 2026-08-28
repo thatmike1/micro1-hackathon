@@ -1,0 +1,31 @@
+{
+  "id": "js-yaml-18",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "quantifier",
+  "source": "StrykerJS mutant #18 (Regex), reproduced from the spike report",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "start": {
+        "line": 241,
+        "column": 85
+      },
+      "end": {
+        "line": 241,
+        "column": 98
+      }
+    },
+    "original": "[-+]?0o[0-7]+",
+    "replacement": "[-+]0o[0-7]+"
+  },
+  "distinguishingInput": "load('a: !!int 0o17')",
+  "expected": {
+    "pristine": "value: { a: 15 }",
+    "mutant": "throws: cannot resolve a node with !<tag:yaml.org,2002:int> explicit tag (1:4)\n\n 1 | a: !!int 0o17\n--------^"
+  },
+  "divergingProbes": 2,
+  "note": "In the explicit-integer pattern the octal alternative's sign becomes mandatory, so an explicitly tagged unsigned octal integer no longer resolves. Bare `0o17` still parses through the implicit pattern, which is what hides it."
+}

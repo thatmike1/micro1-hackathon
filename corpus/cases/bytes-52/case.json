@@ -1,0 +1,31 @@
+{
+  "id": "bytes-52",
+  "kind": "buggy",
+  "library": "bytes",
+  "tag": "3.1.2",
+  "file": "index.js",
+  "category": "option-ignored",
+  "source": "StrykerJS mutant #52 (ConditionalExpression)",
+  "mutation": {
+    "mutator": "ConditionalExpression",
+    "location": {
+      "start": {
+        "line": 92,
+        "column": 35
+      },
+      "end": {
+        "line": 92,
+        "column": 70
+      }
+    },
+    "original": "options.decimalPlaces !== undefined",
+    "replacement": "true"
+  },
+  "distinguishingInput": "bytes.format(0, { fixedDecimals: true })",
+  "expected": {
+    "pristine": "value: '0.00B'",
+    "mutant": "value: '0B'"
+  },
+  "divergingProbes": 71,
+  "note": "The `fixedDecimals` guard collapses to always-true, so trailing zeros are always trimmed and the option silently does nothing. No test sets it."
+}

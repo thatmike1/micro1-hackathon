@@ -1,0 +1,31 @@
+{
+  "id": "bytes-12",
+  "kind": "buggy",
+  "library": "bytes",
+  "tag": "3.1.2",
+  "file": "index.js",
+  "category": "anchor",
+  "source": "StrykerJS mutant #12 (Regex)",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "start": {
+        "line": 37,
+        "column": 19
+      },
+      "end": {
+        "line": 37,
+        "column": 66
+      }
+    },
+    "original": "/^((-|\\+)?(\\d+(?:\\.\\d+)?)) *(kb|mb|gb|tb|pb)$/i",
+    "replacement": "/((-|\\+)?(\\d+(?:\\.\\d+)?)) *(kb|mb|gb|tb|pb)$/i"
+  },
+  "distinguishingInput": "bytes.parse('  1kb')",
+  "expected": {
+    "pristine": "value: 1",
+    "mutant": "value: 1024"
+  },
+  "divergingProbes": 3,
+  "note": "The parse regex loses its `^` anchor, so leading junk before the number is accepted and parsed as a unit value instead of falling through to parseInt."
+}

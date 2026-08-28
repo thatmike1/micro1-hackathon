@@ -1,0 +1,31 @@
+diff --git a/dist/js-yaml.mjs b/dist/js-yaml.mjs
+index ef8e83c..ee8d855 100644
+--- a/dist/js-yaml.mjs
++++ b/dist/js-yaml.mjs
+@@ -240,16 +240,17 @@ var boolYaml11Tag = defineScalarTag("tag:yaml.org,2002:bool", {
+ var YAML_INTEGER_IMPLICIT_PATTERN$1 = /* @__PURE__ */ new RegExp("^(?:0o[0-7]+|0x[0-9a-fA-F]+|[-+]?[0-9]+)$");
+ var YAML_INTEGER_EXPLICIT_PATTERN$1 = /* @__PURE__ */ new RegExp("^(?:[-+]?0b[0-1]+|[-+]?0o[0-7]+|[-+]?0x[0-9a-fA-F]+|[-+]?[0-9]+)$");
+ function parseYamlInteger$2(source) {
+-	let value = source;
++	let digits = source;
+ 	let sign = 1;
+-	if (value[0] === "-" || value[0] === "+") {
+-		if (value[0] === "-") sign = -1;
+-		value = value.slice(1);
+-	}
+-	if (value.startsWith("0b")) return sign * parseInt(value.slice(2), 2);
+-	if (value.startsWith("0o")) return sign * parseInt(value.slice(2), 8);
+-	if (value.startsWith("0x")) return sign * parseInt(value.slice(2), 16);
+-	return sign * parseInt(value, 10);
++	if (digits[0] === "-" || digits[0] === "+") {
++		if (digits[0] === "-") sign = -1;
++		digits = digits.slice(1);
++	}
++	const rest = digits.slice(2);
++	if (digits.startsWith("0b")) return sign * parseInt(rest, 2);
++	if (digits.startsWith("0o")) return sign * parseInt(rest, 8);
++	if (digits.startsWith("0x")) return sign * parseInt(rest, 16);
++	return sign * parseInt(digits, 10);
+ }
+ function resolveYamlInteger$2(source, isExplicit) {
+ 	if (isExplicit) {

@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-08-28T18:26:05.712Z",
+  "node": "v22.22.2",
+  "libraries": [
+    {
+      "id": "ms",
+      "repo": "https://github.com/vercel/ms.git",
+      "tag": "2.1.3",
+      "commit": "1c6264b795492e8fdecbc82cb8802fcfbfc08d26",
+      "entry": "index.js",
+      "test": "./node_modules/.bin/mocha tests.js",
+      "mutate": "index.js",
+      "setupSeconds": 0.1
+    },
+    {
+      "id": "js-yaml",
+      "repo": "https://github.com/nodeca/js-yaml.git",
+      "tag": "5.4.1",
+      "commit": "e5a3ba0efee53629b979f784cd53736f89ea61b6",
+      "entry": "dist/js-yaml.mjs",
+      "test": "node --test 'test/core/**/*.test.mjs'",
+      "mutate": "dist/js-yaml.mjs:240:1-600:1",
+      "setupSeconds": 3
+    },
+    {
+      "id": "bytes",
+      "repo": "https://github.com/visionmedia/bytes.js.git",
+      "tag": "3.1.2",
+      "commit": "9ddc13b6c66e0cb293616fba246e05db4b6cef4d",
+      "entry": "index.js",
+      "test": "./node_modules/.bin/mocha --reporter dot test/",
+      "mutate": "index.js",
+      "setupSeconds": 0.1
+    }
+  ],
+  "selection": {
+    "method": "Stryker SURVIVED list -> differential probe screen -> hand pick for shape",
+    "handVerifiedFromSpike": [
+      "ms-170",
+      "ms-4",
+      "ms-70",
+      "js-yaml-15",
+      "js-yaml-18"
+    ],
+    "hardCase": "js-yaml-15",
+    "casesPerLibrary": {
+      "ms": 7,
+      "js-yaml": 2,
+      "bytes": 3
+    },
+    "controlsPerLibrary": {
+      "ms": 1,
+      "js-yaml": 1,
+      "bytes": 1
+    },
+    "survivorPools": {
+      "ms": {
+        "mutants": 177,
+        "killed": 139,
+        "survived": 38,
+        "discriminable": 35
+      },
+      "bytes": {
+        "mutants": 146,
+        "killed": 132,
+        "survived": 14,
+        "discriminable": 6
+      },
+      "js-yaml": {
+        "note": "not re-run here. The spike measured 873 mutants over dist/js-yaml.mjs:240-600 in 8.7 min, 125 survivors, 2 discriminable. Both js-yaml cases are the spike's hand-verified mutants, reproduced from their recorded location and replacement and re-verified by corpus/verify.mjs."
+      }
+    },
+    "bytesOutcome": "bytes.js spiked green (6 of 14 survivors discriminable), so it supplies 3 cases and no backfill from ms was needed.",
+    "note": "See corpus/README.md for the regeneration commands and the equivalent-mutant argument. Wall times are in docs/dev-notes.md."
+  }
+}

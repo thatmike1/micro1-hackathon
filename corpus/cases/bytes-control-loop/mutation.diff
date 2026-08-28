@@ -1,0 +1,38 @@
+diff --git a/index.js b/index.js
+index 6f2d0f8..2399618 100644
+--- a/index.js
++++ b/index.js
+@@ -94,18 +94,21 @@ function format(value, options) {
+   var unit = (options && options.unit) || '';
+ 
+   if (!unit || !map[unit.toLowerCase()]) {
+-    if (mag >= map.pb) {
+-      unit = 'PB';
+-    } else if (mag >= map.tb) {
+-      unit = 'TB';
+-    } else if (mag >= map.gb) {
+-      unit = 'GB';
+-    } else if (mag >= map.mb) {
+-      unit = 'MB';
+-    } else if (mag >= map.kb) {
+-      unit = 'KB';
+-    } else {
+-      unit = 'B';
++    var units = [
++      ['PB', map.pb],
++      ['TB', map.tb],
++      ['GB', map.gb],
++      ['MB', map.mb],
++      ['KB', map.kb]
++    ];
++
++    unit = 'B';
++
++    for (var i = 0; i < units.length; i++) {
++      if (mag >= units[i][1]) {
++        unit = units[i][0];
++        break;
++      }
+     }
+   }
+ 

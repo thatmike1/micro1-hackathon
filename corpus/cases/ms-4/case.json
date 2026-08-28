@@ -1,0 +1,31 @@
+{
+  "id": "ms-4",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "constant",
+  "source": "StrykerJS mutant #4 (ArithmeticOperator)",
+  "mutation": {
+    "mutator": "ArithmeticOperator",
+    "location": {
+      "start": {
+        "line": 10,
+        "column": 9
+      },
+      "end": {
+        "line": 10,
+        "column": 19
+      }
+    },
+    "original": "d * 365.25",
+    "replacement": "d / 365.25"
+  },
+  "distinguishingInput": "ms('1y')",
+  "expected": {
+    "pristine": "value: 31557600000",
+    "mutant": "value: 236550.30800821356"
+  },
+  "divergingProbes": 135,
+  "note": "The year constant is divided by 365.25 instead of multiplied, so every year-denominated parse is off by ten orders of magnitude. The suite never parses a year value."
+}

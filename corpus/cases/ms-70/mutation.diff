@@ -1,0 +1,12 @@
+diff --git a/index.js b/index.js
+index ea734fb..14126c5 100644
+--- a/index.js
++++ b/index.js
+@@ -64,7 +64,6 @@ function parse(str) {
+     case 'yrs':
+     case 'yr':
+     case 'y':
+-      return n * y;
+     case 'weeks':
+     case 'week':
+     case 'w':

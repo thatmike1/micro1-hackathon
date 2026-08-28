@@ -1,0 +1,31 @@
+{
+  "id": "bytes-15",
+  "kind": "buggy",
+  "library": "bytes",
+  "tag": "3.1.2",
+  "file": "index.js",
+  "category": "quantifier",
+  "source": "StrykerJS mutant #15 (Regex)",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "start": {
+        "line": 37,
+        "column": 19
+      },
+      "end": {
+        "line": 37,
+        "column": 66
+      }
+    },
+    "original": "/^((-|\\+)?(\\d+(?:\\.\\d+)?)) *(kb|mb|gb|tb|pb)$/i",
+    "replacement": "/^((-|\\+)?(\\d(?:\\.\\d+)?)) *(kb|mb|gb|tb|pb)$/i"
+  },
+  "distinguishingInput": "bytes.parse('10.5 GB')",
+  "expected": {
+    "pristine": "value: 11274289152",
+    "mutant": "value: 10"
+  },
+  "divergingProbes": 1,
+  "note": "The integer part of the parse regex accepts a single digit only, so any multi-digit value with a unit fails to match and silently falls through to parseInt, dropping the unit entirely."
+}

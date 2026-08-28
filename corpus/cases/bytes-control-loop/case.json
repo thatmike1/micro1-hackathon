@@ -1,0 +1,28 @@
+{
+  "id": "bytes-control-loop",
+  "kind": "control",
+  "library": "bytes",
+  "tag": "3.1.2",
+  "file": "index.js",
+  "category": "equivalent-refactor",
+  "source": "hand-written equivalent refactor",
+  "mutation": {
+    "mutator": "HandWritten",
+    "location": {
+      "start": {
+        "line": 97,
+        "column": 1
+      },
+      "end": {
+        "line": 109,
+        "column": 6
+      }
+    },
+    "original": "    if (mag >= map.pb) {\n      unit = 'PB';\n    } else if (mag >= map.tb) {\n      unit = 'TB';\n    } else if (mag >= map.gb) {\n      unit = 'GB';\n    } else if (mag >= map.mb) {\n      unit = 'MB';\n    } else if (mag >= map.kb) {\n      unit = 'KB';\n    } else {\n      unit = 'B';\n    }",
+    "replacement": "    var units = [\n      ['PB', map.pb],\n      ['TB', map.tb],\n      ['GB', map.gb],\n      ['MB', map.mb],\n      ['KB', map.kb]\n    ];\n\n    unit = 'B';\n\n    for (var i = 0; i < units.length; i++) {\n      if (mag >= units[i][1]) {\n        unit = units[i][0];\n        break;\n      }\n    }"
+  },
+  "distinguishingInput": null,
+  "expected": null,
+  "divergingProbes": 0,
+  "note": "The `mag >= map.pb` / `mag >= map.tb` if-ladder in `format` becomes a loop over an ordered `[unit, magnitude]` array with the same descending thresholds and the same `B` fallback."
+}
