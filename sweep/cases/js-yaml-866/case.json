@@ -1,0 +1,32 @@
+{
+  "id": "js-yaml-866",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "EqualityOperator",
+  "source": "StrykerJS mutant #866 (EqualityOperator)",
+  "mutation": {
+    "mutator": "EqualityOperator",
+    "location": {
+      "end": {
+        "column": 27,
+        "line": 565
+      },
+      "start": {
+        "column": 9,
+        "line": 565
+      }
+    },
+    "original": "prototype === null",
+    "replacement": "prototype !== null"
+  },
+  "distinguishingInput": "dump(1970-01-01T00:00:00.000Z, {schema: JSON_SCHEMA})",
+  "expected": {
+    "pristine": "throws: unacceptable kind of an object to dump [object Date]",
+    "mutant": "value: '{}\\n'"
+  },
+  "divergingProbes": 1,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at dump(1970-01-01T00:00:00.000Z, {schema: JSON_SCHEMA}). Admitted by the screen, not hand-picked for shape."
+}

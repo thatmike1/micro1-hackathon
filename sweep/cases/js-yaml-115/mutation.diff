@@ -1,0 +1,13 @@
+diff --git a/dist/js-yaml.mjs b/dist/js-yaml.mjs
+index ef8e83c..23fb601 100644
+--- a/dist/js-yaml.mjs
++++ b/dist/js-yaml.mjs
+@@ -273,7 +273,7 @@ var intCoreTag = defineScalarTag("tag:yaml.org,2002:int", {
+ //#endregion
+ //#region src/tag/scalar/int_json.ts
+ var YAML_INTEGER_IMPLICIT_PATTERN = /* @__PURE__ */ new RegExp("^-?(?:0|[1-9][0-9]*)$");
+-var YAML_INTEGER_EXPLICIT_PATTERN = /* @__PURE__ */ new RegExp("^(?:[-+]?0b[0-1]+|[-+]?0o[0-7]+|[-+]?0x[0-9a-fA-F]+|[-+]?[0-9]+)$");
++var YAML_INTEGER_EXPLICIT_PATTERN = /* @__PURE__ */ new RegExp("^(?:[-+]?0b[0-1]+|[-+]?0o[0-7]+|[^-+]?0x[0-9a-fA-F]+|[-+]?[0-9]+)$");
+ function parseYamlInteger$1(source) {
+ 	let value = source;
+ 	let sign = 1;

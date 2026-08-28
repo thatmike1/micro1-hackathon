@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index ea734fb..6bd9073 100644
+--- a/index.js
++++ b/index.js
+@@ -94,7 +94,7 @@ function parse(str) {
+     case 'milliseconds':
+     case 'millisecond':
+     case 'msecs':
+-    case 'msec':
++    case "":
+     case 'ms':
+       return n;
+     default:

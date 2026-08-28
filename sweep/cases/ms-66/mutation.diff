@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index ea734fb..0731090 100644
+--- a/index.js
++++ b/index.js
+@@ -59,7 +59,7 @@ function parse(str) {
+   var n = parseFloat(match[1]);
+   var type = (match[2] || 'ms').toLowerCase();
+   switch (type) {
+-    case 'years':
++    case "":
+     case 'year':
+     case 'yrs':
+     case 'yr':

@@ -1,0 +1,13 @@
+diff --git a/dist/js-yaml.mjs b/dist/js-yaml.mjs
+index ef8e83c..ac5cf41 100644
+--- a/dist/js-yaml.mjs
++++ b/dist/js-yaml.mjs
+@@ -377,7 +377,7 @@ var floatCoreTag = defineScalarTag("tag:yaml.org,2002:float", {
+ //#endregion
+ //#region src/tag/scalar/float_json.ts
+ var YAML_FLOAT_IMPLICIT_PATTERN = /* @__PURE__ */ new RegExp("^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]*)?(?:[eE][-+]?[0-9]+)?$");
+-var YAML_FLOAT_EXPLICIT_PATTERN = /* @__PURE__ */ new RegExp("^(?:[-+]?[0-9]+(?:\\.[0-9]*)?(?:[eE][-+]?[0-9]+)?|[-+]?\\.[0-9]+(?:[eE][-+]?[0-9]+)?|[-+]?\\.(?:inf|Inf|INF)|\\.(?:nan|NaN|NAN))$");
++var YAML_FLOAT_EXPLICIT_PATTERN = /* @__PURE__ */ new RegExp("^(?:[-+]?[0-9]+(?:\\.[0-9]*)(?:[eE][-+]?[0-9]+)?|[-+]?\\.[0-9]+(?:[eE][-+]?[0-9]+)?|[-+]?\\.(?:inf|Inf|INF)|\\.(?:nan|NaN|NAN))$");
+ function resolveYamlFloat$1(source, isExplicit) {
+ 	if (isExplicit) {
+ 		if (!YAML_FLOAT_EXPLICIT_PATTERN.test(source)) return NOT_RESOLVED;

@@ -1,0 +1,32 @@
+{
+  "id": "js-yaml-15",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "Regex",
+  "source": "StrykerJS mutant #15 (Regex)",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "end": {
+        "column": 133,
+        "line": 241
+      },
+      "start": {
+        "column": 66,
+        "line": 241
+      }
+    },
+    "original": "\"^(?:[-+]?0b[0-1]+|[-+]?0o[0-7]+|[-+]?0x[0-9a-fA-F]+|[-+]?[0-9]+)$\"",
+    "replacement": "\"^(?:[^-+]?0b[0-1]+|[-+]?0o[0-7]+|[-+]?0x[0-9a-fA-F]+|[-+]?[0-9]+)$\""
+  },
+  "distinguishingInput": "load('a: !!int -0b101')",
+  "expected": {
+    "pristine": "value: { a: -5 }",
+    "mutant": "throws: cannot resolve a node with !<tag:yaml.org,2002:int> explicit tag (1:4)\n\n 1 | a: !!int -0b101\n--------^"
+  },
+  "divergingProbes": 4,
+  "inCorpus": true,
+  "note": "Survivor of the library's own suite, discriminable by the probe at load('a: !!int -0b101'). Admitted by the screen, not hand-picked for shape."
+}

@@ -1,0 +1,32 @@
+{
+  "id": "ms-46",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "Regex",
+  "source": "StrykerJS mutant #46 (Regex)",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "end": {
+        "column": 145,
+        "line": 53
+      },
+      "start": {
+        "column": 15,
+        "line": 53
+      }
+    },
+    "original": "/^(-?(?:\\d+)?\\.?\\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i",
+    "replacement": "/^(-?(?:\\d+)?\\.?\\d+) *(milliseconds?|msecs|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i"
+  },
+  "distinguishingInput": "ms('1msec')",
+  "expected": {
+    "pristine": "value: 1",
+    "mutant": "value: undefined"
+  },
+  "divergingProbes": 30,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at ms('1msec'). Admitted by the screen, not hand-picked for shape."
+}

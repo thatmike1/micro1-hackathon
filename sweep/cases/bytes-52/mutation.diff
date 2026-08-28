@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index 6f2d0f8..fc11627 100644
+--- a/index.js
++++ b/index.js
+@@ -89,7 +89,7 @@ function format(value, options) {
+   var mag = Math.abs(value);
+   var thousandsSeparator = (options && options.thousandsSeparator) || '';
+   var unitSeparator = (options && options.unitSeparator) || '';
+-  var decimalPlaces = (options && options.decimalPlaces !== undefined) ? options.decimalPlaces : 2;
++  var decimalPlaces = (options && true) ? options.decimalPlaces : 2;
+   var fixedDecimals = Boolean(options && options.fixedDecimals);
+   var unit = (options && options.unit) || '';
+ 

@@ -1,0 +1,12 @@
+diff --git a/index.js b/index.js
+index ea734fb..203a082 100644
+--- a/index.js
++++ b/index.js
+@@ -157,6 +157,6 @@ function fmtLong(ms) {
+  */
+ 
+ function plural(ms, msAbs, n, name) {
+-  var isPlural = msAbs >= n * 1.5;
++  var isPlural = msAbs > n * 1.5;
+   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
+ }

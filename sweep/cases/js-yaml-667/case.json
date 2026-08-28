@@ -1,0 +1,32 @@
+{
+  "id": "js-yaml-667",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "Regex",
+  "source": "StrykerJS mutant #667 (Regex)",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "end": {
+        "column": 46,
+        "line": 472
+      },
+      "start": {
+        "column": 22,
+        "line": 472
+      }
+    },
+    "original": "/^[A-Za-z0-9+/]*={0,2}$/",
+    "replacement": "/^[A-Za-z0-9+/]*=$/"
+  },
+  "distinguishingInput": "load('a: !!binary \"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\"', {schema: YAML11_SCHEMA})",
+  "expected": {
+    "pristine": "value: { a: Uint8Array(42) [ 71, 73, 70, 56, 57, 97, 1, 0, 1, 0, 128, 0, 0, 0, 0, 0, 255, 255, 255, 33, 249, 4, 1, 0, 0, 0, 0, 44, 0, 0, 0, 0, 1, 0, 1, 0, 0, 2, 1, 68, 0, 59 ] }",
+    "mutant": "throws: cannot resolve a node with !<tag:yaml.org,2002:binary> explicit tag (1:4)\n\n 1 | a: !!binary \"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\"\n--------^"
+  },
+  "divergingProbes": 1,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at load('a: !!binary \"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\"', {schema: YAML11_SCHEMA}). Admitted by the screen, not hand-picked for shape."
+}

@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index ea734fb..4fa4969 100644
+--- a/index.js
++++ b/index.js
+@@ -61,7 +61,7 @@ function parse(str) {
+   switch (type) {
+     case 'years':
+     case 'year':
+-    case 'yrs':
++    case "":
+     case 'yr':
+     case 'y':
+       return n * y;

@@ -1,0 +1,32 @@
+{
+  "id": "js-yaml-115",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "Regex",
+  "source": "StrykerJS mutant #115 (Regex)",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "end": {
+        "column": 131,
+        "line": 276
+      },
+      "start": {
+        "column": 64,
+        "line": 276
+      }
+    },
+    "original": "\"^(?:[-+]?0b[0-1]+|[-+]?0o[0-7]+|[-+]?0x[0-9a-fA-F]+|[-+]?[0-9]+)$\"",
+    "replacement": "\"^(?:[-+]?0b[0-1]+|[-+]?0o[0-7]+|[^-+]?0x[0-9a-fA-F]+|[-+]?[0-9]+)$\""
+  },
+  "distinguishingInput": "load('a: !!int -0x1f', {schema: JSON_SCHEMA})",
+  "expected": {
+    "pristine": "value: { a: -31 }",
+    "mutant": "throws: cannot resolve a node with !<tag:yaml.org,2002:int> explicit tag (1:4)\n\n 1 | a: !!int -0x1f\n--------^"
+  },
+  "divergingProbes": 2,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at load('a: !!int -0x1f', {schema: JSON_SCHEMA}). Admitted by the screen, not hand-picked for shape."
+}

@@ -1,0 +1,32 @@
+{
+  "id": "ms-74",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "StringLiteral",
+  "source": "StrykerJS mutant #74 (StringLiteral)",
+  "mutation": {
+    "mutator": "StringLiteral",
+    "location": {
+      "end": {
+        "column": 16,
+        "line": 69
+      },
+      "start": {
+        "column": 10,
+        "line": 69
+      }
+    },
+    "original": "'week'",
+    "replacement": "\"\""
+  },
+  "distinguishingInput": "ms('1week')",
+  "expected": {
+    "pristine": "value: 604800000",
+    "mutant": "value: undefined"
+  },
+  "divergingProbes": 30,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at ms('1week'). Admitted by the screen, not hand-picked for shape."
+}

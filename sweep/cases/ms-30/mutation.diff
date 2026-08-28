@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index ea734fb..2e68a65 100644
+--- a/index.js
++++ b/index.js
+@@ -47,7 +47,7 @@ module.exports = function (val, options) {
+ 
+ function parse(str) {
+   str = String(str);
+-  if (str.length > 100) {
++  if (false) {
+     return;
+   }
+   var match = /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(

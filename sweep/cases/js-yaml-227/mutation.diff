@@ -1,0 +1,16 @@
+diff --git a/dist/js-yaml.mjs b/dist/js-yaml.mjs
+index ef8e83c..d4711c4 100644
+--- a/dist/js-yaml.mjs
++++ b/dist/js-yaml.mjs
+@@ -307,10 +307,7 @@ var YAML_INTEGER_PATTERN = /* @__PURE__ */ new RegExp("^(?:[-+]?0b[0-1_]+|[-+]?0
+ function parseYamlInteger(source) {
+ 	let value = source.replace(/_/g, "");
+ 	let sign = 1;
+-	if (value[0] === "-" || value[0] === "+") {
+-		if (value[0] === "-") sign = -1;
+-		value = value.slice(1);
+-	}
++	if (value[0] === "-" || value[0] === "+") {}
+ 	if (value.startsWith("0b")) return sign * parseInt(value.slice(2), 2);
+ 	if (value.startsWith("0x")) return sign * parseInt(value.slice(2), 16);
+ 	if (value.includes(":")) {

@@ -1,0 +1,32 @@
+{
+  "id": "js-yaml-199",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "Regex",
+  "source": "StrykerJS mutant #199 (Regex)",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "end": {
+        "column": 171,
+        "line": 306
+      },
+      "start": {
+        "column": 55,
+        "line": 306
+      }
+    },
+    "original": "\"^(?:[-+]?0b[0-1_]+|[-+]?0[0-7_]+|[-+]?0x[0-9a-fA-F_]+|[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+|[-+]?(?:0|[1-9][0-9_]*))$\"",
+    "replacement": "\"^(?:[-+]?0b[0-1_]+|[-+]?0[0-7_]+|[^-+]?0x[0-9a-fA-F_]+|[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+|[-+]?(?:0|[1-9][0-9_]*))$\""
+  },
+  "distinguishingInput": "load('a: -0x1f', {schema: YAML11_SCHEMA})",
+  "expected": {
+    "pristine": "value: { a: -31 }",
+    "mutant": "value: { a: '-0x1f' }"
+  },
+  "divergingProbes": 4,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at load('a: -0x1f', {schema: YAML11_SCHEMA}). Admitted by the screen, not hand-picked for shape."
+}

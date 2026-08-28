@@ -1,0 +1,32 @@
+{
+  "id": "js-yaml-128",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "StringLiteral",
+  "source": "StrykerJS mutant #128 (StringLiteral)",
+  "mutation": {
+    "mutator": "StringLiteral",
+    "location": {
+      "end": {
+        "column": 22,
+        "line": 280
+      },
+      "start": {
+        "column": 19,
+        "line": 280
+      }
+    },
+    "original": "\"-\"",
+    "replacement": "\"\""
+  },
+  "distinguishingInput": "load('a: !!int -0o17', {schema: JSON_SCHEMA})",
+  "expected": {
+    "pristine": "value: { a: -15 }",
+    "mutant": "value: { a: -0 }"
+  },
+  "divergingProbes": 3,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at load('a: !!int -0o17', {schema: JSON_SCHEMA}). Admitted by the screen, not hand-picked for shape."
+}

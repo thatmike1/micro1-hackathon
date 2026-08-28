@@ -1,0 +1,32 @@
+{
+  "id": "js-yaml-227",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "BlockStatement",
+  "source": "StrykerJS mutant #227 (BlockStatement)",
+  "mutation": {
+    "mutator": "BlockStatement",
+    "location": {
+      "end": {
+        "column": 3,
+        "line": 313
+      },
+      "start": {
+        "column": 44,
+        "line": 310
+      }
+    },
+    "original": "{\n\t\tif (value[0] === \"-\") sign = -1;\n\t\tvalue = value.slice(1);\n\t}",
+    "replacement": "{}"
+  },
+  "distinguishingInput": "load('a: -0x1f', {schema: YAML11_SCHEMA})",
+  "expected": {
+    "pristine": "value: { a: -31 }",
+    "mutant": "value: { a: -0 }"
+  },
+  "divergingProbes": 8,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at load('a: -0x1f', {schema: YAML11_SCHEMA}). Admitted by the screen, not hand-picked for shape."
+}

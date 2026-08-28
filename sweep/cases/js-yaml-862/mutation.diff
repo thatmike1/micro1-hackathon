@@ -1,0 +1,13 @@
+diff --git a/dist/js-yaml.mjs b/dist/js-yaml.mjs
+index ef8e83c..d3ad367 100644
+--- a/dist/js-yaml.mjs
++++ b/dist/js-yaml.mjs
+@@ -562,7 +562,7 @@ var seqTag = defineSequenceTag("tag:yaml.org,2002:seq", {
+ function isPlainObject(data) {
+ 	if (data === null || typeof data !== "object" || Array.isArray(data)) return false;
+ 	const prototype = Object.getPrototypeOf(data);
+-	return prototype === null || prototype === Object.prototype;
++	return true;
+ }
+ function pick(object, keys) {
+ 	const result = {};

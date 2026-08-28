@@ -1,0 +1,32 @@
+{
+  "id": "bytes-10",
+  "kind": "buggy",
+  "library": "bytes",
+  "tag": "3.1.2",
+  "file": "index.js",
+  "category": "Regex",
+  "source": "StrykerJS mutant #10 (Regex)",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "end": {
+        "column": 51,
+        "line": 26
+      },
+      "start": {
+        "column": 28,
+        "line": 26
+      }
+    },
+    "original": "/(?:\\.0*|(\\.[^0]+)0+)$/",
+    "replacement": "/(?:\\.0*|(\\.[^0]+)0)$/"
+  },
+  "distinguishingInput": "bytes.format(1.5, { decimalPlaces: 3 })",
+  "expected": {
+    "pristine": "value: '1.5B'",
+    "mutant": "value: '1.500B'"
+  },
+  "divergingProbes": 6,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at bytes.format(1.5, { decimalPlaces: 3 }). Admitted by the screen, not hand-picked for shape."
+}

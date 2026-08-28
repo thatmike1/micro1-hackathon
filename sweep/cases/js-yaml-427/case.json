@@ -1,0 +1,32 @@
+{
+  "id": "js-yaml-427",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "Regex",
+  "source": "StrykerJS mutant #427 (Regex)",
+  "mutation": {
+    "mutator": "Regex",
+    "location": {
+      "end": {
+        "column": 193,
+        "line": 380
+      },
+      "start": {
+        "column": 62,
+        "line": 380
+      }
+    },
+    "original": "\"^(?:[-+]?[0-9]+(?:\\\\.[0-9]*)?(?:[eE][-+]?[0-9]+)?|[-+]?\\\\.[0-9]+(?:[eE][-+]?[0-9]+)?|[-+]?\\\\.(?:inf|Inf|INF)|\\\\.(?:nan|NaN|NAN))$\"",
+    "replacement": "\"^(?:[-+]?[0-9]+(?:\\\\.[0-9]*)?(?:[eE][-+][0-9]+)?|[-+]?\\\\.[0-9]+(?:[eE][-+]?[0-9]+)?|[-+]?\\\\.(?:inf|Inf|INF)|\\\\.(?:nan|NaN|NAN))$\""
+  },
+  "distinguishingInput": "load('a: !!float 1e3', {schema: JSON_SCHEMA})",
+  "expected": {
+    "pristine": "value: { a: 1000 }",
+    "mutant": "throws: cannot resolve a node with !<tag:yaml.org,2002:float> explicit tag (1:4)\n\n 1 | a: !!float 1e3\n--------^"
+  },
+  "divergingProbes": 1,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at load('a: !!float 1e3', {schema: JSON_SCHEMA}). Admitted by the screen, not hand-picked for shape."
+}

@@ -2,3 +2,5 @@
 .env.*
 node_modules/
 corpus/.work/
+sweep/.harness/
+sweep/*.log

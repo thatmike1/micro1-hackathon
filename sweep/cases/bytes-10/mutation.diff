@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index 6f2d0f8..fa05e0a 100644
+--- a/index.js
++++ b/index.js
+@@ -23,7 +23,7 @@ module.exports.parse = parse;
+ 
+ var formatThousandsRegExp = /\B(?=(\d{3})+(?!\d))/g;
+ 
+-var formatDecimalsRegExp = /(?:\.0*|(\.[^0]+)0+)$/;
++var formatDecimalsRegExp = /(?:\.0*|(\.[^0]+)0)$/;
+ 
+ var map = {
+   b:  1,

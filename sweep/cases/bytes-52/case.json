@@ -1,0 +1,32 @@
+{
+  "id": "bytes-52",
+  "kind": "buggy",
+  "library": "bytes",
+  "tag": "3.1.2",
+  "file": "index.js",
+  "category": "ConditionalExpression",
+  "source": "StrykerJS mutant #52 (ConditionalExpression)",
+  "mutation": {
+    "mutator": "ConditionalExpression",
+    "location": {
+      "end": {
+        "column": 70,
+        "line": 92
+      },
+      "start": {
+        "column": 35,
+        "line": 92
+      }
+    },
+    "original": "options.decimalPlaces !== undefined",
+    "replacement": "true"
+  },
+  "distinguishingInput": "bytes.format(0, { fixedDecimals: true })",
+  "expected": {
+    "pristine": "value: '0.00B'",
+    "mutant": "value: '0B'"
+  },
+  "divergingProbes": 71,
+  "inCorpus": true,
+  "note": "Survivor of the library's own suite, discriminable by the probe at bytes.format(0, { fixedDecimals: true }). Admitted by the screen, not hand-picked for shape."
+}

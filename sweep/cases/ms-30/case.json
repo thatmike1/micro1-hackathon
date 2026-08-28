@@ -1,0 +1,32 @@
+{
+  "id": "ms-30",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "ConditionalExpression",
+  "source": "StrykerJS mutant #30 (ConditionalExpression)",
+  "mutation": {
+    "mutator": "ConditionalExpression",
+    "location": {
+      "end": {
+        "column": 23,
+        "line": 50
+      },
+      "start": {
+        "column": 7,
+        "line": 50
+      }
+    },
+    "original": "str.length > 100",
+    "replacement": "false"
+  },
+  "distinguishingInput": "ms('11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111')",
+  "expected": {
+    "pristine": "value: undefined",
+    "mutant": "value: 1.111111111111111e+100"
+  },
+  "divergingProbes": 1,
+  "inCorpus": true,
+  "note": "Survivor of the library's own suite, discriminable by the probe at ms('11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111'). Admitted by the screen, not hand-picked for shape."
+}

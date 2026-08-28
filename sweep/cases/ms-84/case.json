@@ -1,0 +1,32 @@
+{
+  "id": "ms-84",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "StringLiteral",
+  "source": "StrykerJS mutant #84 (StringLiteral)",
+  "mutation": {
+    "mutator": "StringLiteral",
+    "location": {
+      "end": {
+        "column": 16,
+        "line": 77
+      },
+      "start": {
+        "column": 10,
+        "line": 77
+      }
+    },
+    "original": "'hour'",
+    "replacement": "\"\""
+  },
+  "distinguishingInput": "ms('1hour')",
+  "expected": {
+    "pristine": "value: 3600000",
+    "mutant": "value: undefined"
+  },
+  "divergingProbes": 30,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at ms('1hour'). Admitted by the screen, not hand-picked for shape."
+}

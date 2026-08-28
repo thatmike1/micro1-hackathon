@@ -1,0 +1,32 @@
+{
+  "id": "js-yaml-220",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "LogicalOperator",
+  "source": "StrykerJS mutant #220 (LogicalOperator)",
+  "mutation": {
+    "mutator": "LogicalOperator",
+    "location": {
+      "end": {
+        "column": 42,
+        "line": 310
+      },
+      "start": {
+        "column": 6,
+        "line": 310
+      }
+    },
+    "original": "value[0] === \"-\" || value[0] === \"+\"",
+    "replacement": "value[0] === \"-\" && value[0] === \"+\""
+  },
+  "distinguishingInput": "load('a: -0x1f', {schema: YAML11_SCHEMA})",
+  "expected": {
+    "pristine": "value: { a: -31 }",
+    "mutant": "value: { a: -0 }"
+  },
+  "divergingProbes": 8,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at load('a: -0x1f', {schema: YAML11_SCHEMA}). Admitted by the screen, not hand-picked for shape."
+}

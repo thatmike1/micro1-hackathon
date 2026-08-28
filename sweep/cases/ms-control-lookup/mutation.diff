@@ -1,0 +1,89 @@
+diff --git a/index.js b/index.js
+index ea734fb..1ab1e23 100644
+--- a/index.js
++++ b/index.js
+@@ -58,48 +58,43 @@ function parse(str) {
+   }
+   var n = parseFloat(match[1]);
+   var type = (match[2] || 'ms').toLowerCase();
+-  switch (type) {
+-    case 'years':
+-    case 'year':
+-    case 'yrs':
+-    case 'yr':
+-    case 'y':
+-      return n * y;
+-    case 'weeks':
+-    case 'week':
+-    case 'w':
+-      return n * w;
+-    case 'days':
+-    case 'day':
+-    case 'd':
+-      return n * d;
+-    case 'hours':
+-    case 'hour':
+-    case 'hrs':
+-    case 'hr':
+-    case 'h':
+-      return n * h;
+-    case 'minutes':
+-    case 'minute':
+-    case 'mins':
+-    case 'min':
+-    case 'm':
+-      return n * m;
+-    case 'seconds':
+-    case 'second':
+-    case 'secs':
+-    case 'sec':
+-    case 's':
+-      return n * s;
+-    case 'milliseconds':
+-    case 'millisecond':
+-    case 'msecs':
+-    case 'msec':
+-    case 'ms':
+-      return n;
+-    default:
+-      return undefined;
++  var multipliers = {
++    years: y,
++    year: y,
++    yrs: y,
++    yr: y,
++    y: y,
++    weeks: w,
++    week: w,
++    w: w,
++    days: d,
++    day: d,
++    d: d,
++    hours: h,
++    hour: h,
++    hrs: h,
++    hr: h,
++    h: h,
++    minutes: m,
++    minute: m,
++    mins: m,
++    min: m,
++    m: m,
++    seconds: s,
++    second: s,
++    secs: s,
++    sec: s,
++    s: s,
++    milliseconds: 1,
++    millisecond: 1,
++    msecs: 1,
++    msec: 1,
++    ms: 1
++  };
++  if (!Object.prototype.hasOwnProperty.call(multipliers, type)) {
++    return undefined;
+   }
++  return n * multipliers[type];
+ }
+ 
+ /**

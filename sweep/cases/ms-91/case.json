@@ -1,0 +1,32 @@
+{
+  "id": "ms-91",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "StringLiteral",
+  "source": "StrykerJS mutant #91 (StringLiteral)",
+  "mutation": {
+    "mutator": "StringLiteral",
+    "location": {
+      "end": {
+        "column": 18,
+        "line": 83
+      },
+      "start": {
+        "column": 10,
+        "line": 83
+      }
+    },
+    "original": "'minute'",
+    "replacement": "\"\""
+  },
+  "distinguishingInput": "ms('1minute')",
+  "expected": {
+    "pristine": "value: 60000",
+    "mutant": "value: undefined"
+  },
+  "divergingProbes": 30,
+  "inCorpus": false,
+  "note": "Survivor of the library's own suite, discriminable by the probe at ms('1minute'). Admitted by the screen, not hand-picked for shape."
+}

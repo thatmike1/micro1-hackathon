@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index ea734fb..fdcb38a 100644
+--- a/index.js
++++ b/index.js
+@@ -7,7 +7,7 @@ var m = s * 60;
+ var h = m * 60;
+ var d = h * 24;
+ var w = d * 7;
+-var y = d * 365.25;
++var y = d / 365.25;
+ 
+ /**
+  * Parse or format the given `val`.

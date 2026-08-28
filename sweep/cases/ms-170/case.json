@@ -1,0 +1,32 @@
+{
+  "id": "ms-170",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "EqualityOperator",
+  "source": "StrykerJS mutant #170 (EqualityOperator)",
+  "mutation": {
+    "mutator": "EqualityOperator",
+    "location": {
+      "end": {
+        "column": 34,
+        "line": 160
+      },
+      "start": {
+        "column": 18,
+        "line": 160
+      }
+    },
+    "original": "msAbs >= n * 1.5",
+    "replacement": "msAbs > n * 1.5"
+  },
+  "distinguishingInput": "ms(1500, {long: true})",
+  "expected": {
+    "pristine": "value: '2 seconds'",
+    "mutant": "value: '2 second'"
+  },
+  "divergingProbes": 5,
+  "inCorpus": true,
+  "note": "Survivor of the library's own suite, discriminable by the probe at ms(1500, {long: true}). Admitted by the screen, not hand-picked for shape."
+}

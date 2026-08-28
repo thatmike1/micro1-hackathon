@@ -1,0 +1,13 @@
+diff --git a/dist/js-yaml.mjs b/dist/js-yaml.mjs
+index ef8e83c..e1d6724 100644
+--- a/dist/js-yaml.mjs
++++ b/dist/js-yaml.mjs
+@@ -469,7 +469,7 @@ var mergeTag = defineScalarTag("tag:yaml.org,2002:merge", {
+ });
+ //#endregion
+ //#region src/tag/scalar/binary.ts
+-var BASE64_PATTERN = /^[A-Za-z0-9+/]*={0,2}$/;
++var BASE64_PATTERN = /^[A-Za-z0-9+/]*=$/;
+ function resolveYamlBinary(source) {
+ 	const input = source.replace(/\s/g, "");
+ 	if (input.length % 4 !== 0 || !BASE64_PATTERN.test(input)) return NOT_RESOLVED;
