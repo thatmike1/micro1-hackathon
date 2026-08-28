@@ -1,0 +1,151 @@
+{
+  "candidate": "baseline-1",
+  "description": "one direct prompt, no tools, single completion",
+  "model": "z-ai/glm-5.3-flash",
+  "startedAt": "2026-08-28T19:30:50.351Z",
+  "finishedAt": "2026-08-28T19:34:53.944Z",
+  "wallMs": 243593,
+  "totals": {
+    "cases": 4,
+    "buggy": 3,
+    "controls": 1,
+    "proved": 3,
+    "proofRate": 1,
+    "claimUnproved": 0,
+    "misses": 0,
+    "falseAlarms": 0,
+    "controlsCorrect": 1,
+    "noVerdict": 0,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 42648,
+      "completionTokens": 34402,
+      "totalTokens": 77050,
+      "costUsd": 0.021886305548
+    },
+    "wallMsTotal": 577591
+  },
+  "cases": [
+    {
+      "id": "bytes-52-composite",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "option-ignored",
+      "outcome": "proved",
+      "defect": true,
+      "note": "formatOptions only falls back to the 2-decimal default when the options object is absent, whereas the original also fell back when options.decimalPlaces was undefined. With options present but decimalPlaces omitted, toFixed(undefined) acts as toFixed(0), so e.g. bytes.format(1536, {}) now returns '2KB' instead of '1.5KB'.",
+      "error": null,
+      "proof": {
+        "path": "test/proof-test.js",
+        "command": "./node_modules/.bin/mocha test/proof-test.js",
+        "testFile": "var assert = require('assert');\nvar bytes = require('..');\n\ndescribe('proof', function () {\n  it('keeps the 2-decimal default when an options object omits decimalPlaces', function () {\n    assert.strictEqual(bytes.format(1536, {}), '1.5KB');\n    assert.strictEqual(bytes.format(1536, { unitSeparator: ' ' }), '1.5 KB');\n  });\n\n  it('keeps 2 decimals for fixedDecimals when decimalPlaces is omitted', function () {\n    assert.strictEqual(bytes.format(1024, { fixedDecimals: true }), '1.00KB');\n  });\n});\n",
+        "mutant": {
+          "code": 2,
+          "ms": 112,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-1KB\u001b[0m\n      \u001b[32m+1.00KB\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (test/proof-test.js:11:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 107,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  \u001b[32m✔\u001b[39m\u001b[0m\u001b[90m keeps the 2-decimal default when an options object omits decimalPlaces\u001b[0m\n  \u001b[32m  \u001b[32m✔\u001b[39m\u001b[0m\u001b[90m keeps 2 decimals for fixedDecimals when decimalPlaces is omitted\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 2 passing\u001b[0m\u001b[90m (2ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 2320,
+        "completionTokens": 16146,
+        "totalTokens": 18466,
+        "costUsd": 0.008143705548
+      },
+      "wallMs": 94432,
+      "trajectory": "bytes-52-composite.jsonl"
+    },
+    {
+      "id": "js-yaml-15-composite",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "character-class",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The refactor rewrote the core int explicit-tag pattern's first alternative from [-+]?0b[0-1]+ to [^-+]?0b[0-1]+ (negated character class), so signed binary literals no longer match. Under the default CORE_SCHEMA, load('!!int -0b101') used to return -5 and now throws 'cannot resolve a node with !<tag:yaml.org,2002:int> explicit tag'.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // Negative binary integer with an explicit !!int tag must resolve under\n    // the default core schema: the explicit pattern is [-+]?0b[0-1]+, so the\n    // sign is allowed.\n    assert.strictEqual(load('!!int -0b101'), -5);\n    // Same for the explicit plus sign.\n    assert.strictEqual(load('!!int +0b11'), 3);\n    // Unsigned binary keeps working in both builds.\n    assert.strictEqual(load('!!int 0b101'), 5);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 79,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.706877"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 79,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.611527"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 36544,
+        "completionTokens": 8594,
+        "totalTokens": 45138,
+        "costUsd": 0.0097786
+      },
+      "wallMs": 243583,
+      "trajectory": "js-yaml-15-composite.jsonl"
+    },
+    {
+      "id": "ms-170-composite",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "threshold",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The LONG_UNITS loop is an equivalent refactor, but pluralize changed the pluralization threshold from msAbs >= n * 1.5 to msAbs > n * 1.5. At exactly 1.5 units (e.g. 1500 ms) Math.round rounds to 2 and the original emitted the plural form ('2 seconds'), while the patched build emits the singular ('2 second').",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('uses the plural form at exactly 1.5x a unit', function () {\n    assert.strictEqual(ms(1500, { long: true }), '2 seconds');\n    assert.strictEqual(ms(90000, { long: true }), '2 minutes');\n    assert.strictEqual(ms(5400000, { long: true }), '2 hours');\n    assert.strictEqual(ms(129600000, { long: true }), '2 days');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 78,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-2 second\u001b[0m\n      \u001b[32m+2 seconds\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 74,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m uses the plural form at exactly 1.5x a unit\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (2ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 1866,
+        "completionTokens": 4499,
+        "totalTokens": 6365,
+        "costUsd": 0.0025294
+      },
+      "wallMs": 138452,
+      "trajectory": "ms-170-composite.jsonl"
+    },
+    {
+      "id": "ms-control-lookup",
+      "kind": "control",
+      "library": "ms",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "The lookup table covers exactly the 31 unit strings the anchored regex can produce, with the same multipliers as the original case groups, and n*1 === n for the ms case. The hasOwnProperty guard exactly mirrors the original (unreachable) default branch, so no caller-observable behaviour changes.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 1918,
+        "completionTokens": 5163,
+        "totalTokens": 7081,
+        "costUsd": 0.0014346
+      },
+      "wallMs": 101124,
+      "trajectory": "ms-control-lookup.jsonl"
+    }
+  ]
+}

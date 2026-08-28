@@ -1,0 +1,58 @@
+diff --git a/index.js b/index.js
+index ea734fb..d187d54 100644
+--- a/index.js
++++ b/index.js
+@@ -127,6 +127,17 @@ function fmtShort(ms) {
+   return ms + 'ms';
+ }
+ 
++/**
++ * Units used by the long format, largest first.
++ */
++
++var LONG_UNITS = [
++  [d, 'day'],
++  [h, 'hour'],
++  [m, 'minute'],
++  [s, 'second']
++];
++
+ /**
+  * Long format for `ms`.
+  *
+@@ -137,17 +148,12 @@ function fmtShort(ms) {
+ 
+ function fmtLong(ms) {
+   var msAbs = Math.abs(ms);
+-  if (msAbs >= d) {
+-    return plural(ms, msAbs, d, 'day');
+-  }
+-  if (msAbs >= h) {
+-    return plural(ms, msAbs, h, 'hour');
+-  }
+-  if (msAbs >= m) {
+-    return plural(ms, msAbs, m, 'minute');
+-  }
+-  if (msAbs >= s) {
+-    return plural(ms, msAbs, s, 'second');
++  for (var i = 0; i < LONG_UNITS.length; i++) {
++    var unit = LONG_UNITS[i][0];
++    var name = LONG_UNITS[i][1];
++    if (msAbs >= unit) {
++      return pluralize(ms, msAbs, unit, name);
++    }
+   }
+   return ms + ' ms';
+ }
+@@ -156,7 +162,8 @@ function fmtLong(ms) {
+  * Pluralization helper.
+  */
+ 
+-function plural(ms, msAbs, n, name) {
+-  var isPlural = msAbs >= n * 1.5;
+-  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
++function pluralize(ms, msAbs, n, name) {
++  var rounded = Math.round(ms / n);
++  var suffix = msAbs > n * 1.5 ? name + 's' : name;
++  return rounded + ' ' + suffix;
+ }

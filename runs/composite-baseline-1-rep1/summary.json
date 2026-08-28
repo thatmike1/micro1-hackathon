@@ -1,0 +1,151 @@
+{
+  "candidate": "baseline-1",
+  "description": "one direct prompt, no tools, single completion",
+  "model": "z-ai/glm-5.3-flash",
+  "startedAt": "2026-08-28T19:25:36.817Z",
+  "finishedAt": "2026-08-28T19:30:44.076Z",
+  "wallMs": 307259,
+  "totals": {
+    "cases": 4,
+    "buggy": 3,
+    "controls": 1,
+    "proved": 3,
+    "proofRate": 1,
+    "claimUnproved": 0,
+    "misses": 0,
+    "falseAlarms": 0,
+    "controlsCorrect": 1,
+    "noVerdict": 0,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 42648,
+      "completionTokens": 37934,
+      "totalTokens": 80582,
+      "costUsd": 0.02380038454
+    },
+    "wallMsTotal": 582617
+  },
+  "cases": [
+    {
+      "id": "bytes-52-composite",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "option-ignored",
+      "outcome": "proved",
+      "defect": true,
+      "note": "formatOptions uses options.decimalPlaces even when it is undefined, whereas the original fell back to 2 in that case; since toFixed(undefined) acts like toFixed(0), bytes(1536, {}) now returns '2KB' instead of '1.5KB'.",
+      "error": null,
+      "proof": {
+        "path": "test/proof-test.js",
+        "command": "./node_modules/.bin/mocha test/proof-test.js",
+        "testFile": "'use strict';\n\nvar assert = require('assert');\nvar bytes = require('..');\n\ndescribe('proof', function () {\n  it('keeps the 2-decimal default when an options object omits decimalPlaces', function () {\n    assert.strictEqual(bytes(1536, {}), '1.5KB');\n    assert.strictEqual(bytes(1536, { fixedDecimals: true }), '1.50KB');\n    assert.strictEqual(bytes(1536, { decimalPlaces: undefined }), '1.5KB');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 122,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-2KB\u001b[0m\n      \u001b[32m+1.5KB\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (test/proof-test.js:8:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 126,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  \u001b[32m✔\u001b[39m\u001b[0m\u001b[90m keeps the 2-decimal default when an options object omits decimalPlaces\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (2ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 2320,
+        "completionTokens": 5182,
+        "totalTokens": 7502,
+        "costUsd": 0.0029387061
+      },
+      "wallMs": 46409,
+      "trajectory": "bytes-52-composite.jsonl"
+    },
+    {
+      "id": "js-yaml-15-composite",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "character-class",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The refactored explicit int pattern uses the negated class [^-+]? instead of [-+]? for the binary alternative, so explicitly tagged signed binary integers like '-0b101' and '+0b11' no longer match and load() throws instead of returning -5 and 3.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // Explicitly tagged signed binary integers must still load as numbers.\n    // The patched explicit int pattern uses [^-+]? instead of [-+]? for the\n    // 0b alternative, so signed binary sources no longer match and load throws.\n    assert.strictEqual(load('!!int -0b101'), -5);\n    assert.strictEqual(load('!!int +0b11'), 3);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 84,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 55.14486"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 86,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 58.927316"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 36544,
+        "completionTokens": 20468,
+        "totalTokens": 57012,
+        "costUsd": 0.01571402844
+      },
+      "wallMs": 138701,
+      "trajectory": "js-yaml-15-composite.jsonl"
+    },
+    {
+      "id": "ms-170-composite",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "threshold",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The refactor changed the plural boundary from `msAbs >= n * 1.5` to the strict `msAbs > n * 1.5`, so values exactly 1.5 units (e.g. ms(1500, {long: true})) now format as singular ('2 second') instead of plural ('2 seconds'). The loop conversion of fmtLong itself is equivalent.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    // At exactly 1.5 units, ms 2.1.3's plural() (msAbs >= n * 1.5) uses the\n    // plural form; the patched pluralize() (msAbs > n * 1.5) uses the singular.\n    assert.strictEqual(ms(1500, { long: true }), '2 seconds');\n    assert.strictEqual(ms(90000, { long: true }), '2 minutes');\n    assert.strictEqual(ms(5400000, { long: true }), '2 hours');\n    assert.strictEqual(ms(129600000, { long: true }), '2 days');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 91,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-2 second\u001b[0m\n      \u001b[32m+2 seconds\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:8:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 86,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (2ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 1866,
+        "completionTokens": 5688,
+        "totalTokens": 7554,
+        "costUsd": 0.00156195
+      },
+      "wallMs": 90251,
+      "trajectory": "ms-170-composite.jsonl"
+    },
+    {
+      "id": "ms-control-lookup",
+      "kind": "control",
+      "library": "ms",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "The multipliers map contains exactly the same keys and values as the original switch cases, and `type` can only ever be one of the regex-matched lowercase unit strings or 'ms', so the hasOwnProperty guard passes exactly when the switch would have matched (and returns undefined otherwise, matching the old default). Behaviour is identical for every input, including case-insensitive and Unicode edge cases.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 1918,
+        "completionTokens": 6596,
+        "totalTokens": 8514,
+        "costUsd": 0.0035857
+      },
+      "wallMs": 307256,
+      "trajectory": "ms-control-lookup.jsonl"
+    }
+  ]
+}

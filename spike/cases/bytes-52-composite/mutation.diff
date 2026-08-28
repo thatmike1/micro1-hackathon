@@ -1,0 +1,111 @@
+diff --git a/index.js b/index.js
+index 6f2d0f8..94ecee9 100644
+--- a/index.js
++++ b/index.js
+@@ -63,6 +63,52 @@ function bytes(value, options) {
+   return null;
+ }
+ 
++/**
++ * Read the formatting options, filling in the defaults.
++ *
++ * @param {object} [options]
++ * @returns {object}
++ * @private
++ */
++
++function formatOptions(options) {
++  var has = Boolean(options);
++  return {
++    thousandsSeparator: (has && options.thousandsSeparator) || '',
++    unitSeparator: (has && options.unitSeparator) || '',
++    decimalPlaces: has ? options.decimalPlaces : 2,
++    fixedDecimals: Boolean(has && options.fixedDecimals),
++    unit: (has && options.unit) || ''
++  };
++}
++
++/**
++ * Pick the largest unit whose magnitude fits the value.
++ *
++ * @param {number} mag
++ * @returns {string}
++ * @private
++ */
++
++function formatUnit(mag) {
++  if (mag >= map.pb) {
++    return 'PB';
++  }
++  if (mag >= map.tb) {
++    return 'TB';
++  }
++  if (mag >= map.gb) {
++    return 'GB';
++  }
++  if (mag >= map.mb) {
++    return 'MB';
++  }
++  if (mag >= map.kb) {
++    return 'KB';
++  }
++  return 'B';
++}
++
+ /**
+  * Format the given value in bytes into a string.
+  *
+@@ -86,45 +132,28 @@ function format(value, options) {
+     return null;
+   }
+ 
+-  var mag = Math.abs(value);
+-  var thousandsSeparator = (options && options.thousandsSeparator) || '';
+-  var unitSeparator = (options && options.unitSeparator) || '';
+-  var decimalPlaces = (options && options.decimalPlaces !== undefined) ? options.decimalPlaces : 2;
+-  var fixedDecimals = Boolean(options && options.fixedDecimals);
+-  var unit = (options && options.unit) || '';
++  var opts = formatOptions(options);
++  var unit = opts.unit;
+ 
+   if (!unit || !map[unit.toLowerCase()]) {
+-    if (mag >= map.pb) {
+-      unit = 'PB';
+-    } else if (mag >= map.tb) {
+-      unit = 'TB';
+-    } else if (mag >= map.gb) {
+-      unit = 'GB';
+-    } else if (mag >= map.mb) {
+-      unit = 'MB';
+-    } else if (mag >= map.kb) {
+-      unit = 'KB';
+-    } else {
+-      unit = 'B';
+-    }
++    unit = formatUnit(Math.abs(value));
+   }
+ 
+-  var val = value / map[unit.toLowerCase()];
+-  var str = val.toFixed(decimalPlaces);
++  var str = (value / map[unit.toLowerCase()]).toFixed(opts.decimalPlaces);
+ 
+-  if (!fixedDecimals) {
++  if (!opts.fixedDecimals) {
+     str = str.replace(formatDecimalsRegExp, '$1');
+   }
+ 
+-  if (thousandsSeparator) {
++  if (opts.thousandsSeparator) {
+     str = str.split('.').map(function (s, i) {
+       return i === 0
+-        ? s.replace(formatThousandsRegExp, thousandsSeparator)
++        ? s.replace(formatThousandsRegExp, opts.thousandsSeparator)
+         : s
+     }).join('.');
+   }
+ 
+-  return str + unitSeparator + unit;
++  return str + opts.unitSeparator + unit;
+ }
+ 
+ /**

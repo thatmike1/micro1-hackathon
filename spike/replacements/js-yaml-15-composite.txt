@@ -1,0 +1,38 @@
+function anchoredAlternation$1(alternatives) {
+	return new RegExp("^(?:" + alternatives.join("|") + ")$");
+}
+var YAML_INTEGER_IMPLICIT_ALTERNATIVES$1 = [
+	"0o[0-7]+",
+	"0x[0-9a-fA-F]+",
+	"[-+]?[0-9]+"
+];
+var YAML_INTEGER_EXPLICIT_ALTERNATIVES$1 = [
+	"[^-+]?0b[0-1]+",
+	"[-+]?0o[0-7]+",
+	"[-+]?0x[0-9a-fA-F]+",
+	"[-+]?[0-9]+"
+];
+var YAML_INTEGER_RADIX_BY_PREFIX$1 = {
+	"0b": 2,
+	"0o": 8,
+	"0x": 16
+};
+var YAML_INTEGER_IMPLICIT_PATTERN$1 = /* @__PURE__ */ anchoredAlternation$1(YAML_INTEGER_IMPLICIT_ALTERNATIVES$1);
+var YAML_INTEGER_EXPLICIT_PATTERN$1 = /* @__PURE__ */ anchoredAlternation$1(YAML_INTEGER_EXPLICIT_ALTERNATIVES$1);
+function parseYamlInteger$2(source) {
+	let digits = source;
+	let sign = 1;
+	if (digits[0] === "-" || digits[0] === "+") {
+		if (digits[0] === "-") sign = -1;
+		digits = digits.slice(1);
+	}
+	const radix = YAML_INTEGER_RADIX_BY_PREFIX$1[digits.slice(0, 2)];
+	if (radix !== undefined) return sign * parseInt(digits.slice(2), radix);
+	return sign * parseInt(digits, 10);
+}
+function resolveYamlInteger$2(source, isExplicit) {
+	const pattern = isExplicit ? YAML_INTEGER_EXPLICIT_PATTERN$1 : YAML_INTEGER_IMPLICIT_PATTERN$1;
+	if (!pattern.test(source)) return NOT_RESOLVED;
+	const result = parseYamlInteger$2(source);
+	return Number.isFinite(result) ? result : NOT_RESOLVED;
+}

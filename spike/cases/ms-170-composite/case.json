@@ -1,0 +1,31 @@
+{
+  "id": "ms-170-composite",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "threshold",
+  "source": "composite of ms-170 and a hand-written same-file refactor",
+  "mutation": {
+    "mutator": "HandWritten",
+    "location": {
+      "start": {
+        "line": 130,
+        "column": 1
+      },
+      "end": {
+        "line": 163,
+        "column": 1
+      }
+    },
+    "original": "/**\n * Long format for `ms`.\n *\n * @param {Number} ms\n * @return {String}\n * @api private\n */\n\nfunction fmtLong(ms) {\n  var msAbs = Math.abs(ms);\n  if (msAbs >= d) {\n    return plural(ms, msAbs, d, 'day');\n  }\n  if (msAbs >= h) {\n    return plural(ms, msAbs, h, 'hour');\n  }\n  if (msAbs >= m) {\n    return plural(ms, msAbs, m, 'minute');\n  }\n  if (msAbs >= s) {\n    return plural(ms, msAbs, s, 'second');\n  }\n  return ms + ' ms';\n}\n\n/**\n * Pluralization helper.\n */\n\nfunction plural(ms, msAbs, n, name) {\n  var isPlural = msAbs >= n * 1.5;\n  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');\n}\n",
+    "replacement": "/**\n * Units used by the long format, largest first.\n */\n\nvar LONG_UNITS = [\n  [d, 'day'],\n  [h, 'hour'],\n  [m, 'minute'],\n  [s, 'second']\n];\n\n/**\n * Long format for `ms`.\n *\n * @param {Number} ms\n * @return {String}\n * @api private\n */\n\nfunction fmtLong(ms) {\n  var msAbs = Math.abs(ms);\n  for (var i = 0; i < LONG_UNITS.length; i++) {\n    var unit = LONG_UNITS[i][0];\n    var name = LONG_UNITS[i][1];\n    if (msAbs >= unit) {\n      return pluralize(ms, msAbs, unit, name);\n    }\n  }\n  return ms + ' ms';\n}\n\n/**\n * Pluralization helper.\n */\n\nfunction pluralize(ms, msAbs, n, name) {\n  var rounded = Math.round(ms / n);\n  var suffix = msAbs > n * 1.5 ? name + 's' : name;\n  return rounded + ' ' + suffix;\n}\n"
+  },
+  "distinguishingInput": "ms(1500, {long: true})",
+  "expected": {
+    "pristine": "value: '2 seconds'",
+    "mutant": "value: '2 second'"
+  },
+  "divergingProbes": 5,
+  "note": "The long formatter's unit ladder becomes a table-driven loop and `plural` is renamed to `pluralize` with the suffix built up separately. Inside that rewrite the plural boundary loses its `=`, so a value exactly on 1.5 units renders singular. Same defect as ms-170, no longer a one-character diff."
+}

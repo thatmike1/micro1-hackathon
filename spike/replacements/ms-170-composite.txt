@@ -1,0 +1,40 @@
+/**
+ * Units used by the long format, largest first.
+ */
+
+var LONG_UNITS = [
+  [d, 'day'],
+  [h, 'hour'],
+  [m, 'minute'],
+  [s, 'second']
+];
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtLong(ms) {
+  var msAbs = Math.abs(ms);
+  for (var i = 0; i < LONG_UNITS.length; i++) {
+    var unit = LONG_UNITS[i][0];
+    var name = LONG_UNITS[i][1];
+    if (msAbs >= unit) {
+      return pluralize(ms, msAbs, unit, name);
+    }
+  }
+  return ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function pluralize(ms, msAbs, n, name) {
+  var rounded = Math.round(ms / n);
+  var suffix = msAbs > n * 1.5 ? name + 's' : name;
+  return rounded + ' ' + suffix;
+}

@@ -1,0 +1,31 @@
+{
+  "id": "bytes-52-composite",
+  "kind": "buggy",
+  "library": "bytes",
+  "tag": "3.1.2",
+  "file": "index.js",
+  "category": "option-ignored",
+  "source": "composite of bytes-52 and a hand-written same-file refactor",
+  "mutation": {
+    "mutator": "HandWritten",
+    "location": {
+      "start": {
+        "line": 66,
+        "column": 1
+      },
+      "end": {
+        "line": 129,
+        "column": 1
+      }
+    },
+    "original": "/**\n * Format the given value in bytes into a string.\n *\n * If the value is negative, it is kept as such. If it is a float,\n * it is rounded.\n *\n * @param {number} value\n * @param {object} [options]\n * @param {number} [options.decimalPlaces=2]\n * @param {number} [options.fixedDecimals=false]\n * @param {string} [options.thousandsSeparator=]\n * @param {string} [options.unit=]\n * @param {string} [options.unitSeparator=]\n *\n * @returns {string|null}\n * @public\n */\n\nfunction format(value, options) {\n  if (!Number.isFinite(value)) {\n    return null;\n  }\n\n  var mag = Math.abs(value);\n  var thousandsSeparator = (options && options.thousandsSeparator) || '';\n  var unitSeparator = (options && options.unitSeparator) || '';\n  var decimalPlaces = (options && options.decimalPlaces !== undefined) ? options.decimalPlaces : 2;\n  var fixedDecimals = Boolean(options && options.fixedDecimals);\n  var unit = (options && options.unit) || '';\n\n  if (!unit || !map[unit.toLowerCase()]) {\n    if (mag >= map.pb) {\n      unit = 'PB';\n    } else if (mag >= map.tb) {\n      unit = 'TB';\n    } else if (mag >= map.gb) {\n      unit = 'GB';\n    } else if (mag >= map.mb) {\n      unit = 'MB';\n    } else if (mag >= map.kb) {\n      unit = 'KB';\n    } else {\n      unit = 'B';\n    }\n  }\n\n  var val = value / map[unit.toLowerCase()];\n  var str = val.toFixed(decimalPlaces);\n\n  if (!fixedDecimals) {\n    str = str.replace(formatDecimalsRegExp, '$1');\n  }\n\n  if (thousandsSeparator) {\n    str = str.split('.').map(function (s, i) {\n      return i === 0\n        ? s.replace(formatThousandsRegExp, thousandsSeparator)\n        : s\n    }).join('.');\n  }\n\n  return str + unitSeparator + unit;\n}\n",
+    "replacement": "/**\n * Read the formatting options, filling in the defaults.\n *\n * @param {object} [options]\n * @returns {object}\n * @private\n */\n\nfunction formatOptions(options) {\n  var has = Boolean(options);\n  return {\n    thousandsSeparator: (has && options.thousandsSeparator) || '',\n    unitSeparator: (has && options.unitSeparator) || '',\n    decimalPlaces: has ? options.decimalPlaces : 2,\n    fixedDecimals: Boolean(has && options.fixedDecimals),\n    unit: (has && options.unit) || ''\n  };\n}\n\n/**\n * Pick the largest unit whose magnitude fits the value.\n *\n * @param {number} mag\n * @returns {string}\n * @private\n */\n\nfunction formatUnit(mag) {\n  if (mag >= map.pb) {\n    return 'PB';\n  }\n  if (mag >= map.tb) {\n    return 'TB';\n  }\n  if (mag >= map.gb) {\n    return 'GB';\n  }\n  if (mag >= map.mb) {\n    return 'MB';\n  }\n  if (mag >= map.kb) {\n    return 'KB';\n  }\n  return 'B';\n}\n\n/**\n * Format the given value in bytes into a string.\n *\n * If the value is negative, it is kept as such. If it is a float,\n * it is rounded.\n *\n * @param {number} value\n * @param {object} [options]\n * @param {number} [options.decimalPlaces=2]\n * @param {number} [options.fixedDecimals=false]\n * @param {string} [options.thousandsSeparator=]\n * @param {string} [options.unit=]\n * @param {string} [options.unitSeparator=]\n *\n * @returns {string|null}\n * @public\n */\n\nfunction format(value, options) {\n  if (!Number.isFinite(value)) {\n    return null;\n  }\n\n  var opts = formatOptions(options);\n  var unit = opts.unit;\n\n  if (!unit || !map[unit.toLowerCase()]) {\n    unit = formatUnit(Math.abs(value));\n  }\n\n  var str = (value / map[unit.toLowerCase()]).toFixed(opts.decimalPlaces);\n\n  if (!opts.fixedDecimals) {\n    str = str.replace(formatDecimalsRegExp, '$1');\n  }\n\n  if (opts.thousandsSeparator) {\n    str = str.split('.').map(function (s, i) {\n      return i === 0\n        ? s.replace(formatThousandsRegExp, opts.thousandsSeparator)\n        : s\n    }).join('.');\n  }\n\n  return str + opts.unitSeparator + unit;\n}\n"
+  },
+  "distinguishingInput": "bytes.format(0, { fixedDecimals: true })",
+  "expected": {
+    "pristine": "value: '0.00B'",
+    "mutant": "value: '0B'"
+  },
+  "divergingProbes": 71,
+  "note": "`format` option reading is hoisted into `formatOptions` and the unit ladder into `formatUnit`. The hoist reads as faithful but drops the `!== undefined` check on `decimalPlaces`, so the option defaults to `undefined` rather than 2 whenever any options object is passed. Same defect as bytes-52."
+}

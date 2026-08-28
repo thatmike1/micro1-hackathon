@@ -1,0 +1,31 @@
+{
+  "id": "js-yaml-15-composite",
+  "kind": "buggy",
+  "library": "js-yaml",
+  "tag": "5.4.1",
+  "file": "dist/js-yaml.mjs",
+  "category": "character-class",
+  "source": "composite of js-yaml-15 and a hand-written same-file refactor",
+  "mutation": {
+    "mutator": "HandWritten",
+    "location": {
+      "start": {
+        "line": 240,
+        "column": 1
+      },
+      "end": {
+        "line": 261,
+        "column": 1
+      }
+    },
+    "original": "var YAML_INTEGER_IMPLICIT_PATTERN$1 = /* @__PURE__ */ new RegExp(\"^(?:0o[0-7]+|0x[0-9a-fA-F]+|[-+]?[0-9]+)$\");\nvar YAML_INTEGER_EXPLICIT_PATTERN$1 = /* @__PURE__ */ new RegExp(\"^(?:[-+]?0b[0-1]+|[-+]?0o[0-7]+|[-+]?0x[0-9a-fA-F]+|[-+]?[0-9]+)$\");\nfunction parseYamlInteger$2(source) {\n\tlet value = source;\n\tlet sign = 1;\n\tif (value[0] === \"-\" || value[0] === \"+\") {\n\t\tif (value[0] === \"-\") sign = -1;\n\t\tvalue = value.slice(1);\n\t}\n\tif (value.startsWith(\"0b\")) return sign * parseInt(value.slice(2), 2);\n\tif (value.startsWith(\"0o\")) return sign * parseInt(value.slice(2), 8);\n\tif (value.startsWith(\"0x\")) return sign * parseInt(value.slice(2), 16);\n\treturn sign * parseInt(value, 10);\n}\nfunction resolveYamlInteger$2(source, isExplicit) {\n\tif (isExplicit) {\n\t\tif (!YAML_INTEGER_EXPLICIT_PATTERN$1.test(source)) return NOT_RESOLVED;\n\t} else if (!YAML_INTEGER_IMPLICIT_PATTERN$1.test(source)) return NOT_RESOLVED;\n\tconst result = parseYamlInteger$2(source);\n\treturn Number.isFinite(result) ? result : NOT_RESOLVED;\n}\n",
+    "replacement": "function anchoredAlternation$1(alternatives) {\n\treturn new RegExp(\"^(?:\" + alternatives.join(\"|\") + \")$\");\n}\nvar YAML_INTEGER_IMPLICIT_ALTERNATIVES$1 = [\n\t\"0o[0-7]+\",\n\t\"0x[0-9a-fA-F]+\",\n\t\"[-+]?[0-9]+\"\n];\nvar YAML_INTEGER_EXPLICIT_ALTERNATIVES$1 = [\n\t\"[^-+]?0b[0-1]+\",\n\t\"[-+]?0o[0-7]+\",\n\t\"[-+]?0x[0-9a-fA-F]+\",\n\t\"[-+]?[0-9]+\"\n];\nvar YAML_INTEGER_RADIX_BY_PREFIX$1 = {\n\t\"0b\": 2,\n\t\"0o\": 8,\n\t\"0x\": 16\n};\nvar YAML_INTEGER_IMPLICIT_PATTERN$1 = /* @__PURE__ */ anchoredAlternation$1(YAML_INTEGER_IMPLICIT_ALTERNATIVES$1);\nvar YAML_INTEGER_EXPLICIT_PATTERN$1 = /* @__PURE__ */ anchoredAlternation$1(YAML_INTEGER_EXPLICIT_ALTERNATIVES$1);\nfunction parseYamlInteger$2(source) {\n\tlet digits = source;\n\tlet sign = 1;\n\tif (digits[0] === \"-\" || digits[0] === \"+\") {\n\t\tif (digits[0] === \"-\") sign = -1;\n\t\tdigits = digits.slice(1);\n\t}\n\tconst radix = YAML_INTEGER_RADIX_BY_PREFIX$1[digits.slice(0, 2)];\n\tif (radix !== undefined) return sign * parseInt(digits.slice(2), radix);\n\treturn sign * parseInt(digits, 10);\n}\nfunction resolveYamlInteger$2(source, isExplicit) {\n\tconst pattern = isExplicit ? YAML_INTEGER_EXPLICIT_PATTERN$1 : YAML_INTEGER_IMPLICIT_PATTERN$1;\n\tif (!pattern.test(source)) return NOT_RESOLVED;\n\tconst result = parseYamlInteger$2(source);\n\treturn Number.isFinite(result) ? result : NOT_RESOLVED;\n}\n"
+  },
+  "distinguishingInput": "load('a: !!int -0b101')",
+  "expected": {
+    "pristine": "value: { a: -5 }",
+    "mutant": "throws: cannot resolve a node with !<tag:yaml.org,2002:int> explicit tag (1:4)\n\n 1 | a: !!int -0b101\n--------^"
+  },
+  "divergingProbes": 4,
+  "note": "The two integer patterns are decomposed into alternation arrays built by `anchoredAlternation`, the radix branches in the parser become a prefix table, and the resolver picks its pattern up front. The binary alternative is written `[^-+]?` instead of `[-+]?` among three sibling fragments that are not. Same defect as js-yaml-15."
+}

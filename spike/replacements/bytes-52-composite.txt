@@ -1,0 +1,92 @@
+/**
+ * Read the formatting options, filling in the defaults.
+ *
+ * @param {object} [options]
+ * @returns {object}
+ * @private
+ */
+
+function formatOptions(options) {
+  var has = Boolean(options);
+  return {
+    thousandsSeparator: (has && options.thousandsSeparator) || '',
+    unitSeparator: (has && options.unitSeparator) || '',
+    decimalPlaces: has ? options.decimalPlaces : 2,
+    fixedDecimals: Boolean(has && options.fixedDecimals),
+    unit: (has && options.unit) || ''
+  };
+}
+
+/**
+ * Pick the largest unit whose magnitude fits the value.
+ *
+ * @param {number} mag
+ * @returns {string}
+ * @private
+ */
+
+function formatUnit(mag) {
+  if (mag >= map.pb) {
+    return 'PB';
+  }
+  if (mag >= map.tb) {
+    return 'TB';
+  }
+  if (mag >= map.gb) {
+    return 'GB';
+  }
+  if (mag >= map.mb) {
+    return 'MB';
+  }
+  if (mag >= map.kb) {
+    return 'KB';
+  }
+  return 'B';
+}
+
+/**
+ * Format the given value in bytes into a string.
+ *
+ * If the value is negative, it is kept as such. If it is a float,
+ * it is rounded.
+ *
+ * @param {number} value
+ * @param {object} [options]
+ * @param {number} [options.decimalPlaces=2]
+ * @param {number} [options.fixedDecimals=false]
+ * @param {string} [options.thousandsSeparator=]
+ * @param {string} [options.unit=]
+ * @param {string} [options.unitSeparator=]
+ *
+ * @returns {string|null}
+ * @public
+ */
+
+function format(value, options) {
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  var opts = formatOptions(options);
+  var unit = opts.unit;
+
+  if (!unit || !map[unit.toLowerCase()]) {
+    unit = formatUnit(Math.abs(value));
+  }
+
+  var str = (value / map[unit.toLowerCase()]).toFixed(opts.decimalPlaces);
+
+  if (!opts.fixedDecimals) {
+    str = str.replace(formatDecimalsRegExp, '$1');
+  }
+
+  if (opts.thousandsSeparator) {
+    str = str.split('.').map(function (s, i) {
+      return i === 0
+        ? s.replace(formatThousandsRegExp, opts.thousandsSeparator)
+        : s
+    }).join('.');
+  }
+
+  return str + opts.unitSeparator + unit;
+}
