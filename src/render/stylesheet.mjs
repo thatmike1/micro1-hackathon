@@ -1,11 +1,14 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Trajectory — smoke-return-window</title>
-<style>
+/**
+ * The Bound Record — the emitted page's only styling authority.
+ *
+ * `TOKENS` is the design system's `tokens.css` inlined verbatim between BEGIN/END
+ * markers: the runtime restyles the artifact by swapping that block alone, so
+ * regenerate it from the source sheet rather than editing it in place. `DOCUMENT`
+ * styles the trajectory's own markup and reads every value through those tokens.
+ */
 
+/** the token sheet, verbatim */
+const TOKENS = String.raw`
 /* ===== BEGIN tokens.css — inlined verbatim, the only styling authority ===== */
 /* ==========================================================================
    THE BOUND RECORD — token sheet
@@ -162,7 +165,10 @@
   }
 }
 /* ===== END tokens.css ===== */
+`;
 
+/** the trajectory document itself: printed apparatus, written record, instrument mono */
+const DOCUMENT = String.raw`
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
@@ -675,115 +681,7 @@ h2 + .attest { border-top: 0; padding-top: var(--space-1); }
   figure, .particulars, .step, .legend { break-inside: avoid; }
   a { text-decoration: none; }
 }
+`;
 
-</style>
-</head>
-<body>
-<main class="leaf">
-
-  <p class="marginal">Fol. 1</p>
-  <header class="masthead printed">
-    <span>Trajectory &middot; smoke-2026-08-28T17-15-15.jsonl</span>
-    <span>2026-08-28 · 17:15:15 UTC</span>
-  </header>
-
-  <h1>smoke-return-window</h1>
-
-  <p class="standfirst"><b>3 steps</b> recorded. The run ended <b>final</b> after 22.7 s.</p>
-
-  <p class="marginal at-block">Particulars</p>
-  <dl class="particulars">
-    <div><dt>Model</dt><dd>z-ai/glm-5.3-flash</dd></div>
-    <div><dt>Steps</dt><dd>3 of 8 max</dd></div>
-    <div><dt>Tools</dt><dd>lookup_order, check_return_window</dd></div>
-    <div><dt>Tokens</dt><dd>1,120 in · 436 out</dd></div>
-    <div><dt>Wall time</dt><dd>22.7 s</dd></div>
-    <div><dt>Cost</dt><dd>$0.000143</dd></div>
-  </dl>
-
-  <h2><span class="key">&sect; 1</span>Instructions as issued</h2>
-  <figure>
-    <pre><span>You are a support agent. Use the tools to</span><span>establish the facts before answering; do not</span><span>guess dates, totals or policy. Finish with a</span><span>short reply the customer could be sent as-is.</span></pre>
-    <figcaption><span class="join">e00</span><span class="what">Instructions as issued &middot; verbatim</span><span class="measure">177 chars</span></figcaption>
-  </figure>
-  <p class="call"><span class="key">Tools</span><code>lookup_order, check_return_window</code></p>
-
-  <h2><span class="key">&sect; 2</span>The record</h2>
-  <div class="chain">
-    <p class="marginal"><span>00:07</span><br><span>Step 1</span></p>
-    <div class="step">
-      <p class="printed step-head"><span>Assistant</span><span>391 tok</span></p>
-      <p class="call"><span class="key">Call</span><code>lookup_order(orderId=&quot;A-1042&quot;)</code></p>
-      <p class="call"><span class="key">Call</span><code>lookup_order(orderId=&quot;A-1099&quot;)</code></p>
-      <figure>
-        <pre><span>{&quot;id&quot;:&quot;A-1042&quot;,&quot;placedDaysAgo&quot;:41,&quot;total&quot;:89.5,&quot;</span><span>status&quot;:&quot;delivered&quot;}</span></pre>
-        <figcaption><span class="join">e02</span><span class="what">lookup_order &middot; returned 68 B</span><span class="measure">0 ms</span></figcaption>
-      </figure>
-      <figure>
-        <pre><span>{&quot;id&quot;:&quot;A-1099&quot;,&quot;placedDaysAgo&quot;:6,&quot;total&quot;:24,&quot;sta</span><span>tus&quot;:&quot;delivered&quot;}</span></pre>
-        <figcaption><span class="join">e03</span><span class="what">lookup_order &middot; returned 65 B</span><span class="measure">0 ms</span></figcaption>
-      </figure>
-    </div>
-    <p class="marginal"><span>00:13</span><br><span>Step 2</span></p>
-    <div class="step">
-      <p class="printed step-head"><span>Assistant</span><span>455 tok</span></p>
-      <p class="call"><span class="key">Call</span><code>check_return_window(placedDaysAgo=41)</code></p>
-      <p class="call"><span class="key">Call</span><code>check_return_window(placedDaysAgo=6)</code></p>
-      <figure>
-        <pre><span>{&quot;windowDays&quot;:30,&quot;returnable&quot;:false,&quot;daysOverdue</span><span>&quot;:11}</span></pre>
-        <figcaption><span class="join">e05</span><span class="what">check_return_window &middot; returned 53 B</span><span class="measure">0 ms</span></figcaption>
-      </figure>
-      <figure>
-        <pre><span>{&quot;windowDays&quot;:30,&quot;returnable&quot;:true,&quot;daysOverdue&quot;</span><span>:0}</span></pre>
-        <figcaption><span class="join">e06</span><span class="what">check_return_window &middot; returned 51 B</span><span class="measure">0 ms</span></figcaption>
-      </figure>
-    </div>
-    <p class="marginal"><span>00:23</span><br><span>Step 3</span></p>
-    <div class="step">
-      <p class="printed step-head"><span>Assistant</span><span>710 tok</span></p>
-      <p class="printed">Final text &middot; set at &sect; 3</p>
-    </div>
-  </div>
-
-  <h2><span class="key">&sect; 3</span>Result</h2>
-        <p class="said">Here&#39;s what I found:</p>
-      <p class="said"><strong>A-1042 — Not returnable.</strong> It was placed 41 days ago, which is past the 30-day return window (11 days overdue).</p>
-      <p class="said"><strong>A-1099 — Returnable.</strong> It was placed only 6 days ago, well within the 30-day return window.</p>
-      <p class="said"><strong>Suggested customer reply:</strong></p>
-      <p class="said">&gt; Thanks for reaching out! Here&#39;s the status of your return requests:
-&gt;
-&gt; - <strong>Order A-1099 ($24.00)</strong> — Great news, this order is eligible for return. It was placed 6 days ago, within our 30-day return window. Let us know and we&#39;ll get the return started for you.
-&gt;
-&gt; - <strong>Order A-1042 ($89.50)</strong> — Unfortunately, this order can&#39;t be returned. It was placed 41 days ago, which is past our 30-day return window. We&#39;re sorry for the inconvenience.
-&gt;
-&gt; Is there anything else we can help you with?</p>
-
-  <h2><span class="key">&sect; 4</span>Attestation</h2>
-  <section class="attest">
-    <div>
-      <div class="sign"><p class="hand machine">z-ai/glm-5.3-flash</p></div>
-      <p class="printed">Recorded by &middot; agent loop, unattended</p>
-    </div>
-    <div>
-      <div class="sign"></div>
-      <p class="printed">Witnessed by &mdash; no human checkpoint recorded in this run</p>
-    </div>
-  </section>
-
-  <div class="legend printed">
-    <p><i></i>Step executed</p>
-    <p><i class="m-retried"></i>Retried</p>
-    <p><i class="m-checkpoint"></i>Human checkpoint</p>
-    <p><i class="m-failed"></i>Failed, not retried</p>
-  </div>
-
-  <p class="marginal at-block">Fol. 1</p>
-  <footer class="colophon printed">
-    <span>Rendered from smoke-2026-08-28T17-15-15.jsonl</span>
-    <span>Fol. 1 of 1</span>
-    <span class="note">9 events recorded, e00–e08, unbroken</span>
-  </footer>
-
-</main>
-</body>
-</html>
+/** the complete inline sheet for one emitted page */
+export const STYLESHEET = TOKENS + DOCUMENT;

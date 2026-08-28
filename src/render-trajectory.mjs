@@ -2,13 +2,21 @@
 import { writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { readTrajectory } from './trajectory.mjs';
+import { STYLESHEET } from './render/stylesheet.mjs';
 
 /**
  * CLI: `node src/render-trajectory.mjs runs/<file>.jsonl -o out.html`
  *
- * Renders a trajectory as a self-contained HTML page: no external requests, inline CSS,
- * every colour/space/font value declared as a custom property in the single `:root` block
- * so a later design pass can restyle by editing that block alone.
+ * Renders a trajectory as a self-contained HTML page — no external requests, no script,
+ * the whole design system inline — in the idiom of a countersigned laboratory notebook:
+ * printed apparatus, written record and instrument mono are three separate inks, the run
+ * is one unbroken spine of steps, and tool output is a sheet tipped into the book with the
+ * event key written across the join. Two rules the renderer may not bend:
+ *
+ *   - a witness or approval line renders only from a recorded `checkpoint` event. With no
+ *     such event the rule prints with the space above it empty and is labelled unwitnessed.
+ *     Nothing in this file may put a name or an approval into that space on its own.
+ *   - what crosses a tipped-in sheet's join is the event key, never initials.
  */
 function main(argv) {
   const args = argv.slice(2);
@@ -25,120 +33,400 @@ function main(argv) {
 
 /**
  * @param {object[]} events events from `readTrajectory`
- * @param {string} [sourceName] filename shown in the header
+ * @param {string} [sourceName] filename shown in the masthead and colophon
  * @returns {string} a complete HTML document
  */
 export function renderTrajectory(events, sourceName = 'trajectory') {
-  const start = events.find((e) => e.type === 'run-start') ?? {};
-  const end = events.find((e) => e.type === 'run-end') ?? {};
-  const body = events.filter((e) => e.type !== 'run-start' && e.type !== 'run-end');
+  const record = readRecord(events);
+  const { start, end } = record;
+  const title = start.caseId ?? sourceName;
 
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>trajectory — ${esc(start.caseId ?? sourceName)}</title>
+<title>Trajectory — ${esc(title)}</title>
 <style>
-${CSS}
+${STYLESHEET}
 </style>
 </head>
 <body>
-<main class="page">
-  <header class="header">
-    <div class="header-title">
-      <h1>${esc(start.caseId ?? sourceName)}</h1>
-      <p class="source">${esc(sourceName)}</p>
-    </div>
-    <dl class="facts">
-      ${fact('model', start.model)}
-      ${fact('started', start.t ? formatTime(start.t) : null)}
-      ${fact('wall time', end.wallMs != null ? `${(end.wallMs / 1000).toFixed(1)}s` : null)}
-      ${fact('steps', end.steps != null ? `${end.steps} / ${start.maxSteps ?? '?'}` : null)}
-      ${fact('tokens', formatTokens(end.usage))}
-      ${fact('cost', end.usage?.costUsd != null ? `$${end.usage.costUsd.toFixed(6)}` : null)}
-      ${fact('outcome', end.stopReason, end.stopReason === 'error' ? 'bad' : 'good')}
-    </dl>
+<main class="leaf">
+
+  <p class="marginal">Fol. 1</p>
+  <header class="masthead printed">
+    <span>Trajectory &middot; ${esc(sourceName)}</span>
+    <span>${esc(start.t ? stamp(start.t) : 'undated')}</span>
   </header>
 
-  <section class="panel">
-    <h2>instructions</h2>
-    <pre class="prose">${esc(start.instructions ?? '')}</pre>
-    ${start.tools?.length ? `<p class="tools">tools: ${start.tools.map((t) => `<code>${esc(t)}</code>`).join(' ')}</p>` : ''}
-  </section>
+  <h1>${esc(title)}</h1>
 
-  <section class="chain">
-    ${body.map(renderEvent).join('\n')}
-  </section>
+  ${standfirst(record)}
 
-  <section class="panel result ${end.stopReason === 'error' ? 'result-error' : ''}">
-    <h2>result</h2>
-    <pre class="prose">${esc(end.error ?? end.result ?? '(no final text)')}</pre>
-  </section>
+  <p class="marginal at-block">Particulars</p>
+  <dl class="particulars">
+    ${particular('Model', start.model)}
+    ${particular('Steps', end.steps != null ? `${end.steps} of ${start.maxSteps ?? '?'} max` : null)}
+    ${particular('Tools', start.tools?.length ? start.tools.join(', ') : null)}
+    ${particular('Tokens', tokens(end.usage))}
+    ${particular('Wall time', end.wallMs != null ? duration(end.wallMs) : null)}
+    ${particular('Cost', end.usage?.costUsd != null ? `$${end.usage.costUsd.toFixed(6)}` : 'not reported')}
+  </dl>
+
+  <h2><span class="key">&sect; 1</span>Instructions as issued</h2>
+  ${instructions(record)}
+
+  <h2><span class="key">&sect; 2</span>The record</h2>
+  <div class="chain">
+${record.steps.map((step) => renderStep(step, record)).join('\n')}
+  </div>
+
+  <h2><span class="key">&sect; 3</span>Result</h2>
+  ${result(record)}
+
+  <h2><span class="key">&sect; 4</span>Attestation</h2>
+  ${attestation(record)}
+
+  <div class="legend printed">
+    <p><i></i>Step executed</p>
+    <p><i class="m-retried"></i>Retried</p>
+    <p><i class="m-checkpoint"></i>Human checkpoint</p>
+    <p><i class="m-failed"></i>Failed, not retried</p>
+  </div>
+
+  <p class="marginal at-block">Fol. 1</p>
+  <footer class="colophon printed">
+    <span>Rendered from ${esc(sourceName)}</span>
+    <span>Fol. 1 of 1</span>
+    <span class="note">${esc(tally(record))}</span>
+  </footer>
+
 </main>
 </body>
 </html>
 `;
 }
 
-function renderEvent(event) {
+/**
+ * read the flat event list into the shape the page is set from: the run's envelope, the
+ * steps of the chain in order, and the checkpoints the attestation may draw on.
+ *
+ * Events are keyed by their position in the file rather than by their `seq`, so the key
+ * written across a tipped-in sheet's join points at one line of one file even when a file
+ * holds more than one run and `seq` restarts.
+ *
+ * @param {object[]} events
+ */
+function readRecord(events) {
+  const keyed = events.map((event, index) => ({ ...event, key: `e${String(index).padStart(2, '0')}` }));
+  const starts = keyed.filter((e) => e.type === 'run-start');
+  const ends = keyed.filter((e) => e.type === 'run-end');
+
+  /** @type {{step: number|null, t: string|null, origin: string|null, events: object[]}[]} */
+  const steps = [];
+  let current = null;
+  let origin = null;
+  for (const event of keyed) {
+    if (event.type === 'run-start') {
+      origin = event.t ?? null;
+      current = null;
+      continue;
+    }
+    if (event.type === 'run-end') {
+      current = null;
+      continue;
+    }
+    // a retry or a checkpoint can be written before the step event it belongs to, so a
+    // step is opened by whichever of its events comes first
+    if (!current || current.step !== event.step) {
+      current = { step: event.step ?? null, t: event.t ?? null, origin, events: [] };
+      steps.push(current);
+    }
+    current.events.push(event);
+  }
+
+  return {
+    events: keyed,
+    start: starts[0] ?? {},
+    end: ends.at(-1) ?? {},
+    runs: starts.length,
+    steps,
+    checkpoints: keyed.filter((e) => e.type === 'checkpoint'),
+    retries: keyed.filter((e) => e.type === 'retry'),
+    failures: keyed.filter((e) => e.type === 'tool-result' && !e.ok),
+  };
+}
+
+/** the standfirst states the shape of the run in the written hand, from counts only */
+function standfirst({ start, end, steps, retries, checkpoints, runs }) {
+  const across = runs > 1 ? ` across the ${runs} runs this file holds` : '';
+  const parts = [`<b>${steps.length} ${steps.length === 1 ? 'step' : 'steps'}</b> recorded${across}`];
+  if (retries.length) parts.push(`<b>${count(retries.length, 'retry', 'retries')}</b>`);
+  if (checkpoints.length) parts.push(`<b>${count(checkpoints.length, 'human checkpoint')}</b>`);
+  const shape = parts.length > 1
+    ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`
+    : parts[0];
+  const ending = end.stopReason
+    ? ` The run ended <b>${esc(end.stopReason)}</b>${end.wallMs != null ? ` after ${duration(end.wallMs)}` : ''}.`
+    : ' No run-end was recorded.';
+  const asked = start.instructions ? '' : ' No instructions were recorded with the run.';
+  return `<p class="standfirst">${shape}.${ending}${asked}</p>`;
+}
+
+/** the instructions, tipped in verbatim, with the run-start's key across the join */
+function instructions({ start }) {
+  const text = start.instructions ?? '';
+  const tools = start.tools?.length
+    ? `\n  <p class="call"><span class="key">Tools</span><code>${esc(start.tools.join(', '))}</code></p>`
+    : '';
+  return `<figure>
+    ${machine(text)}
+    <figcaption>${join(start.key)}<span class="what">Instructions as issued &middot; verbatim</span><span class="measure">${text.length} chars</span></figcaption>
+  </figure>${tools}`;
+}
+
+/**
+ * one link of the chain: elapsed time in the printed margin, then the step itself with the
+ * mark its state strikes on the spine.
+ */
+function renderStep(step, record) {
+  const turn = step.events.find((e) => e.type === 'step');
+  const rest = step.events.filter((e) => e !== turn);
+  const retried = step.events.some((e) => e.type === 'retry');
+  const checkpointed = step.events.some((e) => e.type === 'checkpoint');
+  const failed = step.events.some((e) => e.type === 'tool-result' && !e.ok);
+
+  // one mark per step: the least routine state a step reached is the one struck on the
+  // spine. A retry that is also checkpointed still shows its struck attempt below the line,
+  // so nothing is lost by the mark naming the checkpoint.
+  const mark = checkpointed ? 'checkpoint' : failed ? 'failed' : retried ? 'retried' : '';
+
+  const states = [retried && 'retried', failed && 'failed', checkpointed && 'human checkpoint']
+    .filter(Boolean)
+    .join(' &middot; ');
+  const head = [turn ? 'Assistant' : 'Transport', states].filter(Boolean).join(' &middot; ');
+  const measure = turn?.usage?.totalTokens ? `${number(turn.usage.totalTokens)} tok` : '';
+
+  // the run's final text is the last step's text over again; it is set once, under § 3,
+  // and the step that wrote it says where it went rather than printing it twice
+  const isFinalText = turn?.text != null && turn.text === record.end.result && step === record.steps.at(-1);
+
+  const inside = [
+    `      <p class="printed step-head"><span>${head}</span><span>${measure}</span></p>`,
+    isFinalText ? '      <p class="printed">Final text &middot; set at &sect; 3</p>' : said(turn?.text),
+    ...(turn?.toolCalls ?? []).map(call),
+    ...rest.map((event) => renderAttachment(event, record)),
+  ].filter((fragment) => fragment !== '');
+
+  return `    <p class="marginal"><span>${esc(elapsed(step.origin, step.t))}</span><br><span>Step ${
+    step.step ?? '&mdash;'
+  }</span></p>
+    <div class="step${mark ? ` ${mark}` : ''}">
+${inside.join('\n')}
+    </div>`;
+}
+
+/** what happened to a step after the agent asked for it, in the order it was recorded */
+function renderAttachment(event, record) {
   switch (event.type) {
-    case 'step':
-      return `<article class="event event-step">
-  <div class="event-head"><span class="badge">step ${event.step}</span>${
-    event.finishReason ? `<span class="meta">${esc(event.finishReason)}</span>` : ''
-  }${event.usage ? `<span class="meta">${formatTokens(event.usage)}</span>` : ''}</div>
-  ${event.text ? `<pre class="prose">${esc(event.text)}</pre>` : ''}
-  ${(event.toolCalls ?? [])
-    .map(
-      (call) => `<div class="call"><span class="call-name">→ ${esc(call.name)}</span>
-    <pre class="code">${esc(JSON.stringify(call.arguments, null, 2))}</pre></div>`,
-    )
-    .join('\n')}
-</article>`;
-
     case 'tool-result':
-      return `<article class="event event-tool ${event.ok ? '' : 'is-bad'}">
-  <div class="event-head"><span class="badge badge-tool">${esc(event.name)}</span><span class="meta">${
-    event.ok ? 'ok' : 'failed'
-  } · ${event.ms}ms</span></div>
-  <pre class="code">${esc(event.result ?? '')}</pre>
-</article>`;
+      return `      <figure>
+        ${machine(event.result ?? '')}
+        <figcaption>${join(event.key)}<span class="what">${esc(event.name ?? 'tool')} &middot; ${
+          event.ok ? `returned ${bytes(event.result)}` : 'error, not retried'
+        }</span><span class="measure">${event.ms != null ? duration(event.ms) : ''}</span></figcaption>
+      </figure>`;
 
+    // the failed attempt is struck through and left hanging under the line it replaced
     case 'retry':
-      return `<article class="event event-retry">
-  <div class="event-head"><span class="badge badge-retry">retry ${event.attempt}</span><span class="meta">backoff ${event.delayMs}ms</span></div>
-  <p class="prose">${esc(event.reason ?? '')}</p>
-</article>`;
+      return `      <p class="trim"><span class="struck">${esc(event.reason ?? 'transport failure')}${
+        event.delayMs != null ? ` &middot; retrying in ${duration(event.delayMs)}` : ''
+      }</span> <span class="correction">Retry ${esc(event.attempt ?? '')}</span></p>`;
 
     case 'checkpoint':
-      return `<article class="event event-checkpoint">
-  <div class="event-head"><span class="badge badge-checkpoint">checkpoint</span><span class="meta">${esc(
-    event.decision ?? 'pending',
-  )}</span></div>
-  <p class="prose">${esc(event.question ?? event.label ?? '')}</p>
-  ${event.note ? `<p class="prose note">${esc(event.note)}</p>` : ''}
-</article>`;
+      return signatureBlock(event);
 
     default:
-      return `<article class="event"><div class="event-head"><span class="badge">${esc(
-        event.type,
-      )}</span></div><pre class="code">${esc(JSON.stringify(event, null, 2))}</pre></article>`;
+      return `      <figure>
+        ${machine(JSON.stringify(event, null, 2))}
+        <figcaption>${join(event.key)}<span class="what">${esc(
+          event.type,
+        )} &middot; recorded verbatim</span><span class="measure"></span></figcaption>
+      </figure>`;
   }
 }
 
-function fact(label, value, tone) {
-  if (value == null) return '';
-  return `<div class="fact${tone ? ` is-${tone}` : ''}"><dt>${esc(label)}</dt><dd>${esc(String(value))}</dd></div>`;
+/**
+ * a signature block, rendered only from a recorded checkpoint event and only from what that
+ * event actually carries. The decision and the note are the record; the renderer adds no
+ * name, no approval and no countersignature of its own, and the stamp states what was
+ * checked and by what, never that a person checked it.
+ *
+ * @param {object} event a `checkpoint` event
+ */
+function signatureBlock(event) {
+  const decided = event.decision != null && event.decision !== '';
+  return `      <p class="said">${esc(event.question ?? event.label ?? 'A human checkpoint was recorded.')}</p>
+      <section class="attest">
+        <div>
+          <div class="sign">${decided ? `<p class="hand">${esc(event.decision)}</p>` : ''}</div>
+          <p class="printed">${
+            decided
+              ? `Decision recorded &middot; ${esc(clock(event.t))} &middot; ${esc(event.key)}`
+              : 'No decision recorded &mdash; unwitnessed'
+          }</p>
+        </div>
+        <div>
+          <div class="sign stamped"><p class="hand"><span class="stamp">Recorded by the harness &middot; ${esc(
+            event.key,
+          )}</span></p></div>
+          <p class="printed">${event.note ? esc(event.note) : 'No note recorded'}</p>
+        </div>
+      </section>`;
 }
 
-function formatTokens(usage) {
-  if (!usage || !usage.totalTokens) return null;
-  return `${usage.totalTokens} (${usage.promptTokens} in / ${usage.completionTokens} out)`;
+/**
+ * the foot of the page. `Recorded by` states the apparatus that kept the record, which is a
+ * machine and is set as one. `Witnessed by` is filled only from a checkpoint event carrying
+ * a decision; with none, the rule prints over an empty space and says so.
+ */
+function attestation({ start, checkpoints }) {
+  const witness = checkpoints.find((e) => e.decision != null && e.decision !== '');
+  return `<section class="attest">
+    <div>
+      <div class="sign"><p class="hand machine">${esc(start.model ?? 'model not recorded')}</p></div>
+      <p class="printed">Recorded by &middot; agent loop, unattended</p>
+    </div>
+    <div>
+      <div class="sign">${witness ? `<p class="hand">${esc(witness.note ?? witness.decision)}</p>` : ''}</div>
+      <p class="printed">${
+        witness
+          ? `Witnessed by &middot; ${esc(clock(witness.t))} &middot; from ${esc(witness.key)}`
+          : 'Witnessed by &mdash; no human checkpoint recorded in this run'
+      }</p>
+    </div>
+  </section>`;
 }
 
-function formatTime(iso) {
-  return iso.replace('T', ' ').replace(/\..*$/, ' UTC');
+/** the run's outcome as the agent left it: the one place the final text is set */
+function result({ end }) {
+  if (end.error) {
+    return `<p class="printed">The run ended in error</p>\n${said(end.error) || '  <p class="said">No error text was recorded.</p>'}`;
+  }
+  return said(end.result) || '  <p class="said">No final text was recorded.</p>';
+}
+
+/** the colophon's count: what the page is made of, so nothing can be dropped unnoticed */
+function tally({ events, runs }) {
+  const range = events.length ? `${events[0].key}–${events.at(-1).key}` : 'none';
+  const many = runs > 1 ? `; ${runs} runs in this file` : '';
+  return `${events.length} events recorded, ${range}, unbroken${many}`;
+}
+
+/** printed label, machine value: one field of the ruled particulars block */
+function particular(label, value) {
+  return `<div><dt>${esc(label)}</dt><dd>${esc(value ?? 'not recorded')}</dd></div>`;
+}
+
+/** the event key written across the join of a tipped-in sheet — never initials */
+function join(key) {
+  return `<span class="join">${esc(key ?? 'e??')}</span>`;
+}
+
+/** a tool call in the machine hand, under its printed key */
+function call(toolCall) {
+  const args = toolCall.arguments && typeof toolCall.arguments === 'object'
+    ? Object.entries(toolCall.arguments)
+        .map(([name, value]) => `${name}=${JSON.stringify(value)}`)
+        .join(', ')
+    : JSON.stringify(toolCall.arguments ?? null);
+  return `      <p class="call"><span class="key">Call</span><code>${esc(toolCall.name)}(${esc(args)})</code></p>`;
+}
+
+/**
+ * what the agent wrote, in the written hand. Blank lines separate paragraphs so the record
+ * keeps the lead; every other line break is preserved by the block's `pre-wrap`. The only
+ * markup read out of the text is `**bold**`, which the models emit constantly and which
+ * would otherwise print as asterisks in a document claiming to be typeset.
+ */
+function said(text) {
+  if (!text) return '';
+  return String(text)
+    .split(/\n[ \t]*\n/)
+    .map((para) => para.replace(/^\n+|\n+$/g, ''))
+    .filter((para) => para !== '')
+    .map((para) => `      <p class="said">${bold(esc(para))}</p>`)
+    .join('\n');
+}
+
+function bold(escaped) {
+  return escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+}
+
+/**
+ * instrument output, hard-wrapped at 48 columns so no soft wrap reads as an extra emitted
+ * line at desktop or print width, with each emitted line its own block so a soft wrap on a
+ * narrow screen hangs instead.
+ */
+function machine(text) {
+  const lines = String(text ?? '').split('\n').flatMap((line) => wrap(line, 48));
+  return `<pre>${lines.map((line) => `<span>${esc(line)}</span>`).join('')}</pre>`;
+}
+
+/** @returns {string[]} `line` broken at `width`, on a space where there is one */
+function wrap(line, width) {
+  const out = [];
+  let rest = line;
+  while (rest.length > width) {
+    const space = rest.lastIndexOf(' ', width);
+    const cut = space > 0 ? space : width;
+    out.push(rest.slice(0, cut));
+    rest = rest.slice(space > 0 ? cut + 1 : cut);
+  }
+  out.push(rest);
+  return out;
+}
+
+/** `mm:ss` since the run started, the chain's absolute position in the run */
+function elapsed(origin, t) {
+  if (!origin || !t) return '--:--';
+  const ms = Date.parse(t) - Date.parse(origin);
+  if (!Number.isFinite(ms) || ms < 0) return '--:--';
+  const total = Math.round(ms / 1000);
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/** `2026-08-28 · 17:15:15 UTC` */
+function stamp(iso) {
+  return `${iso.slice(0, 10)} · ${clock(iso)}`;
+}
+
+/** `17:15:15 UTC` */
+function clock(iso) {
+  return iso ? `${iso.slice(11, 19)} UTC` : 'time not recorded';
+}
+
+function tokens(usage) {
+  if (!usage?.totalTokens) return null;
+  return `${number(usage.promptTokens)} in · ${number(usage.completionTokens)} out`;
+}
+
+function duration(ms) {
+  return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`;
+}
+
+function bytes(text) {
+  const n = Buffer.byteLength(String(text ?? ''), 'utf8');
+  return n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} kB`;
+}
+
+function number(value) {
+  return Number(value ?? 0).toLocaleString('en-US');
+}
+
+function count(n, singular, plural = `${singular}s`) {
+  return `${n} ${n === 1 ? singular : plural}`;
 }
 
 function esc(value) {
@@ -147,152 +435,5 @@ function esc(value) {
     (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch],
   );
 }
-
-const CSS = `:root {
-  --color-bg: #f6f6f4;
-  --color-surface: #ffffff;
-  --color-surface-alt: #f0f0ed;
-  --color-text: #1a1a18;
-  --color-text-muted: #6b6b66;
-  --color-border: #dcdcd6;
-  --color-accent: #2f5fd0;
-  --color-tool: #0f7a5a;
-  --color-retry: #b06a00;
-  --color-checkpoint: #7a3fbf;
-  --color-bad: #c0392b;
-  --color-good: #0f7a5a;
-
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  --font-size-base: 15px;
-  --font-size-small: 12.5px;
-  --font-size-title: 25px;
-  --line-height: 1.55;
-
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 18px;
-  --space-5: 28px;
-  --space-6: 44px;
-
-  --radius: 8px;
-  --border-width: 1px;
-  --rail-width: 2px;
-  --page-width: 860px;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height);
-}
-
-.page {
-  max-width: var(--page-width);
-  margin: 0 auto;
-  padding: var(--space-6) var(--space-4);
-}
-
-h1 { font-size: var(--font-size-title); margin: 0; }
-h2 {
-  font-size: var(--font-size-small);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-  margin: 0 0 var(--space-3);
-}
-
-.header {
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-.source { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-family: var(--font-mono); font-size: var(--font-size-small); }
-
-.facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--space-3);
-  margin: var(--space-4) 0 0;
-}
-.fact dt { font-size: var(--font-size-small); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.fact dd { margin: var(--space-1) 0 0; font-family: var(--font-mono); }
-.fact.is-good dd { color: var(--color-good); }
-.fact.is-bad dd { color: var(--color-bad); }
-
-.panel {
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-.tools { margin: var(--space-3) 0 0; color: var(--color-text-muted); font-size: var(--font-size-small); }
-.tools code { font-family: var(--font-mono); background: var(--color-surface-alt); padding: 0 var(--space-1); border-radius: var(--radius); }
-
-.chain {
-  border-left: var(--rail-width) solid var(--color-border);
-  padding-left: var(--space-4);
-  margin: 0 0 var(--space-4) var(--space-2);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.event {
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-left: var(--rail-width) solid var(--color-accent);
-  border-radius: var(--radius);
-  padding: var(--space-3) var(--space-4);
-}
-.event-tool { border-left-color: var(--color-tool); background: var(--color-surface-alt); }
-.event-retry { border-left-color: var(--color-retry); }
-.event-checkpoint { border-left-color: var(--color-checkpoint); }
-.event.is-bad { border-left-color: var(--color-bad); }
-
-.event-head { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
-.badge {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-small);
-  font-weight: 600;
-  color: var(--color-accent);
-}
-.badge-tool { color: var(--color-tool); }
-.badge-retry { color: var(--color-retry); }
-.badge-checkpoint { color: var(--color-checkpoint); }
-.meta { font-size: var(--font-size-small); color: var(--color-text-muted); font-family: var(--font-mono); }
-
-.prose { margin: var(--space-2) 0 0; white-space: pre-wrap; word-wrap: break-word; font-family: inherit; }
-.note { color: var(--color-text-muted); }
-.code {
-  margin: var(--space-2) 0 0;
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-surface-alt);
-  border-radius: var(--radius);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-small);
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-x: auto;
-}
-.event-tool .code { background: var(--color-surface); }
-
-.call { margin-top: var(--space-2); }
-.call-name { font-family: var(--font-mono); font-size: var(--font-size-small); color: var(--color-accent); }
-
-.result pre { font-family: inherit; }
-.result-error { border-color: var(--color-bad); }
-.result-error pre { color: var(--color-bad); }`;
 
 if (import.meta.url === `file://${process.argv[1]}`) main(process.argv);
