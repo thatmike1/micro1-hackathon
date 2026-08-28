@@ -35,6 +35,15 @@ async function main(argv) {
   if (cases.length === 0) throw new Error('no matching cases');
 
   const outDir = args.out ?? join('runs', `stage0-${candidate.id}-${stamp(new Date())}`);
+  // explicit request config: recorded in every trajectory's run-start and in summary.json, so a
+  // run always carries the knobs it ran at. `--reasoning off` disables reasoning; any other value
+  // is passed as the effort. `--provider` pins OpenRouter routing to one provider, no fallbacks.
+  const requestExtras = {
+    ...(args.reasoning
+      ? { reasoning: args.reasoning === 'off' ? { enabled: false } : { effort: args.reasoning } }
+      : {}),
+    ...(args.provider ? { provider: { order: [args.provider], allow_fallbacks: false } } : {}),
+  };
   const startedAt = new Date();
   const results = new Array(cases.length);
 
@@ -45,7 +54,7 @@ async function main(argv) {
     Array.from({ length: Math.min(args.concurrency, cases.length) }, async () => {
       for (let i = next++; i < cases.length; i = next++) {
         const record = cases[i];
-        const result = await runCase({ record, candidate, outDir, model: args.model, apiKey });
+        const result = await runCase({ record, candidate, outDir, model: args.model, apiKey, requestExtras });
         results[i] = result;
         process.stdout.write(
           `${result.outcome.padEnd(14)} ${record.id.padEnd(22)} ` +
@@ -60,6 +69,7 @@ async function main(argv) {
     candidate: candidate.id,
     description: candidate.description,
     model: args.model,
+    requestExtras,
     startedAt: startedAt.toISOString(),
     finishedAt: new Date().toISOString(),
     wallMs: Date.now() - startedAt.getTime(),
@@ -75,14 +85,14 @@ async function main(argv) {
  * One case end to end: prepare the checkouts, ask the candidate, score the answer.
  * @returns {Promise<object>} the record written into `summary.json`
  */
-async function runCase({ record, candidate, outDir, model, apiKey }) {
+async function runCase({ record, candidate, outDir, model, apiKey, requestExtras }) {
   const startedAt = Date.now();
   const trajectory = openTrajectory({ file: join(outDir, `${record.id}.jsonl`) });
   let workspace = null;
 
   try {
     workspace = await prepareCase(record);
-    const answer = await candidate.run({ record, workspace, trajectory, model, apiKey });
+    const answer = await candidate.run({ record, workspace, trajectory, model, apiKey, requestExtras });
 
     if (answer.stopReason === 'error') {
       return finish('error', { error: answer.error, usage: answer.usage });
@@ -153,13 +163,23 @@ function proveClaim(record, workspace, content) {
 
 /** @param {string[]} argv */
 function parseArgs(argv) {
-  const args = { candidate: null, model: DEFAULT_MODEL, cases: [], out: null, concurrency: 1 };
+  const args = {
+    candidate: null,
+    model: DEFAULT_MODEL,
+    cases: [],
+    out: null,
+    concurrency: 1,
+    reasoning: null,
+    provider: null,
+  };
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
     if (flag === '--candidate') args.candidate = argv[++i];
     else if (flag === '--model') args.model = argv[++i];
     else if (flag === '--out') args.out = argv[++i];
     else if (flag === '--concurrency') args.concurrency = Number(argv[++i]);
+    else if (flag === '--reasoning') args.reasoning = argv[++i];
+    else if (flag === '--provider') args.provider = argv[++i];
     else if (flag === '--cases') {
       while (argv[i + 1] && !argv[i + 1].startsWith('--')) args.cases.push(argv[++i]);
     } else throw new Error(`unknown argument: ${flag}`);

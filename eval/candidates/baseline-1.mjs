@@ -18,7 +18,7 @@ export const description = 'one direct prompt, no tools, single completion';
  * @param {string} options.model
  * @param {string} options.apiKey
  */
-export async function run({ record, workspace, trajectory, model, apiKey }) {
+export async function run({ record, workspace, trajectory, model, apiKey, requestExtras = {} }) {
   const { entry, diff } = changeUnderReview(record);
   const source = readFileSync(join(workspace.mutant, entry), 'utf8');
 
@@ -47,6 +47,6 @@ export async function run({ record, workspace, trajectory, model, apiKey }) {
     trajectory,
     maxSteps: 1,
     apiKey,
-    extraBody: { usage: { include: true } },
+    extraBody: { usage: { include: true }, ...requestExtras },
   });
 }

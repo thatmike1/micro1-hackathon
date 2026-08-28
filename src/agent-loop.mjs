@@ -71,7 +71,11 @@ export async function runAgent({
     instructions,
     tools: tools.map((tool) => tool.name),
     maxSteps,
+    requestExtras: extraBody,
   });
+
+  const providers = new Set();
+  let reasoningTokens = null;
 
   let text = null;
   let stopReason = 'max-steps';
@@ -108,12 +112,17 @@ export async function runAgent({
       }));
 
       addUsage(usage, response.usage);
+      if (response.provider) providers.add(response.provider);
+      const stepReasoning = response.usage?.completion_tokens_details?.reasoning_tokens;
+      if (typeof stepReasoning === 'number') reasoningTokens = (reasoningTokens ?? 0) + stepReasoning;
       trajectory.write('step', {
         step,
         text: message.content ?? null,
         toolCalls,
         usage: response.usage ? toUsage(response.usage) : null,
         finishReason: choice.finish_reason ?? null,
+        provider: response.provider ?? null,
+        reasoningTokens: typeof stepReasoning === 'number' ? stepReasoning : null,
       });
 
       messages.push({
@@ -140,9 +149,18 @@ export async function runAgent({
 
   const steps = stopReason === 'max-steps' ? maxSteps : Math.min(step, maxSteps);
   const wallMs = Date.now() - startedAt;
-  trajectory.write('run-end', { result: text, stopReason, error, usage, steps, wallMs });
+  trajectory.write('run-end', {
+    result: text,
+    stopReason,
+    error,
+    usage,
+    steps,
+    wallMs,
+    providers: [...providers],
+    reasoningTokens,
+  });
 
-  return { text, stopReason, error, usage, steps, wallMs, messages };
+  return { text, stopReason, error, usage, steps, wallMs, messages, providers: [...providers], reasoningTokens };
 }
 
 /** run one tool call, logging a checkpoint first when the tool asks for approval */
