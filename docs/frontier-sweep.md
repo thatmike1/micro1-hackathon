@@ -171,34 +171,38 @@ per-run coin flip in it, which is worth stating whenever the 12/12 stage-0 numbe
 ## Results, no-diff arm
 
 Baseline 1 with the diff removed and the file introduced as "a recent change may have introduced a
-defect" (`sweep/candidates/baseline-1-nodiff.mjs`), flash only, on 10 buggy cases spanning all
-three libraries and six shapes, plus the 3 controls.
+defect" (`sweep/candidates/baseline-1-nodiff.mjs`), flash only, two repetitions, on 10 buggy cases
+spanning all three libraries and six shapes, plus the 3 controls.
 
-| rep | proved | miss | no-verdict | false alarms | tokens | cost | wall |
-|---|---|---|---|---|---|---|---|
-| 1 | **8/10** | 1 (`ms-91`) | 2 (`js-yaml-15`, `js-yaml-control-hoist`) | 1/3 (`bytes-control-loop`) | 341,677 | $0.0912 | 11.0 min |
+| rep | proved | claim-unproved | miss | no-verdict | false alarms | tokens | cost | wall |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **8/10** | 0 | 1 (`ms-91`) | 2 (`js-yaml-15`, `js-yaml-control-hoist`) | 1/3 (`bytes-control-loop`) | 341,677 | $0.0912 | 11.0 min |
+| 2 | **5/10** | 2 (`ms-4`, `ms-12`) | 1 (`ms-91`) | 3 (`js-yaml-15`, `js-yaml-18`, `js-yaml-control-hoist`) | 0/3 | 307,302 | $0.0728 | 19.6 min |
 
-**Removing the diff costs flash almost nothing on ms and bytes.** It proved `bytes-12`, `bytes-15`,
-`bytes-52`, `ms-4`, `ms-12`, `ms-72`, `ms-170` and `js-yaml-18` from the post-change file alone.
-The pointer is not what was doing the work; the semantics were.
+**Removing the diff costs flash little on ms and bytes, and costs it a lot of stability.** All
+three bytes cases proved in both repetitions, and `ms-72` and `ms-170` did too. The pointer is not
+what was doing the work on those; the semantics were.
 
-Two readings, and this arm cannot separate them. Either the model reasons well enough about these
-files to find a one-character defect unaided, or it is recalling the pristine source of three very
-popular MIT libraries and diffing against memory. The second is live: `ms`, `bytes` and `js-yaml`
-at these tags are certainly in training data. What the arm does establish is that **a corpus built
-from public library sources cannot cleanly measure "can the agent find the defect", because the
-answer key is in the model's weights.** A corpus over private or synthetic code would separate
-them; this one cannot.
+But the arm is far noisier than the diff arm: four of the thirteen cases flip between repetitions
+(`ms-4` and `ms-12` proved then unproved, `js-yaml-18` proved then no-verdict,
+`bytes-control-loop` false alarm then correct), against three flips in 73 cases for flash with the
+diff. Every js-yaml case ends in an empty answer in at least one repetition — the model reasons at
+length over the 129 KB bundle and returns nothing. `ms-91` (a deleted `'minute'` alias) is missed
+in both repetitions: with no diff, a removed string literal in a long alias ladder is invisible.
 
-The cost of losing the diff shows up as instability rather than misses: 2 no-verdicts (empty
-answers after long reasoning traces) and a false alarm on the bytes control, neither of which the
-diff arm ever produced on flash.
+Two readings of the ms/bytes result, and this arm cannot separate them. Either the model reasons
+well enough to find a one-character defect unaided, or it is recalling the pristine source of three
+very popular MIT libraries and diffing against memory. The second is live: `ms`, `bytes` and
+`js-yaml` at these tags are certainly in training data. What the arm does establish is that **a
+corpus built from public library sources cannot cleanly measure "can the agent find the defect",
+because the answer key is in the model's weights.** A corpus over private or synthetic code would
+separate them; this one cannot.
 
 ## Spend
 
-$0.92 across the six diff-arm model-repetitions and the no-diff repetition, plus $0.001 for two
-two-case trial runs, against the $3 guard. Flash accounts for $0.75 of it; the two small models
-cost $0.35 combined for four full passes.
+**$0.9962 across all eight model-arm-repetitions**, plus about $0.001 for two two-case trial runs,
+against the $3 guard. 8,197,535 tokens. Flash accounts for $0.82 of it; the two small models cost
+$0.35 combined for four full passes of the whole pool.
 
 Wall time: flash needs ~19 min for a 73-case pass at `--concurrency 8`, dominated by js-yaml, whose
 prompts run 40-57k tokens each. The small models finish the same pass in about 1 minute.
