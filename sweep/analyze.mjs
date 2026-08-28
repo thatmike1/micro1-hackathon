@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { totals } from '../eval/score.mjs';
 
 /**
  * CLI: `node sweep/analyze.mjs [runsDir]`
  *
- * Reads every `runs/sweep-*/summary.json` and prints the markdown tables `docs/frontier-sweep.md`
+ * Reads the `summary.json` of every `runs/sweep-...` directory and prints the markdown tables `docs/frontier-sweep.md`
  * is built from: the per-model per-case outcome matrix, failure clusters by library and by
  * Stryker mutator shape, the cases that flipped between repetitions, and the cost totals.
  *
@@ -31,6 +31,8 @@ const MARK = {
 function loadRuns() {
   const runs = readdirSync(RUNS_DIR, { withFileTypes: true })
     .filter((e) => e.isDirectory() && e.name.startsWith('sweep-'))
+    // a directory without a summary is a run still in flight, or one that was cut short
+    .filter((e) => existsSync(join(RUNS_DIR, e.name, 'summary.json')))
     .map((e) => {
       const summary = JSON.parse(readFileSync(join(RUNS_DIR, e.name, 'summary.json'), 'utf8'));
       const rep = Number(/-rep(\d+)$/.exec(e.name)?.[1] ?? 0);

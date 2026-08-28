@@ -1,0 +1,1020 @@
+{
+  "candidate": "baseline-1",
+  "description": "one direct prompt, no tools, single completion",
+  "model": "z-ai/glm-5.3-flash",
+  "startedAt": "2026-08-28T20:21:20.675Z",
+  "finishedAt": "2026-08-28T20:32:41.966Z",
+  "wallMs": 681291,
+  "totals": {
+    "cases": 30,
+    "buggy": 29,
+    "controls": 1,
+    "proved": 28,
+    "proofRate": 0.9655172413793104,
+    "claimUnproved": 0,
+    "misses": 0,
+    "falseAlarms": 0,
+    "controlsCorrect": 1,
+    "noVerdict": 1,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 1075408,
+      "completionTokens": 229037,
+      "totalTokens": 1304445,
+      "costUsd": 0.16632776892499995
+    },
+    "wallMsTotal": 4635574
+  },
+  "cases": [
+    {
+      "id": "js-yaml-107",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change replaces the optional sign `[-+]?` with `[^-+]?` in intJsonTag's explicit integer pattern, so explicitly tagged signed binary integers (`!!int -0b101`, `!!int +0b101`) under JSON_SCHEMA now throw instead of resolving to -5/5, while previously rejected inputs like `!!int 00b101` now resolve (to 0).",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // JSON schema explicit !!int must still resolve signed binary literals.\n    assert.strictEqual(load('!!int \"-0b101\"', { schema: JSON_SCHEMA }), -5);\n    assert.strictEqual(load('!!int \"+0b101\"', { schema: JSON_SCHEMA }), 5);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 79,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 52.611009"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 72,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.613046"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35882,
+        "completionTokens": 6420,
+        "totalTokens": 42302,
+        "costUsd": 0.00214575
+      },
+      "wallMs": 109483,
+      "trajectory": "js-yaml-107.jsonl"
+    },
+    {
+      "id": "js-yaml-111",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The diff changed the JSON-schema explicit integer pattern's octal alternative from [-+]?0o... to [^-+]?0o..., so explicitly tagged signed octal integers like '!!int -0o17' no longer match and loading under JSON_SCHEMA now throws instead of returning -15/15; it also newly accepts junk like '10o17' (resolved as 10).",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // Under the JSON schema, an explicitly tagged !!int accepts signed octal\n    // notation: the explicit integer pattern allows an optional +/- sign.\n    assert.strictEqual(load('!!int -0o17', { schema: JSON_SCHEMA }), -15);\n    assert.strictEqual(load('!!int +0o17', { schema: JSON_SCHEMA }), 15);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 75,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.69041"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 74,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.672596"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35881,
+        "completionTokens": 6162,
+        "totalTokens": 42043,
+        "costUsd": 0.00846315
+      },
+      "wallMs": 147346,
+      "trajectory": "js-yaml-111.jsonl"
+    },
+    {
+      "id": "js-yaml-115",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "Changing [-+]? to [^-+]? in the JSON schema's explicit integer pattern breaks explicitly tagged signed hex integers (e.g. '!!int -0x1F' now throws instead of returning -31) and lets malformed scalars like '!!int 10x1F' silently parse as 10 via parseInt truncation. The own test suite doesn't cover explicit signed hex under JSON_SCHEMA, so it stays green.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // JSON schema must still resolve explicitly tagged hex integers with a sign.\n    assert.strictEqual(load('!!int -0x1F', { schema: JSON_SCHEMA }), -31);\n    // ...and must reject malformed hex-like scalars instead of truncating via parseInt.\n    assert.throws(() => load('!!int 10x1F', { schema: JSON_SCHEMA }), /cannot resolve a node/);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 79,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.462389"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 78,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.134982"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35880,
+        "completionTokens": 4923,
+        "totalTokens": 40803,
+        "costUsd": 0.0078435
+      },
+      "wallMs": 45647,
+      "trajectory": "js-yaml-115.jsonl"
+    },
+    {
+      "id": "js-yaml-124",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change removes sign handling from the JSON-schema integer parser, so explicit `!!int` tags with signed binary/octal/hex values now fall through to `parseInt(value, 10)`, which stops at the `0x`/`0b`/`0o` prefix and returns 0/-0 instead of the correct number (e.g. `!!int \"-0x1F\"` yields -0 rather than -31). Implicit plain scalars are unaffected, which is why the existing suite stays green.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('resolves signed hex/octal/binary !!int tags in the JSON schema', () => {\n    assert.strictEqual(load('!!int \"-0x1F\"', { schema: JSON_SCHEMA }), -31);\n    assert.strictEqual(load('!!int \"+0x10\"', { schema: JSON_SCHEMA }), 16);\n    assert.strictEqual(load('!!int \"-0b101\"', { schema: JSON_SCHEMA }), -5);\n    assert.strictEqual(load('!!int \"-0o17\"', { schema: JSON_SCHEMA }), -15);\n    // sanity: signed decimal is unchanged\n    assert.strictEqual(load('!!int \"-123\"', { schema: JSON_SCHEMA }), -123);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 79,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.308367"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 81,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 54.812442"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35750,
+        "completionTokens": 5992,
+        "totalTokens": 41742,
+        "costUsd": 0.0083585
+      },
+      "wallMs": 75332,
+      "trajectory": "js-yaml-124.jsonl"
+    },
+    {
+      "id": "js-yaml-125",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "LogicalOperator",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The `&&` condition in parseYamlInteger$1 (the intJsonTag/JSON_SCHEMA resolver) is always false, so a leading sign is never stripped; explicitly tagged signed non-decimal integers like `!!int \"-0x1F\"` or `!!int \"+0x10\"` are then parsed with parseInt(value, 10), returning -0/0 instead of -31/16.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // The JSON-schema int resolver must strip a leading sign before decoding\n    // the 0x/0b/0o prefix. The patch turns that check into `&&`, which is\n    // never true, so signed radix forms reach parseInt(value, 10) and the\n    // digits after the prefix are silently dropped (yielding 0 or -0).\n    assert.strictEqual(load('!!int \"-0x1F\"', { schema: JSON_SCHEMA }), -31);\n    assert.strictEqual(load('!!int \"+0x10\"', { schema: JSON_SCHEMA }), 16);\n    // Control: plain signed decimals still resolve identically.\n    assert.strictEqual(load('!!int \"-41\"', { schema: JSON_SCHEMA }), -41);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 74,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.684191"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 73,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.572755"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35775,
+        "completionTokens": 8617,
+        "totalTokens": 44392,
+        "costUsd": 0.004837375
+      },
+      "wallMs": 143275,
+      "trajectory": "js-yaml-125.jsonl"
+    },
+    {
+      "id": "js-yaml-126",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change breaks sign handling in parseYamlInteger$1 (intJsonTag, used by JSON_SCHEMA): a leading '-' is no longer stripped, so negative hex/octal/binary literals fall through to parseInt(value, 10), which stops at the radix prefix and returns -0. Explicitly tagged negative non-decimal integers like '!!int \"-0x1F\"' now load as -0 instead of -31.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // JSON_SCHEMA resolves explicitly tagged integers via intJsonTag.\n    // The patched parseYamlInteger$1 no longer strips a leading '-', so\n    // negative binary/octal/hex literals fall through to parseInt(value, 10),\n    // which stops at the radix prefix and yields -0.\n    assert.strictEqual(load('!!int \"-0x1F\"', { schema: JSON_SCHEMA }), -31);\n    assert.strictEqual(load('!!int \"-0b101\"', { schema: JSON_SCHEMA }), -5);\n    assert.strictEqual(load('!!int \"-0o17\"', { schema: JSON_SCHEMA }), -15);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 76,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.752853"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 75,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.727487"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35765,
+        "completionTokens": 13092,
+        "totalTokens": 48857,
+        "costUsd": 0.011909558925
+      },
+      "wallMs": 106374,
+      "trajectory": "js-yaml-126.jsonl"
+    },
+    {
+      "id": "js-yaml-128",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The condition `value[0] === \"\"` is never true (value[0] is a character or undefined), so sign stripping in parseYamlInteger$1 is dead code. Explicitly tagged non-decimal integers under JSON_SCHEMA like `-0x10` / `+0x10` fall through to `parseInt(value, 10)`, yielding -0/0 instead of -16/16.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('parses explicitly tagged negative hex integers in JSON_SCHEMA', () => {\n    assert.strictEqual(load('!!int \"-0x10\"', { schema: JSON_SCHEMA }), -16);\n  });\n\n  it('parses explicitly tagged positive hex integers in JSON_SCHEMA', () => {\n    assert.strictEqual(load('!!int \"+0x10\"', { schema: JSON_SCHEMA }), 16);\n  });\n\n  it('parses explicitly tagged negative binary integers in JSON_SCHEMA', () => {\n    assert.strictEqual(load('!!int \"-0b101\"', { schema: JSON_SCHEMA }), -5);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 77,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 3\n# suites 1\n# pass 1\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.478404"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 77,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 3\n# suites 1\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.77744"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35775,
+        "completionTokens": 1896,
+        "totalTokens": 37671,
+        "costUsd": 0.00631425
+      },
+      "wallMs": 218515,
+      "trajectory": "js-yaml-128.jsonl"
+    },
+    {
+      "id": "js-yaml-129",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The patch stops parseYamlInteger$1 (JSON_SCHEMA int tag) from stripping a leading '+', so explicitly tagged binary/octal/hex integers like !!int \"+0x1A\" no longer match their 0x/0o/0b prefix and fall through to parseInt(...,10), yielding 0 instead of 26. This is observable via load with JSON_SCHEMA.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // JSON_SCHEMA explicit int pattern allows a leading '+' on 0b/0o/0x literals;\n    // the patched build no longer strips the sign before parsing them.\n    assert.strictEqual(load('!!int \"+0x1A\"', { schema: JSON_SCHEMA }), 26);\n    assert.strictEqual(load('!!int \"+0o17\"', { schema: JSON_SCHEMA }), 15);\n    assert.strictEqual(load('!!int \"+0b101\"', { schema: JSON_SCHEMA }), 5);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.557511"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 73,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.881093"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35764,
+        "completionTokens": 6367,
+        "totalTokens": 42131,
+        "costUsd": 0.00427405
+      },
+      "wallMs": 133098,
+      "trajectory": "js-yaml-129.jsonl"
+    },
+    {
+      "id": "js-yaml-131",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change makes parseYamlInteger$1 (used by intJsonTag in JSON_SCHEMA) no longer strip a leading '+', so explicitly tagged '+0x…'/'+0o…'/'+0b…' integers fall through to parseInt(value, 10), which stops at the radix prefix and returns 0 instead of the correct value. Decimal '+N' still works only because parseInt happens to accept the sign, which is why the existing suite stays green.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // JSON schema resolves explicitly tagged integers with a leading '+'.\n    // The patched parseYamlInteger$1 no longer strips '+', so radix-prefixed\n    // forms fall through to parseInt(value, 10) and yield 0.\n    assert.strictEqual(load('!!int +0x1F', { schema: JSON_SCHEMA }), 31);\n    assert.strictEqual(load('!!int +0o17', { schema: JSON_SCHEMA }), 15);\n    assert.strictEqual(load('!!int +0b101', { schema: JSON_SCHEMA }), 5);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 73,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.23332"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 71,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.484135"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35773,
+        "completionTokens": 5552,
+        "totalTokens": 41325,
+        "costUsd": 0.00814195
+      },
+      "wallMs": 37671,
+      "trajectory": "js-yaml-131.jsonl"
+    },
+    {
+      "id": "js-yaml-132",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "BlockStatement",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The refactor emptied the sign-handling branch of parseYamlInteger$1 (used only by intJsonTag in JSON_SCHEMA). Signed radix-prefixed integers with an explicit tag (e.g. !!int \"-0x10\") now lose their sign and parse as -0/0 via parseInt base 10 instead of -16/15, so load returns a different value.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // intJsonTag (JSON_SCHEMA) resolves explicitly tagged signed radix\n    // integers, but the patched parseYamlInteger dropped sign handling:\n    // the sign is lost and the value parses via parseInt base 10 as -0/0.\n    assert.strictEqual(load('!!int \"-0x10\"', { schema: JSON_SCHEMA }), -16);\n    assert.strictEqual(load('!!int \"-0b101\"', { schema: JSON_SCHEMA }), -5);\n    assert.strictEqual(load('!!int \"+0o17\"', { schema: JSON_SCHEMA }), 15);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 72,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.85829"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 71,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 45.981446"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35815,
+        "completionTokens": 7294,
+        "totalTokens": 43109,
+        "costUsd": 0.00901925
+      },
+      "wallMs": 432034,
+      "trajectory": "js-yaml-132.jsonl"
+    },
+    {
+      "id": "js-yaml-15",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The mutation changes the core int tag's explicit binary branch from [-+]?0b[0-1]+ to [^-+]?0b[0-1]+, so explicitly tagged signed binary integers like '!!int -0b101' now throw instead of resolving to -5, while malformed sources like '!!int \" 0b101\"' now resolve (to 0) instead of throwing.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // Explicitly tagged binary integers must still resolve under the\n    // default (core) schema, including signed forms.\n    assert.strictEqual(load('!!int 0b101'), 5);\n    assert.strictEqual(load('!!int -0b101'), -5);\n    assert.strictEqual(load('!!int +0b101'), 5);\n    // Junk must not be silently accepted as an integer.\n    assert.throws(() => load('!!int \" 0b101\"'));\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 75,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.086011"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 76,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.148297"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35908,
+        "completionTokens": 5938,
+        "totalTokens": 41846,
+        "costUsd": 0.0041312
+      },
+      "wallMs": 139048,
+      "trajectory": "js-yaml-15.jsonl"
+    },
+    {
+      "id": "js-yaml-18",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The diff removed the '?' from '[-+]?0o[0-7]+' in YAML_INTEGER_EXPLICIT_PATTERN for int_core, breaking resolution of explicitly tagged unsigned octal integers like '!!int 0o17'.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // The octal alternative of the explicit integer pattern lost its optional sign,\n    // so an explicitly tagged unsigned octal no longer resolves.\n    assert.strictEqual(load('!!int 0o17'), 15);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 74,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.316095"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 74,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.560946"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35903,
+        "completionTokens": 2054,
+        "totalTokens": 37957,
+        "costUsd": 0.00641245
+      },
+      "wallMs": 243813,
+      "trajectory": "js-yaml-18.jsonl"
+    },
+    {
+      "id": "js-yaml-191",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The diff changed the optional sign `[-+]?` of the YAML 1.1 binary-integer alternative into the negated class `[^-+]`: signed binary literals like `-0b101`/`+0b101` no longer resolve and load as strings under YAML11_SCHEMA, while garbage like `10b101` now matches and loads as the integer 10 (and dump quotes such strings as a result).",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, YAML11_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // Signed binary integers must still resolve under the YAML 1.1 schema.\n    assert.strictEqual(load('-0b101', { schema: YAML11_SCHEMA }), -5);\n    assert.strictEqual(load('+0b101', { schema: YAML11_SCHEMA }), 5);\n    // A decimal digit before 0b... is not a binary integer.\n    assert.strictEqual(load('10b101', { schema: YAML11_SCHEMA }), '10b101');\n    // DUMP_SCHEMA extends the YAML 1.1 schema, so this string must dump unquoted.\n    assert.strictEqual(dump('10b101'), '10b101\\n');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 74,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.22948"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 76,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.689438"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35921,
+        "completionTokens": 12288,
+        "totalTokens": 48209,
+        "costUsd": 0.005766075
+      },
+      "wallMs": 226216,
+      "trajectory": "js-yaml-191.jsonl"
+    },
+    {
+      "id": "js-yaml-199",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The YAML 1.1 int pattern's hex alternative was changed from an optional sign [-+]? to [^-+]? (one char that is not a sign), so signed hex integers like '-0x1F' no longer resolve and load as strings (and dump unquoted), while junk like '10x1F' now resolves to the integer 10. Only YAML11_SCHEMA/DUMP_SCHEMA are affected, so the core-schema suite stays green.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, YAML11_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('yaml11 schema resolves signed hex integers', () => {\n    assert.strictEqual(load('-0x1F', { schema: YAML11_SCHEMA }), -31);\n    assert.strictEqual(load('+0x1F', { schema: YAML11_SCHEMA }), 31);\n    assert.strictEqual(load('0x1F', { schema: YAML11_SCHEMA }), 31);\n  });\n\n  it('dump quotes strings that the yaml11 schema resolves as ints', () => {\n    assert.strictEqual(dump('-0x1F'), \"'-0x1F'\\n\");\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 2\n# suites 1\n# pass 0\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.680768"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 76,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 2\n# suites 1\n# pass 2\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.373125"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35920,
+        "completionTokens": 15017,
+        "totalTokens": 50937,
+        "costUsd": 0.00644825
+      },
+      "wallMs": 245429,
+      "trajectory": "js-yaml-199.jsonl"
+    },
+    {
+      "id": "js-yaml-219",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "proved",
+      "defect": true,
+      "note": "Disabling the sign-stripping block in parseYamlInteger breaks the YAML 1.1 int tag for signed non-decimal forms: '-0x1F' loads as -0 instead of -31, '+0x1F' as 0 instead of 31, '-017' as -17 instead of octal -15, and '-1:30' as -30 instead of -90. The core-schema tests miss this because intYaml11Tag is only used by YAML11_SCHEMA/DUMP_SCHEMA, and dump output is unaffected since the tag identity of quoted strings does not change.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, YAML11_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('YAML 1.1 signed non-decimal integers keep sign and base', () => {\n    // -0x1F must be -31 (patched build returns -0 via parseInt('-0x1F', 10))\n    assert.strictEqual(load('-0x1F', { schema: YAML11_SCHEMA }), -31);\n    // +0x1F must be 31 (patched build returns 0)\n    assert.strictEqual(load('+0x1F', { schema: YAML11_SCHEMA }), 31);\n    // -017 is octal: must be -15 (patched build returns decimal -17)\n    assert.strictEqual(load('-017', { schema: YAML11_SCHEMA }), -15);\n    // -1:30 is sexagesimal: must be -90 (patched build returns -30)\n    assert.strictEqual(load('-1:30', { schema: YAML11_SCHEMA }), -90);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 74,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.679582"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 73,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.491966"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35760,
+        "completionTokens": 9272,
+        "totalTokens": 45032,
+        "costUsd": 0.00285728
+      },
+      "wallMs": 176897,
+      "trajectory": "js-yaml-219.jsonl"
+    },
+    {
+      "id": "js-yaml-220",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "LogicalOperator",
+      "outcome": "proved",
+      "defect": true,
+      "note": "Changing || to && makes the sign-stripping branch dead code (a char cannot be both '-' and '+'), so signed YAML 1.1 integers in non-decimal radixes parse wrongly: load('-010', {schema: YAML11_SCHEMA}) now returns -10 instead of -8, and '-0x1f'/'-0b101' return -0 instead of -31/-5, '-1:30' returns -30 instead of -90. Plain CORE_SCHEMA loading and dump output are unaffected, which is why the existing suite stays green.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, YAML11_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // YAML 1.1 signed integers: the sign must be stripped before radix parsing.\n    assert.strictEqual(load('-010', { schema: YAML11_SCHEMA }), -8);\n    assert.strictEqual(load('+010', { schema: YAML11_SCHEMA }), 8);\n    assert.strictEqual(load('-0x1f', { schema: YAML11_SCHEMA }), -31);\n    assert.strictEqual(load('-0b101', { schema: YAML11_SCHEMA }), -5);\n    assert.strictEqual(load('-1:30', { schema: YAML11_SCHEMA }), -90);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 75,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.891694"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 73,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.35288"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35784,
+        "completionTokens": 7075,
+        "totalTokens": 42859,
+        "costUsd": 0.00445255
+      },
+      "wallMs": 174788,
+      "trajectory": "js-yaml-220.jsonl"
+    },
+    {
+      "id": "js-yaml-221",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change removes the '-' case from the sign-stripping branch of the YAML 1.1 integer parser, so negative hex/octal/binary/sexagesimal integers lose their value when loading with YAML11_SCHEMA (e.g. '-0x10' yields -0 instead of -16, '-010' yields -10 instead of -8). The default CORE_SCHEMA path is untouched, so the existing suite stays green despite the regression.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, YAML11_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // The patched parseYamlInteger no longer strips a leading '-', so\n    // negative YAML 1.1 integers in non-decimal forms are misparsed:\n    // '-0x10' -> -0 (was -16), '-010' -> -10 (was -8),\n    // '-0b101' -> -0 (was -5), '-1:30' -> -30 (was -90).\n    assert.strictEqual(load('-0x10', { schema: YAML11_SCHEMA }), -16);\n    assert.strictEqual(load('-010', { schema: YAML11_SCHEMA }), -8);\n    assert.strictEqual(load('-0b101', { schema: YAML11_SCHEMA }), -5);\n    assert.strictEqual(load('-1:30', { schema: YAML11_SCHEMA }), -90);\n    // Sanity: forms that are still handled correctly.\n    assert.strictEqual(load('0x10', { schema: YAML11_SCHEMA }), 16);\n    assert.strictEqual(load('-123', { schema: YAML11_SCHEMA }), -123);\n    assert.strictEqual(dump(-16), '-16\\n');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.951919"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 79,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.227915"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35774,
+        "completionTokens": 10269,
+        "totalTokens": 46043,
+        "costUsd": 0.0052503
+      },
+      "wallMs": 186173,
+      "trajectory": "js-yaml-221.jsonl"
+    },
+    {
+      "id": "js-yaml-223",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "empty answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 35783,
+        "completionTokens": 11000,
+        "totalTokens": 46783,
+        "costUsd": 0.01086745
+      },
+      "wallMs": 235223,
+      "trajectory": "js-yaml-223.jsonl"
+    },
+    {
+      "id": "js-yaml-224",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The mutation removes the leading-'+' strip in the YAML 1.1 int tag's parseYamlInteger, so signed non-decimal literals fall through to parseInt(value, 10): load('+0x1f', {schema: YAML11_SCHEMA}) returns 0 instead of 31 (likewise '+0b101' gives 0 instead of 5, and '+010' gives 10 instead of octal 8). Default-schema loading and dumping are unaffected, which is why the existing suite stays green.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, YAML11_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // YAML 1.1 schema resolves signed non-decimal integers.\n    // Unpatched: parseYamlInteger strips the leading '+', so\n    //   '+0x1f' -> parseInt('1f', 16) === 31\n    //   '+0b101' -> parseInt('101', 2) === 5\n    //   '+010'  -> parseInt('010', 8) === 8\n    // The patch skips stripping '+', so these fall through to\n    // parseInt(value, 10): '+0x1f' and '+0b101' become 0, '+010' becomes 10.\n    assert.strictEqual(load('+0x1f', { schema: YAML11_SCHEMA }), 31);\n    assert.strictEqual(load('+0b101', { schema: YAML11_SCHEMA }), 5);\n    assert.strictEqual(load('+010', { schema: YAML11_SCHEMA }), 8);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 76,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.640645"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 72,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 45.422834"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35773,
+        "completionTokens": 8262,
+        "totalTokens": 44035,
+        "costUsd": 0.004748475
+      },
+      "wallMs": 141012,
+      "trajectory": "js-yaml-224.jsonl"
+    },
+    {
+      "id": "js-yaml-226",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The condition `value[0] === \"\"` is never true (out-of-range string indexing yields undefined), so the patch silently removes leading \"+\" handling in the YAML 1.1 integer parser. Consequently `+0x1F`, `+0b101`, and `+017` load as 0, 0, and 17 instead of 31, 5, and 15 under YAML11_SCHEMA.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, YAML11_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // YAML 1.1 schema: a leading \"+\" must be stripped before radix detection.\n    assert.strictEqual(load('+0x1F', { schema: YAML11_SCHEMA }), 31);\n    assert.strictEqual(load('+0b101', { schema: YAML11_SCHEMA }), 5);\n    assert.strictEqual(load('+017', { schema: YAML11_SCHEMA }), 15);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 87,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 59.763762"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 79,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.899679"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35780,
+        "completionTokens": 4841,
+        "totalTokens": 40621,
+        "costUsd": 0.00174719
+      },
+      "wallMs": 78981,
+      "trajectory": "js-yaml-226.jsonl"
+    },
+    {
+      "id": "js-yaml-227",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "BlockStatement",
+      "outcome": "proved",
+      "defect": true,
+      "note": "Emptying the sign branch in parseYamlInteger breaks the YAML 1.1 int tag for signed non-decimal literals: '-010' now loads as -10 instead of -8, '-0x10' as -0 instead of -16, and '-1:30' as -30 instead of -90, since the sign is neither stripped nor applied.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, YAML11_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // YAML 1.1 implicit integers: signed non-decimal forms must keep sign and radix\n    assert.strictEqual(load('-010\\n', { schema: YAML11_SCHEMA }), -8);\n    assert.strictEqual(load('-0x10\\n', { schema: YAML11_SCHEMA }), -16);\n    assert.strictEqual(load('+0x10\\n', { schema: YAML11_SCHEMA }), 16);\n    assert.strictEqual(load('-0b101\\n', { schema: YAML11_SCHEMA }), -5);\n    assert.strictEqual(load('-1:30\\n', { schema: YAML11_SCHEMA }), -90);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 75,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.455115"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 73,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.91655"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35811,
+        "completionTokens": 7280,
+        "totalTokens": 43091,
+        "costUsd": 0.004505825
+      },
+      "wallMs": 145805,
+      "trajectory": "js-yaml-227.jsonl"
+    },
+    {
+      "id": "js-yaml-418",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The diff makes the sign mandatory in the JSON schema's explicit float pattern, so explicit `!!float` tags on unsigned numbers (e.g. `!!float 5`, `!!float 0.5`) now throw 'cannot resolve a node with explicit tag' under JSON_SCHEMA instead of resolving. Only the explicit-tag path of floatJsonTag (JSON_SCHEMA) is affected, which is why the existing suite remains green.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // An explicit !!float tag on an unsigned number must resolve under the\n    // JSON schema: JSON floats do not require a sign.\n    assert.strictEqual(load('!!float 5\\n', { schema: JSON_SCHEMA }), 5);\n    assert.strictEqual(load('!!float 0.5\\n', { schema: JSON_SCHEMA }), 0.5);\n    assert.strictEqual(load('!!float 1e3\\n', { schema: JSON_SCHEMA }), 1000);\n    // Signed values must keep working.\n    assert.strictEqual(load('!!float -5\\n', { schema: JSON_SCHEMA }), -5);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 73,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.245357"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 74,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.74131"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35974,
+        "completionTokens": 10253,
+        "totalTokens": 46227,
+        "costUsd": 0.00310322
+      },
+      "wallMs": 165616,
+      "trajectory": "js-yaml-418.jsonl"
+    },
+    {
+      "id": "js-yaml-422",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The diff removes the '?' after (?:\\.[0-9]*) in YAML_FLOAT_EXPLICIT_PATTERN, making the decimal point mandatory for explicitly tagged floats under JSON_SCHEMA. `load('!!float 123', { schema: JSON_SCHEMA })` (and '1e5', '-1') previously resolved to a number but now throws \"cannot resolve a node with !<tag:yaml.org,2002:float> explicit tag\".",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // An explicit !!float tag in the JSON schema must still accept floats\n    // written without a fractional part (digits-only and exponent forms),\n    // matching the YAML 1.2 JSON-schema float regex and the core tag.\n    assert.strictEqual(load('!!float 123', { schema: JSON_SCHEMA }), 123);\n    assert.strictEqual(load('!!float 1e5', { schema: JSON_SCHEMA }), 100000);\n    assert.strictEqual(load('!!float -1', { schema: JSON_SCHEMA }), -1);\n    // Implicit resolution and dotted explicit forms are unaffected.\n    assert.strictEqual(load('1e5', { schema: JSON_SCHEMA }), 100000);\n    assert.strictEqual(load('!!float 123.', { schema: JSON_SCHEMA }), 123);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.073392"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 76,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.628259"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35976,
+        "completionTokens": 6228,
+        "totalTokens": 42204,
+        "costUsd": 0.00209712
+      },
+      "wallMs": 134970,
+      "trajectory": "js-yaml-422.jsonl"
+    },
+    {
+      "id": "js-yaml-426",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "Changing [eE] to [^eE] in the JSON-schema float's explicit pattern breaks explicitly tagged exponent floats: load('!!float 1e3', { schema: JSON_SCHEMA }) now throws instead of returning 1000 (same for 1.5e3, -1.5E-3, etc.), while malformed input like '!!float 1x3' that used to throw is silently resolved to 1.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('resolves explicitly tagged exponent floats under the JSON schema', () => {\n    assert.strictEqual(load('!!float 1e3', { schema: JSON_SCHEMA }), 1000);\n    assert.strictEqual(load('!!float -1.5E-3', { schema: JSON_SCHEMA }), -0.0015);\n  });\n\n  it('rejects malformed explicit floats under the JSON schema', () => {\n    assert.throws(() => load('!!float 1x3', { schema: JSON_SCHEMA }));\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 76,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 2\n# suites 1\n# pass 0\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.742775"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 76,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 2\n# suites 1\n# pass 2\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.927886"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35976,
+        "completionTokens": 8900,
+        "totalTokens": 44876,
+        "costUsd": 0.0049232
+      },
+      "wallMs": 171635,
+      "trajectory": "js-yaml-426.jsonl"
+    },
+    {
+      "id": "js-yaml-427",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The patch makes the exponent sign mandatory in YAML_FLOAT_EXPLICIT_PATTERN's integer-mantissa alternative, so under JSON_SCHEMA an explicitly tagged float like `!!float 1e5` (which previously resolved to 100000) now returns NOT_RESOLVED and load throws 'cannot resolve a node with !<tag:yaml.org,2002:float> explicit tag'. The unchanged implicit pattern and the pattern's own second alternative still accept unsigned exponents, so this is an inconsistent regression, not an equivalent refactor.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // Control: dump/load round trip is unaffected.\n    assert.strictEqual(load(dump(100000), { schema: JSON_SCHEMA }), 100000);\n    // Control: implicit unsigned-exponent floats still resolve under JSON_SCHEMA.\n    assert.strictEqual(load('1e5', { schema: JSON_SCHEMA }), 100000);\n    // Regression: explicitly tagged JSON-schema floats with unsigned exponents must resolve.\n    assert.strictEqual(load('!!float 1e5', { schema: JSON_SCHEMA }), 100000);\n    assert.strictEqual(load('!!float 1.5e5', { schema: JSON_SCHEMA }), 150000);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 76,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.405544"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 76,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.285383"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35975,
+        "completionTokens": 8977,
+        "totalTokens": 44952,
+        "costUsd": 0.002784295
+      },
+      "wallMs": 151358,
+      "trajectory": "js-yaml-427.jsonl"
+    },
+    {
+      "id": "js-yaml-430",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The patch negates the exponent digit class in the JSON schema's explicit float pattern: `!!float 1e5` under JSON_SCHEMA now throws 'cannot resolve a node' instead of returning 100000, while malformed input like `!!float 1ex` now silently resolves to 1.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, JSON_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // The JSON schema's explicit !!float pattern must accept decimal exponents...\n    assert.strictEqual(load('!!float 1e5', { schema: JSON_SCHEMA }), 100000);\n    assert.strictEqual(load('!!float 1.5e-3', { schema: JSON_SCHEMA }), 0.0015);\n    // ...and must reject non-numeric exponent characters instead of\n    // silently resolving them via parseFloat.\n    assert.throws(() => load('!!float 1ex', { schema: JSON_SCHEMA }));\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 77,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.54366"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 76,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.68972"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35977,
+        "completionTokens": 8613,
+        "totalTokens": 44590,
+        "costUsd": 0.00970305
+      },
+      "wallMs": 77805,
+      "trajectory": "js-yaml-430.jsonl"
+    },
+    {
+      "id": "js-yaml-667",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The pattern now requires exactly one '=' padding char, but valid base64 payloads can have zero padding (length %4==0, e.g. 'aGVsbG8h') or two '=' (e.g. 'aA=='); those previously resolved via atob and now return NOT_RESOLVED, so load() throws 'cannot resolve a node with !<tag:yaml.org,2002:binary> explicit tag'. Since dump() itself emits unpadded base64 for byte counts divisible by 3, dump/load round-trips of Uint8Array also break.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, YAML11_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // Unpadded base64 (8 chars, no '=') resolved before the change.\n    assert.deepStrictEqual(\n      load('!!binary aGVsbG8h', { schema: YAML11_SCHEMA }),\n      new Uint8Array([104, 101, 108, 108, 111, 33]) // \"hello!\"\n    );\n\n    // Double-padded base64 ('==') also resolved before the change.\n    assert.deepStrictEqual(\n      load('!!binary aA==', { schema: YAML11_SCHEMA }),\n      new Uint8Array([104]) // \"h\"\n    );\n\n    // Round trip: dump() emits unpadded base64 for byte lengths divisible by 3.\n    const dumped = dump(new Uint8Array([104, 105, 33]));\n    assert.deepStrictEqual(\n      load(dumped, { schema: YAML11_SCHEMA }),\n      new Uint8Array([104, 105, 33])\n    );\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 80,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.471814"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 83,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 54.320379"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35773,
+        "completionTokens": 11668,
+        "totalTokens": 47441,
+        "costUsd": 0.003457255
+      },
+      "wallMs": 220014,
+      "trajectory": "js-yaml-667.jsonl"
+    },
+    {
+      "id": "js-yaml-862",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "proved",
+      "defect": true,
+      "note": "isPlainObject() now returns true for every non-array object, so mapTag.identify (and the legacy/real map variants) match class instances and other custom-prototype objects. Consequently dump(new Foo()) used to throw 'unacceptable kind of an object to dump' (and was skipped under skipInvalid) but now serializes as a plain mapping.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    class Foo {\n      constructor() {\n        this.x = 1;\n      }\n    }\n    // Objects with a custom prototype are not plain objects; dumping one\n    // must raise \"unacceptable kind of an object to dump\" instead of being\n    // silently serialized as a mapping.\n    assert.throws(() => dump(new Foo()), /unacceptable kind of an object to dump/);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 76,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.730239"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 74,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.455698"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35739,
+        "completionTokens": 4251,
+        "totalTokens": 39990,
+        "costUsd": 0.003743175
+      },
+      "wallMs": 84096,
+      "trajectory": "js-yaml-862.jsonl"
+    },
+    {
+      "id": "js-yaml-866",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "EqualityOperator",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The diff inverts isPlainObject's first clause (=== became !==), so it now accepts any non-array object with a prototype (Map, class instances, ...) and rejects Object.create(null) objects. As a result dump(new Map([['a',1]])) silently returns '{}' instead of throwing, and dumping null-prototype objects throws instead of producing a mapping.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { dump, load } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // A Map instance is not a plain object, so the default map tag must not\n    // identify it: dumping one must throw instead of silently dropping data.\n    assert.throws(\n      () => dump(new Map([['a', 1]])),\n      /unacceptable kind of an object to dump/\n    );\n\n    // Conversely, a null-prototype object IS a plain object and must dump\n    // (and round-trip) as an ordinary mapping.\n    const nullProto = Object.create(null);\n    nullProto.a = 1;\n    assert.equal(dump(nullProto), 'a: 1\\n');\n    assert.deepEqual(load(dump(nullProto)), { a: 1 });\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 75,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.841424"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 77,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.71775"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 35753,
+        "completionTokens": 6265,
+        "totalTokens": 42018,
+        "costUsd": 0.004247725
+      },
+      "wallMs": 120352,
+      "trajectory": "js-yaml-866.jsonl"
+    },
+    {
+      "id": "js-yaml-control-hoist",
+      "kind": "control",
+      "library": "js-yaml",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "The diff only renames `value` to `digits` and hoists the pure `digits.slice(2)` into `rest`. `rest` is read only on the 0b/0o/0x branches, where it is identical to the original `value.slice(2)`, and the decimal path (`parseInt(digits, 10)`) is unchanged, so all inputs resolve to the same values.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 36088,
+        "completionTokens": 4271,
+        "totalTokens": 40359,
+        "costUsd": 0.00377435
+      },
+      "wallMs": 67568,
+      "trajectory": "js-yaml-control-hoist.jsonl"
+    }
+  ]
+}

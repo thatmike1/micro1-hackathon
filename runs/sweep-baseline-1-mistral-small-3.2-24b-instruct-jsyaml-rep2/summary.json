@@ -1,0 +1,870 @@
+{
+  "candidate": "baseline-1",
+  "description": "one direct prompt, no tools, single completion",
+  "model": "mistralai/mistral-small-3.2-24b-instruct",
+  "startedAt": "2026-08-28T20:35:09.003Z",
+  "finishedAt": "2026-08-28T20:42:06.982Z",
+  "wallMs": 417979,
+  "totals": {
+    "cases": 30,
+    "buggy": 29,
+    "controls": 1,
+    "proved": 0,
+    "proofRate": 0,
+    "claimUnproved": 18,
+    "misses": 0,
+    "falseAlarms": 1,
+    "controlsCorrect": 0,
+    "noVerdict": 1,
+    "errors": 10,
+    "usage": {
+      "promptTokens": 783234,
+      "completionTokens": 19685,
+      "totalTokens": 802919,
+      "costUsd": 0.06388954000000001
+    },
+    "wallMsTotal": 789290
+  },
+  "cases": [
+    {
+      "id": "js-yaml-107",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The patch changes the regex for explicit integers to disallow negative signs on binary, octal, and hexadecimal numbers, which is incorrect.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\nconst yaml = `---\n- 0b1010\n- 0o777\n- 0x1F\n- 0\n- 12345\n`;\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const obj = load(yaml);\n    assert.deepEqual(obj, [10, 511, 31, 0, 12345]);\n    assert.equal(dump(obj), yaml);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 83,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 54.95776"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 81,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 53.01973"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39216,
+        "completionTokens": 233,
+        "totalTokens": 39449,
+        "costUsd": 0.0029878
+      },
+      "wallMs": 20284,
+      "trajectory": "js-yaml-107.jsonl"
+    },
+    {
+      "id": "js-yaml-111",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of octal numbers without a sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const yaml = \"\"\"\n      - 0o123\n    \"\"\"\n    const obj = load(yaml);\n    assert.deepEqual(obj, [123]);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 62,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 33.639618"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 56,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.719572"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39216,
+        "completionTokens": 162,
+        "totalTokens": 39378,
+        "costUsd": 0.0029736
+      },
+      "wallMs": 17730,
+      "trajectory": "js-yaml-111.jsonl"
+    },
+    {
+      "id": "js-yaml-115",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 6920,
+      "trajectory": "js-yaml-115.jsonl"
+    },
+    {
+      "id": "js-yaml-124",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 7606,
+      "trajectory": "js-yaml-124.jsonl"
+    },
+    {
+      "id": "js-yaml-125",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "LogicalOperator",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 39078,
+        "completionTokens": 16384,
+        "totalTokens": 55462,
+        "costUsd": 0.00620765
+      },
+      "wallMs": 417956,
+      "trajectory": "js-yaml-125.jsonl"
+    },
+    {
+      "id": "js-yaml-126",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change incorrectly modifies the parsing of negative integers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '-0x10';\n    const expected = '-26';\n    const result = load(input);\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 75,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.530806"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 76,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.000104"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39068,
+        "completionTokens": 156,
+        "totalTokens": 39224,
+        "costUsd": 0.0029613
+      },
+      "wallMs": 12216,
+      "trajectory": "js-yaml-126.jsonl"
+    },
+    {
+      "id": "js-yaml-128",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change incorrectly handles negative numbers by treating an empty string as a negative sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\nconst input = \"\"\"\n- -1\n- +1\n\"\"\"\n\nconst expected = [\n  -1,\n  1\n]\n\nconst result = load(input)\n\nassert.deepEqual(result, expected)\n",
+        "mutant": {
+          "code": 1,
+          "ms": 58,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.420125"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.075794"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39078,
+        "completionTokens": 146,
+        "totalTokens": 39224,
+        "costUsd": 0.00356082
+      },
+      "wallMs": 16316,
+      "trajectory": "js-yaml-128.jsonl"
+    },
+    {
+      "id": "js-yaml-129",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks parsing of negative numbers in the intJsonTag.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '-123';\n    const expected = '-123';\n    const result = dump(load(input));\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 81,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 52.364677"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.208121"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39069,
+        "completionTokens": 161,
+        "totalTokens": 39230,
+        "costUsd": 0.002962375
+      },
+      "wallMs": 17994,
+      "trajectory": "js-yaml-129.jsonl"
+    },
+    {
+      "id": "js-yaml-131",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 10030,
+      "trajectory": "js-yaml-131.jsonl"
+    },
+    {
+      "id": "js-yaml-132",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "BlockStatement",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks parsing of signed integers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    assert.strictEqual(load('-10'), -10);\n    assert.strictEqual(load('+10'), 10);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 75,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.490677"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 73,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.331125"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39127,
+        "completionTokens": 147,
+        "totalTokens": 39274,
+        "costUsd": 0.002963925
+      },
+      "wallMs": 14915,
+      "trajectory": "js-yaml-132.jsonl"
+    },
+    {
+      "id": "js-yaml-15",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the handling of unsigned binary integers in YAML.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = \"\"\"\n      - 0b1010\n      - 0b1010\n    \"\"\"\n    const output = \"\"\"\n      - 10\n      - 0b1010\n    \"\"\"\n    assert.strictEqual(dump(load(input)), output);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 60,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.735717"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 60,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 31.568437"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39242,
+        "completionTokens": 194,
+        "totalTokens": 39436,
+        "costUsd": 0.00298195
+      },
+      "wallMs": 10725,
+      "trajectory": "js-yaml-15.jsonl"
+    },
+    {
+      "id": "js-yaml-18",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The patch changes the regex pattern for explicit integers, making it no longer match numbers with a leading minus sign and a single zero before the 'o' in an octal literal.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = \"\"\"\n      - 0o123\n      - -0o123\n    \"\"\"\n    const expected = \"\"\"\n      - 83\n      - -83\n    \"\"\"\n    const actual = dump(load(input))\n    assert.strictEqual(actual, expected)\n  })\n})",
+        "mutant": {
+          "code": 1,
+          "ms": 58,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 30.101159"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.825648"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39238,
+        "completionTokens": 216,
+        "totalTokens": 39454,
+        "costUsd": 0.00298605
+      },
+      "wallMs": 12906,
+      "trajectory": "js-yaml-18.jsonl"
+    },
+    {
+      "id": "js-yaml-191",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the ability to parse negative binary numbers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const yaml = \"\"\"\n      - -1\n      - -1\n    \"\"\"\n    const data = load(yaml)\n    assert.deepEqual(data, [-1, -1])\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 60,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 32.021279"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 58,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.476026"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39255,
+        "completionTokens": 163,
+        "totalTokens": 39418,
+        "costUsd": 0.002976725
+      },
+      "wallMs": 14631,
+      "trajectory": "js-yaml-191.jsonl"
+    },
+    {
+      "id": "js-yaml-199",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 6870,
+      "trajectory": "js-yaml-199.jsonl"
+    },
+    {
+      "id": "js-yaml-219",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 7372,
+      "trajectory": "js-yaml-219.jsonl"
+    },
+    {
+      "id": "js-yaml-220",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "LogicalOperator",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 6254,
+      "trajectory": "js-yaml-220.jsonl"
+    },
+    {
+      "id": "js-yaml-221",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of negative numbers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const data = {\n      \"negative\": \"-123\",\n      \"positive\": \"+123\"\n    };\n    const yaml = dump(data);\n    const result = load(yaml);\n    assert.deepEqual(result, data);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 80,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.631418"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 79,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 52.230286"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39077,
+        "completionTokens": 175,
+        "totalTokens": 39252,
+        "costUsd": 0.002965775
+      },
+      "wallMs": 15529,
+      "trajectory": "js-yaml-221.jsonl"
+    },
+    {
+      "id": "js-yaml-223",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of negative integers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = `-1`;\n    assert.equal(load(input), -1);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 74,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.837408"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 76,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.249656"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39087,
+        "completionTokens": 134,
+        "totalTokens": 39221,
+        "costUsd": 0.002958325
+      },
+      "wallMs": 8411,
+      "trajectory": "js-yaml-223.jsonl"
+    },
+    {
+      "id": "js-yaml-224",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks parsing of negative numbers in YAML.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = \"\"\"\n      - -1\n      - +1\n      - 1\n    \"\"\"\n    const output = dump(input)\n    assert.strictEqual(output, \"\"\"\n- -1\n- +1\n- 1\n    \"\"\"\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 58,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.165804"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 59,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 31.110194"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39076,
+        "completionTokens": 179,
+        "totalTokens": 39255,
+        "costUsd": 0.0029665
+      },
+      "wallMs": 18521,
+      "trajectory": "js-yaml-224.jsonl"
+    },
+    {
+      "id": "js-yaml-226",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 8769,
+      "trajectory": "js-yaml-226.jsonl"
+    },
+    {
+      "id": "js-yaml-227",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "BlockStatement",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The patch breaks parsing of negative hexadecimal integers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\nconst yaml = \"\"\"\n- 0x10\n- 0x-10\n\"\"\"\nconst obj = load(yaml);\nconst dumped = dump(obj);\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    assert.deepEqual(obj, [-16, 16]);\n    assert.equal(dumped, \"\"\"\n- 16\n- -16\n\"\"\"\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 58,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.797048"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 58,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.371115"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39121,
+        "completionTokens": 199,
+        "totalTokens": 39320,
+        "costUsd": 0.002973875
+      },
+      "wallMs": 15967,
+      "trajectory": "js-yaml-227.jsonl"
+    },
+    {
+      "id": "js-yaml-418",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 6676,
+      "trajectory": "js-yaml-418.jsonl"
+    },
+    {
+      "id": "js-yaml-422",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the ability to parse numbers with scientific notation.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\nconst input = '123.456e-789';\nconst expected = 123.456e-789;\n\nconst roundtrip = dump(load(input));\n\nconst result = load(roundtrip);\n\nassert.strictEqual(result, expected);",
+        "mutant": {
+          "code": 0,
+          "ms": 69,
+          "tail": "type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 39.536509"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 71,
+          "tail": "type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 41.568779"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39331,
+        "completionTokens": 158,
+        "totalTokens": 39489,
+        "costUsd": 0.002981425
+      },
+      "wallMs": 18066,
+      "trajectory": "js-yaml-422.jsonl"
+    },
+    {
+      "id": "js-yaml-426",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 6554,
+      "trajectory": "js-yaml-426.jsonl"
+    },
+    {
+      "id": "js-yaml-427",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of scientific notation numbers with a negative exponent.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const yaml = '1e-1';\n    const obj = load(yaml);\n    assert.strictEqual(obj, 0.1);\n    assert.strictEqual(dump(obj), yaml);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 81,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 54.332357"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 81,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 53.687273"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39330,
+        "completionTokens": 167,
+        "totalTokens": 39497,
+        "costUsd": 0.00298315
+      },
+      "wallMs": 14648,
+      "trajectory": "js-yaml-427.jsonl"
+    },
+    {
+      "id": "js-yaml-430",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 6272,
+      "trajectory": "js-yaml-430.jsonl"
+    },
+    {
+      "id": "js-yaml-667",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks loading of base64-encoded strings that lack padding characters.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = 'aGVsbG8gd29ybGQ=\\n';\n    assert.throws(() => load(input));\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.820113"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.792943"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39087,
+        "completionTokens": 154,
+        "totalTokens": 39241,
+        "costUsd": 0.002962325
+      },
+      "wallMs": 9179,
+      "trajectory": "js-yaml-667.jsonl"
+    },
+    {
+      "id": "js-yaml-862",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the isPlainObject function, which is used to check if an object is a plain object. The original implementation checks if the object's prototype is either null or Object.prototype, which is the correct way to determine if an object is a plain object. The patched implementation always returns true, which means it will incorrectly identify objects with custom prototypes as plain objects.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const obj = {\n      a: 1,\n      b: 2,\n      c: 3\n    };\n    const yaml = dump(obj);\n    const loaded = load(yaml);\n    assert.deepStrictEqual(loaded, obj);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 80,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.626413"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 79,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.887914"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39038,
+        "completionTokens": 240,
+        "totalTokens": 39278,
+        "costUsd": 0.00297585
+      },
+      "wallMs": 19569,
+      "trajectory": "js-yaml-862.jsonl"
+    },
+    {
+      "id": "js-yaml-866",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "EqualityOperator",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the handling of objects with a custom prototype.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\nconst input = { __proto__: 'test' };\nconst expected = { __proto__: 'test' };\n\nconst output = dump(input);\nconst result = load(output);\n\nassert.deepStrictEqual(result, expected);",
+        "mutant": {
+          "code": 0,
+          "ms": 70,
+          "tail": "type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 40.656995"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 67,
+          "tail": "type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 39.104837"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39052,
+        "completionTokens": 142,
+        "totalTokens": 39194,
+        "costUsd": 0.0029573
+      },
+      "wallMs": 8666,
+      "trajectory": "js-yaml-866.jsonl"
+    },
+    {
+      "id": "js-yaml-control-hoist",
+      "kind": "control",
+      "library": "js-yaml",
+      "category": "equivalent-refactor",
+      "outcome": "false-alarm",
+      "defect": true,
+      "note": "The change alters the parsing of hexadecimal integers, causing -0x100 to be parsed as -256 instead of -256.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 39448,
+        "completionTokens": 175,
+        "totalTokens": 39623,
+        "costUsd": 0.00360282
+      },
+      "wallMs": 31738,
+      "trajectory": "js-yaml-control-hoist.jsonl"
+    }
+  ]
+}

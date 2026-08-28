@@ -1,0 +1,1020 @@
+{
+  "candidate": "baseline-1",
+  "description": "one direct prompt, no tools, single completion",
+  "model": "mistralai/mistral-small-3.2-24b-instruct",
+  "startedAt": "2026-08-28T20:33:54.892Z",
+  "finishedAt": "2026-08-28T20:35:08.961Z",
+  "wallMs": 74069,
+  "totals": {
+    "cases": 30,
+    "buggy": 29,
+    "controls": 1,
+    "proved": 0,
+    "proofRate": 0,
+    "claimUnproved": 28,
+    "misses": 0,
+    "falseAlarms": 1,
+    "controlsCorrect": 0,
+    "noVerdict": 0,
+    "errors": 1,
+    "usage": {
+      "promptTokens": 1135733,
+      "completionTokens": 5062,
+      "totalTokens": 1140795,
+      "costUsd": 0.08619237499999999
+    },
+    "wallMsTotal": 532482
+  },
+  "cases": [
+    {
+      "id": "js-yaml-107",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the handling of binary, octal, and hexadecimal numbers in YAML.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const yaml = \"\"\"\n      - 0b1010\n      - 0o12\n      - 0x10\n      - 123\n    \"\"\"\n    const obj = load(yaml);\n    const dumped = dump(obj);\n    assert.strictEqual(dumped, yaml);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 59,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 30.21798"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.873163"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39216,
+        "completionTokens": 201,
+        "totalTokens": 39417,
+        "costUsd": 0.0029814
+      },
+      "wallMs": 17253,
+      "trajectory": "js-yaml-107.jsonl"
+    },
+    {
+      "id": "js-yaml-111",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The patch changes the regex pattern for explicit integers to allow an optional sign in front of octal numbers. This is incorrect because octal numbers should not have a sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = \"\"\"\n      - 0o123\n    \"\"\"\n    const expected = \"\"\"\n      - 83\n    \"\"\"\n    assert.strictEqual(dump(load(input)), expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.691217"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 58,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 30.483351"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39216,
+        "completionTokens": 196,
+        "totalTokens": 39412,
+        "costUsd": 0.0029804
+      },
+      "wallMs": 23892,
+      "trajectory": "js-yaml-111.jsonl"
+    },
+    {
+      "id": "js-yaml-115",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change allows 0x to be parsed as a positive integer without a sign, which is incorrect.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\nconst yaml = `\\n# This should be parsed as a positive integer\\nvalue: 0x123\\n`;\n\nconst obj = load(yaml);\nassert.strictEqual(obj.value, 307);\nassert.strictEqual(dump(obj), 'value: 307\\n'\\n);\n",
+        "mutant": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.676321"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 30.086659"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39215,
+        "completionTokens": 174,
+        "totalTokens": 39389,
+        "costUsd": 0.002975925
+      },
+      "wallMs": 22381,
+      "trajectory": "js-yaml-115.jsonl"
+    },
+    {
+      "id": "js-yaml-124",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of negative integers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '-123';\n    const expected = '-123';\n    const result = dump(load(input));\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.842564"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.667068"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39053,
+        "completionTokens": 157,
+        "totalTokens": 39210,
+        "costUsd": 0.002960375
+      },
+      "wallMs": 18465,
+      "trajectory": "js-yaml-124.jsonl"
+    },
+    {
+      "id": "js-yaml-125",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "LogicalOperator",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of negative and positive integers with a 0x prefix.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '-\n  - 0x10\n  - -0x10\n  - +0x10';\n    const expected = '-\n  - 16\n  - -16\n  - 16';\n    const result = dump(load(input));\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 55,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.592532"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 31.511637"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39078,
+        "completionTokens": 203,
+        "totalTokens": 39281,
+        "costUsd": 0.00297145
+      },
+      "wallMs": 31087,
+      "trajectory": "js-yaml-125.jsonl"
+    },
+    {
+      "id": "js-yaml-126",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of negative numbers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '-123';\n    const result = load(input);\n    assert.strictEqual(result, -123);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 77,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.549628"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 77,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.609349"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39068,
+        "completionTokens": 147,
+        "totalTokens": 39215,
+        "costUsd": 0.0029595
+      },
+      "wallMs": 18076,
+      "trajectory": "js-yaml-126.jsonl"
+    },
+    {
+      "id": "js-yaml-128",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change incorrectly modifies the sign handling logic, causing negative numbers to be parsed as positive.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = \"\"\"\n- 1\n- -1\n\"\"\"\n    const actual = load(input);\n    const expected = [1, -1];\n    assert.deepStrictEqual(actual, expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 59,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.422106"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.167834"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39078,
+        "completionTokens": 174,
+        "totalTokens": 39252,
+        "costUsd": 0.00296565
+      },
+      "wallMs": 22167,
+      "trajectory": "js-yaml-128.jsonl"
+    },
+    {
+      "id": "js-yaml-129",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks parsing of hexadecimal integers with a positive sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '0xFF';\n    const expected = 255;\n    const result = load(input);\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 79,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.410237"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 78,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.033275"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39069,
+        "completionTokens": 159,
+        "totalTokens": 39228,
+        "costUsd": 0.002961975
+      },
+      "wallMs": 15156,
+      "trajectory": "js-yaml-129.jsonl"
+    },
+    {
+      "id": "js-yaml-131",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change incorrectly modifies the sign detection logic, causing the parser to treat a positive zero as a negative number.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    // assert the correct behaviour here\n    const input = '0';\n    const result = load(input);\n    assert.strictEqual(result, 0);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 75,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.36368"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 76,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.874769"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39077,
+        "completionTokens": 164,
+        "totalTokens": 39241,
+        "costUsd": 0.002963575
+      },
+      "wallMs": 13110,
+      "trajectory": "js-yaml-131.jsonl"
+    },
+    {
+      "id": "js-yaml-132",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "BlockStatement",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of negative integers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '-12345';\n    const expected = '-12345';\n    const result = load(dump(input));\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 78,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.723133"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 82,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 54.205587"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39127,
+        "completionTokens": 161,
+        "totalTokens": 39288,
+        "costUsd": 0.002966725
+      },
+      "wallMs": 14902,
+      "trajectory": "js-yaml-132.jsonl"
+    },
+    {
+      "id": "js-yaml-15",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of unsigned binary numbers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const yaml = \"\"\"\n      - 0b1010\n      - 0b1010\n    \"\"\"\n    const obj = load(yaml)\n    assert.deepEqual(obj, [10, 10])\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 62,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 31.826629"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 55,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.117648"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39242,
+        "completionTokens": 172,
+        "totalTokens": 39414,
+        "costUsd": 0.00297755
+      },
+      "wallMs": 21936,
+      "trajectory": "js-yaml-15.jsonl"
+    },
+    {
+      "id": "js-yaml-18",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of negative octal numbers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const yaml = \"\"\"\n      - 0o123\n      - -0o123\n    \"\"\"\n    const expected = [123, -123]\n    const actual = load(yaml)\n    assert.deepEqual(actual, expected)\n  })\n})",
+        "mutant": {
+          "code": 1,
+          "ms": 56,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.233169"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 59,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 30.975344"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39238,
+        "completionTokens": 181,
+        "totalTokens": 39419,
+        "costUsd": 0.00297905
+      },
+      "wallMs": 22794,
+      "trajectory": "js-yaml-18.jsonl"
+    },
+    {
+      "id": "js-yaml-191",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the ability to parse and dump binary numbers without a sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\nconst yaml = \"\"\"\n- 0b1010\n- 0b1010\n\"\"\"\n\nconst obj = load(yaml)\nassert.deepEqual(obj, [10, 10])\n\nconst yaml2 = dump(obj)\nassert.equal(yaml2, \"\"\"\n- 0b1010\n- 0b1010\n\"\"\"\n)",
+        "mutant": {
+          "code": 1,
+          "ms": 56,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.695802"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.30014"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39255,
+        "completionTokens": 186,
+        "totalTokens": 39441,
+        "costUsd": 0.002981325
+      },
+      "wallMs": 19314,
+      "trajectory": "js-yaml-191.jsonl"
+    },
+    {
+      "id": "js-yaml-199",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks parsing of hexadecimal numbers without a sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '0x0';\n    const expected = 0;\n    const result = load(input);\n    assert.deepEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 79,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.760718"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 74,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.17932"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39253,
+        "completionTokens": 155,
+        "totalTokens": 39408,
+        "costUsd": 0.002974975
+      },
+      "wallMs": 17267,
+      "trajectory": "js-yaml-199.jsonl"
+    },
+    {
+      "id": "js-yaml-219",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change removes the ability to parse negative and positive numbers in hexadecimal format, which is a breaking change.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '0x1234567890ABCDEF';\n    const expected = 1125937504606846983;\n    const result = load(input);\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 52.069056"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 74,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.977184"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39063,
+        "completionTokens": 195,
+        "totalTokens": 39258,
+        "costUsd": 0.002968725
+      },
+      "wallMs": 12943,
+      "trajectory": "js-yaml-219.jsonl"
+    },
+    {
+      "id": "js-yaml-220",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "LogicalOperator",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks parsing of negative and positive integers in sequence.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = \"\"\"\n      - -1\n      - +1\n    \"\"\"\n    const result = load(input)\n    assert.deepStrictEqual(result, [-1, 1])\n  })\n})",
+        "mutant": {
+          "code": 1,
+          "ms": 60,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 31.672317"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.540676"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39087,
+        "completionTokens": 162,
+        "totalTokens": 39249,
+        "costUsd": 0.002963925
+      },
+      "wallMs": 21215,
+      "trajectory": "js-yaml-220.jsonl"
+    },
+    {
+      "id": "js-yaml-221",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of positive integers with a leading '+' sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const yaml = \"\"\"\n      - 1\n      - -1\n      - +1\n    \"\"\"\n    const result = load(yaml)\n    assert.deepEqual(result, [1, -1, 1])\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 55,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 27.747587"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.733478"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39077,
+        "completionTokens": 173,
+        "totalTokens": 39250,
+        "costUsd": 0.002965375
+      },
+      "wallMs": 13490,
+      "trajectory": "js-yaml-221.jsonl"
+    },
+    {
+      "id": "js-yaml-223",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The patch breaks parsing of negative integers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    assert.deepEqual(load('-1'), -1);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 77,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.018864"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 77,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.899908"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39087,
+        "completionTokens": 126,
+        "totalTokens": 39213,
+        "costUsd": 0.002956725
+      },
+      "wallMs": 17009,
+      "trajectory": "js-yaml-223.jsonl"
+    },
+    {
+      "id": "js-yaml-224",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of hexadecimal integers with a plus sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '0x1234567890ABCDEF';\n    const expected = 305419896;\n    const result = load(input);\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 77,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.595292"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 77,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 48.371856"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39076,
+        "completionTokens": 177,
+        "totalTokens": 39253,
+        "costUsd": 0.0029661
+      },
+      "wallMs": 16240,
+      "trajectory": "js-yaml-224.jsonl"
+    },
+    {
+      "id": "js-yaml-226",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "StringLiteral",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks parsing of positive integers with no sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\nconst yaml = \"\"\"\n- 0\n- -1\n- 1\n\"\"\"\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const result = load(yaml);\n    assert.deepEqual(result, [0, -1, 1]);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 62,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 30.924553"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 58,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.908399"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39084,
+        "completionTokens": 168,
+        "totalTokens": 39252,
+        "costUsd": 0.0029649
+      },
+      "wallMs": 18314,
+      "trajectory": "js-yaml-226.jsonl"
+    },
+    {
+      "id": "js-yaml-227",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "BlockStatement",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the parsing of signed integers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = \"\"\"\n      - -1\n      - +1\n    \"\"\"\n    const output = load(input)\n    assert.deepEqual(output, [-1, 1])\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 58,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 30.761783"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 55,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.061438"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39121,
+        "completionTokens": 158,
+        "totalTokens": 39279,
+        "costUsd": 0.002965675
+      },
+      "wallMs": 9784,
+      "trajectory": "js-yaml-227.jsonl"
+    },
+    {
+      "id": "js-yaml-418",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the ability to parse floats with a leading minus sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '--- 1.23e4\n...';\n    const result = load(input);\n    assert.strictEqual(result, 12300);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 29.122454"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 57,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 28.38614"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39331,
+        "completionTokens": 161,
+        "totalTokens": 39492,
+        "costUsd": 0.002982025
+      },
+      "wallMs": 16309,
+      "trajectory": "js-yaml-418.jsonl"
+    },
+    {
+      "id": "js-yaml-422",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the ability to parse scientific notation numbers.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '1.234e-5';\n    const result = load(input);\n    assert.strictEqual(result, 1.234e-5);\n  });\n});",
+        "mutant": {
+          "code": 0,
+          "ms": 78,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.15942"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 73,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.992459"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39331,
+        "completionTokens": 161,
+        "totalTokens": 39492,
+        "costUsd": 0.002982025
+      },
+      "wallMs": 16338,
+      "trajectory": "js-yaml-422.jsonl"
+    },
+    {
+      "id": "js-yaml-426",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "error",
+      "defect": null,
+      "note": null,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"mistralai/mistral-small-3.2-24b-instruct is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"DeepInfra… (gave up after 4 attempts)",
+      "proof": null,
+      "usage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "costUsd": null
+      },
+      "wallMs": 8698,
+      "trajectory": "js-yaml-426.jsonl"
+    },
+    {
+      "id": "js-yaml-427",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks parsing of scientific notation with a single character exponent sign.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = `\\n      - 1e\n      - 1E\n      - 1e+\n      - 1e-\\n      - 1e+1\n      - 1e-1\n      - 1e+1.1\n      - 1e-1.1\\n    `;\n    const result = load(input);\n    assert.deepEqual(result, [1, 1, 1, 1, 1, 1, 1]);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 82,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 53.409703"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 79,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 52.491578"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39330,
+        "completionTokens": 231,
+        "totalTokens": 39561,
+        "costUsd": 0.00299595
+      },
+      "wallMs": 15579,
+      "trajectory": "js-yaml-427.jsonl"
+    },
+    {
+      "id": "js-yaml-430",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change alters the regex pattern for explicit floats, which breaks parsing of valid floats like '1e-1'.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = '1e-1';\n    const expected = '0.1';\n    const result = load(input);\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 78,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.609268"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 77,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 50.141085"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39336,
+        "completionTokens": 171,
+        "totalTokens": 39507,
+        "costUsd": 0.0029844
+      },
+      "wallMs": 22927,
+      "trajectory": "js-yaml-430.jsonl"
+    },
+    {
+      "id": "js-yaml-667",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "Regex",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the handling of base64-encoded binary data by making the regex too strict.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const input = 'base64: \\n  SGVsbG8gV29ybGQhCg==';\n    const expected = 'base64: \\n  Hello World!';\n    const result = dump(load(input));\n    assert.strictEqual(result, expected);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 79,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.740244"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 80,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 52.530098"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39087,
+        "completionTokens": 194,
+        "totalTokens": 39281,
+        "costUsd": 0.002970325
+      },
+      "wallMs": 14318,
+      "trajectory": "js-yaml-667.jsonl"
+    },
+    {
+      "id": "js-yaml-862",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "ConditionalExpression",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the core schema's ability to distinguish plain objects from other objects with a custom prototype.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump, CORE_SCHEMA, realMapTag } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const data = {\n      a: 1,\n      b: 2,\n      c: 3\n    };\n    const yaml = dump(data, {\n      schema: CORE_SCHEMA.withTags(realMapTag)\n    });\n    const result = load(yaml, {\n      schema: CORE_SCHEMA.withTags(realMapTag)\n    });\n    assert.deepEqual(result, data);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 79,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 51.843964"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 81,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 52.744419"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39038,
+        "completionTokens": 230,
+        "totalTokens": 39268,
+        "costUsd": 0.00297385
+      },
+      "wallMs": 20904,
+      "trajectory": "js-yaml-862.jsonl"
+    },
+    {
+      "id": "js-yaml-866",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "EqualityOperator",
+      "outcome": "claim-unproved",
+      "defect": true,
+      "note": "The change breaks the handling of objects created with Object.create(null).",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, dump } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('fails on the patched build', () => {\n    const obj = Object.create(null);\n    const yaml = dump(obj);\n    const obj2 = load(yaml);\n    assert.strictEqual(Object.getPrototypeOf(obj2), null);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 77,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.427361"
+        },
+        "pristine": {
+          "code": 1,
+          "ms": 76,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 49.04618"
+        },
+        "proved": false
+      },
+      "usage": {
+        "promptTokens": 39052,
+        "completionTokens": 164,
+        "totalTokens": 39216,
+        "costUsd": 0.0029617
+      },
+      "wallMs": 18924,
+      "trajectory": "js-yaml-866.jsonl"
+    },
+    {
+      "id": "js-yaml-control-hoist",
+      "kind": "control",
+      "library": "js-yaml",
+      "category": "equivalent-refactor",
+      "outcome": "false-alarm",
+      "defect": true,
+      "note": "The change breaks the dumping of integers with 0x, 0o, and 0b prefixes.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 39448,
+        "completionTokens": 161,
+        "totalTokens": 39609,
+        "costUsd": 0.0029908
+      },
+      "wallMs": 11690,
+      "trajectory": "js-yaml-control-hoist.jsonl"
+    }
+  ]
+}
