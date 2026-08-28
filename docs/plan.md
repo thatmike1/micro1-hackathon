@@ -1,0 +1,28 @@
+# build plan — silent mutant
+
+Agent reviews a diff against a green-suite library and proves the bug: a test that fails on the patched checkout and passes on pristine, both via exit codes. Primary metric: proof rate over 12 buggy cases + false-alarm rate over 3 clean controls. Full sketch: ideation report §3.1 (external), measured corpus feasibility: spike report (external).
+
+## phases
+
+- [x] scaffold: agent loop over OpenRouter, trajectory JSONL, HTML renderer, 14 tests, live smoke on z-ai/glm-5.3-flash
+- [ ] corpus: 12 cases + 3 equivalent-refactor controls from pinned tags (ms@2.1.3 backbone, js-yaml targeted regions, bytes.js if it spikes green), differential probe script, `npm run corpus:verify` green
+- [ ] notebook design applied to trajectory renderer (tokens + structure; witness lines only from checkpoint events)
+- [ ] stage 0: baseline 1 (single prompt, no execution) over full corpus — record scores in CHANGELOG.md
+- [ ] stage 0b: baseline 2 (agent with read/bash tools, no verification contract) — record
+- [ ] stage 1: prover loop with double-run gate, max 3 retries — measure, record
+- [ ] stage 2: hypothesizer/prover split — measure, record
+- [ ] stage 3: cross-case memory file — measure, record, keep the on/off ablation
+- [ ] review-package HTML per case (diff, hypothesis ledger, both runner outputs, retries)
+- [ ] eval runner + scoreboard (baseline vs stages, same cases, exit-code scored)
+- [ ] repro guide, tested from a clean clone (setup, exact commands, versions, runtime, cost)
+- [ ] README: user, bottleneck, value; disclosure that everything here was written during the event; third-party tools named (Stryker, mocha, OpenRouter)
+- [ ] trajectories: representative runs per agent, rendered + raw JSONL
+- [ ] video ≤5 min per the beat sheet in the ideation report
+- [ ] changelog closed with main failure mode + hot take (discriminability scarcity)
+- [ ] submit before Mon 01:59 CEST
+
+## rules
+
+- every measured stage appends a CHANGELOG.md row with real numbers before the next stage starts
+- nothing enters the corpus unverified (suite green on mutant, probe divergence recorded; controls: suite green, no divergence)
+- no code copied from anywhere pre-existing; deps require a one-line justification
