@@ -119,3 +119,65 @@ Two things cost real time and are worth knowing before touching this again:
 The hard case is `js-yaml-15` per the report: one character inside the explicit-integer pattern
 (`[-+]?0b` to `[^-+]?0b`), 314 tests green, reachable only through an explicit `!!int` tag carrying a
 signed non-decimal literal.
+
+## Stage 0 completion (2026-08-28)
+
+Both baselines ran over all 15 cases on `z-ai/glm-5.3-flash`. Rows are in CHANGELOG.md; the runs
+are `runs/stage0-baseline-1-2026-08-28T18-56-11/` and `runs/stage0-baseline-2-2026-08-28T18-56-15/`,
+each holding one trajectory per case plus `summary.json`.
+
+| run | proof rate | false alarms | tokens | cost | wall |
+|---|---|---|---|---|---|
+| baseline 1 (one prompt, no tools) | 12/12 | 0/3 | 212,375 | $0.0478 | 6.4 min |
+| baseline 2 (read-file + run-command) | 9/12 | 0/3 | 466,005 | $0.0358 | 13.8 min |
+
+Total spend for the session, including two two-case trial runs: **$0.093**. Both runs used
+`--concurrency 4`; per-case wall times in the summaries are real, only the run totals are
+compressed. Median per-case wall was 72s for baseline 1 and 97s for baseline 2.
+
+### The finding that matters: baseline 1 saturates the corpus
+
+A single prompt with the changed file and the diff, no execution at all, proves every one of the 12
+buggy cases and stays silent on all 3 controls. That includes `js-yaml-15`, the designated hard
+case, which it catches with `load('!!int "-0b1010"')`.
+
+The corpus was built to be hard for the *library's own test suite*, and it is: every mutant is
+silent under 49 / 314 / 30 existing tests. It was never screened for being hard for a reviewer who
+is handed the diff, and the diff points straight at the mutated span. On this corpus and this model
+there is no proof-rate headroom above stage 0. Stages 1 to 3 can still be measured on cost, wall
+time, and baseline 2's failure modes, but "the gate raises the proof rate" is not a claim this
+corpus can support. Deciding what to do about that is a call for the next session; the honest
+sequence was the point of running stage 0 first, and this is what it bought.
+
+### Baseline 2's three failures are the interesting half
+
+- `js-yaml-15`, `js-yaml-18` — both hit `maxSteps: 12` and returned no final text at all. They
+  spent the budget reading a 129 KB bundle in 8 KB tool-result slices and re-deriving how js-yaml
+  resolves its own package name. Baseline 1, handed the same file whole, answered in one turn.
+- `ms-72` — claimed the defect correctly and shipped a test with a true first assertion and a false
+  second one: `ms(ms('1y'))` is `'365d'`, not `'1y'`, on pristine too. Red on both sides, so not a
+  proof. This is exactly the failure the stage-1 double-run gate is meant to catch before the
+  answer leaves the agent.
+
+Tool access cost 2.2x the tokens and 2.2x the wall time for a lower score. Cost per run is still
+lower than baseline 1 because baseline 1's completions are long reasoning traces on expensive
+output tokens, while baseline 2's tokens are mostly cheap prompt tokens re-sent each step.
+
+### Notes for whoever touches `eval/` next
+
+- **Checkouts are copied, never mutated in place.** `eval/workspace.mjs` copies
+  `corpus/.work/<lib>` twice into a temp dir minus `node_modules` (symlinked back), resets each
+  copy's entry module from the pristine snapshot, and applies `mutation.diff` to one. Resetting
+  from the snapshot rather than trusting the shared checkout means a crashed run cannot leak a
+  mutation into the next case. A pair costs 11-51 ms to prepare.
+- **The module-cache gotcha from the corpus section does not apply here.** Every proof run is a
+  fresh `node`/`mocha` process against its own directory, so pristine and mutant are never in one
+  process. That is the reason the double run is two spawns rather than two imports.
+- **Where a proof test lands** is per library, in `PROOF_RUNNERS`: `proof-test.js` for ms,
+  `test/proof-test.js` for bytes, `test/core/proof.test.mjs` for js-yaml. Each is a path the
+  library's own runner already covers, and each candidate is shown the exact skeleton, so the
+  import path is never something the model has to guess.
+- **`run-command` confines the cwd, not writes.** Baseline 2 wrote a scratch script to `/tmp` with
+  a shell redirect and ran it from inside a checkout. That is within the ticket's contract (reject
+  any cwd outside the checkouts) and it is worth knowing before this is pointed at anything less
+  disposable than a temp checkout.

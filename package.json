@@ -13,6 +13,8 @@
     "corpus:verify": "node corpus/verify.mjs",
     "corpus:probe": "node corpus/probe.mjs",
     "corpus:screen": "node corpus/screen.mjs",
-    "corpus:make-case": "node corpus/make-case.mjs"
+    "corpus:make-case": "node corpus/make-case.mjs",
+    "eval:run": "node eval/run-eval.mjs",
+    "eval:report": "node eval/report.mjs"
   }
 }
