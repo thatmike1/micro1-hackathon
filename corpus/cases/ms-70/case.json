@@ -1,0 +1,31 @@
+{
+  "id": "ms-70",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "fall-through",
+  "source": "StrykerJS mutant #70 (ConditionalExpression)",
+  "mutation": {
+    "mutator": "ConditionalExpression",
+    "location": {
+      "start": {
+        "line": 66,
+        "column": 5
+      },
+      "end": {
+        "line": 67,
+        "column": 20
+      }
+    },
+    "original": "case 'y':\n      return n * y;",
+    "replacement": "case 'y':"
+  },
+  "distinguishingInput": "ms('1y')",
+  "expected": {
+    "pristine": "value: 31557600000",
+    "mutant": "value: 604800000"
+  },
+  "divergingProbes": 135,
+  "note": "The body of `case 'y'` is removed, so a year value falls through to the week branch. The suite parses weeks and days but never years."
+}

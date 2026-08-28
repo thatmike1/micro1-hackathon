@@ -47,3 +47,46 @@ Scaffold is done and green:
 
 Open for the next session: README placeholders (user / bottleneck / why it matters), the eval set
 and `docs/repro.md` numbers, and the design pass over the renderer's `:root` block.
+
+## Corpus completion (2026-08-28)
+
+`npm run corpus:setup` + `npm run corpus:verify` are green end to end from a fresh clone: 12 buggy
+cases and 3 controls, 15/15 verified.
+
+Wall times on this machine (Node v22.22.2):
+
+| step | time |
+|---|---|
+| `corpus:setup --fresh` (3 clones, installs, js-yaml build, 3 pristine suites) | 21.7s |
+| `corpus:verify` (15 cases: apply, suite, probe) | 4.8s |
+| `corpus/screen.mjs ms` (stryker 9.1s + screen of 38 survivors) | 15.5s |
+| `corpus/screen.mjs bytes` (stryker 7.7s + screen of 14 survivors) | 14s |
+
+Survivor-pool differences from the spike:
+
+- **ms is identical on mutation counts** — 177 mutants, 139 killed, 38 survived — but **35 of 38 are
+  discriminable here against the spike's 32**. Same survivors, wider probe corpus: 1071 inputs
+  sweeping every unit spelling against both output formats and both sides of every unit and plural
+  threshold, against the spike's ~150. The three extra are the input-type guard, the emptied error
+  message and the disabled 100-character cap, all of which need probe inputs the narrower corpus
+  never sent.
+- **bytes.js spiked green**, which the spike had not measured: 146 mutants, 132 killed, 14 survived,
+  6 discriminable (43%). It supplies 3 cases, so no backfill from ms was needed.
+- **js-yaml was not re-run.** The region takes 8.7 minutes and yields 2 discriminable survivors; both
+  are in the corpus, reproduced from the spike's recorded mutation location and replacement and
+  re-verified end to end.
+
+Two things cost real time and are worth knowing before touching this again:
+
+- **Node's module cache is keyed by filename for CommonJS.** `verify.mjs` probes the same checkout
+  path once per case with different content each time, and a `?query` cache-buster does not help for
+  ms and bytes because the ESM import is routed through the CJS require cache. Ten of fifteen cases
+  passed for the wrong reason until the probe started snapshotting the mutant to a fresh path. The
+  three js-yaml cases were unaffected, which is exactly what made the failure legible.
+- **The probe must resolve js-yaml schemas from the module it is calling.** Capturing pristine's
+  `CORE_SCHEMA` and handing it to the mutant routes resolution through pristine tag definitions and
+  hides every mutation in the region under test.
+
+The hard case is `js-yaml-15` per the report: one character inside the explicit-integer pattern
+(`[-+]?0b` to `[^-+]?0b`), 314 tests green, reachable only through an explicit `!!int` tag carrying a
+signed non-decimal literal.

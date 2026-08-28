@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index ea734fb..e1b6503 100644
+--- a/index.js
++++ b/index.js
+@@ -32,7 +32,7 @@ module.exports = function (val, options) {
+     return options.long ? fmtLong(val) : fmtShort(val);
+   }
+   throw new Error(
+-    'val is not a non-empty string or a valid number. val=' +
++    "" +
+       JSON.stringify(val)
+   );
+ };

@@ -8,6 +8,11 @@
     "demo": "node scripts/demo.mjs",
     "smoke": "node scripts/smoke.mjs",
     "test": "node --test",
-    "render": "node src/render-trajectory.mjs"
+    "render": "node src/render-trajectory.mjs",
+    "corpus:setup": "node corpus/setup.mjs",
+    "corpus:verify": "node corpus/verify.mjs",
+    "corpus:probe": "node corpus/probe.mjs",
+    "corpus:screen": "node corpus/screen.mjs",
+    "corpus:make-case": "node corpus/make-case.mjs"
   }
 }

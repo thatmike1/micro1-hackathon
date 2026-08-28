@@ -1,0 +1,31 @@
+{
+  "id": "ms-30",
+  "kind": "buggy",
+  "library": "ms",
+  "tag": "2.1.3",
+  "file": "index.js",
+  "category": "guard",
+  "source": "StrykerJS mutant #30 (ConditionalExpression)",
+  "mutation": {
+    "mutator": "ConditionalExpression",
+    "location": {
+      "start": {
+        "line": 50,
+        "column": 7
+      },
+      "end": {
+        "line": 50,
+        "column": 23
+      }
+    },
+    "original": "str.length > 100",
+    "replacement": "false"
+  },
+  "distinguishingInput": "ms('11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111')",
+  "expected": {
+    "pristine": "value: undefined",
+    "mutant": "value: 1.111111111111111e+100"
+  },
+  "divergingProbes": 1,
+  "note": "The 100-character input cap is disabled, so absurdly long digit strings are parsed instead of returning undefined. No test feeds an over-long input."
+}
