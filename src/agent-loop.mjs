@@ -33,6 +33,8 @@ const RETRYABLE_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
  * @param {number} [options.maxRetries] transient-failure retries per request, default 3
  * @param {number} [options.retryBaseMs] first backoff delay in ms, doubling per attempt, default 500
  * @param {(ms: number) => Promise<void>} [options.sleep] injectable delay, for tests
+ * @param {object} [options.extraBody] extra fields merged into the request body, e.g. OpenRouter's
+ *   `{ usage: { include: true } }` which makes the provider report per-call cost
  * @param {(ctx: object) => Promise<{decision: string, note?: string}>|{decision: string, note?: string}} [options.onCheckpoint]
  *   consulted before any tool marked `requiresApproval`; anything other than `approve` skips the call
  * @returns {Promise<{text: string|null, stopReason: 'final'|'max-steps'|'error', error: string|null,
@@ -52,6 +54,7 @@ export async function runAgent({
   maxRetries = 3,
   retryBaseMs = 500,
   sleep = defaultSleep,
+  extraBody = {},
   onCheckpoint = () => ({ decision: 'approve' }),
 }) {
   const startedAt = Date.now();
@@ -81,6 +84,7 @@ export async function runAgent({
         model,
         messages,
         ...(tools.length > 0 ? { tools: tools.map(toToolSchema), tool_choice: 'auto' } : {}),
+        ...extraBody,
       };
       const response = await requestWithRetry({
         url: `${baseUrl}/chat/completions`,
