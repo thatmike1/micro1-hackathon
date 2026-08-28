@@ -181,3 +181,28 @@ output tokens, while baseline 2's tokens are mostly cheap prompt tokens re-sent 
   a shell redirect and ran it from inside a checkout. That is within the ticket's contract (reject
   any cwd outside the checkouts) and it is worth knowing before this is pointed at anything less
   disposable than a temp checkout.
+
+## Config repin: provider + reasoning made explicit and recorded (2026-08-28, late)
+
+Prompted by the stage-0 review: no run so far sent a `reasoning` field or pinned a provider, and
+nothing recorded which provider served a request or whether it spent reasoning tokens. Changes on
+this branch: the loop records `provider` and `reasoningTokens` per step and aggregates both into
+`run-end`; `run-start` carries `requestExtras` (the exact knobs sent); `eval:run` grew
+`--reasoning <off|effort>` and `--provider <name>` (pin with `allow_fallbacks: false`), both echoed
+into `summary.json`.
+
+Replication of stage-0 baseline-1, 15 cases each arm, measured:
+
+| arm | config | proof rate | notes |
+|---|---|---|---|
+| stage 0 (original) | unpinned, default | 12/12 | single run, config unrecorded |
+| A | unpinned, default, now recorded | 11/12 | served by EIGHT providers (Z.AI x6, DeepInfra x2, Novita x2, Makora, Modal, Parasail, Reka, Wafer); every request emitted reasoning tokens (7-9,382); js-yaml-15 no-verdict |
+| B | Z.AI pinned, `reasoning {enabled:false}` | error | HTTP 400 "Reasoning is mandatory for this endpoint and cannot be disabled" on all 15 — flash has no reasoning off switch |
+| B2 | Z.AI pinned, default reasoning | 10/12 | 64,803 reasoning tokens total; ms-170 and ms-27 claim-unproved |
+| C | Z.AI pinned, `effort: low` | 11/12 | 1,202 reasoning tokens total, $0.010 vs B2's $0.027; js-yaml-15 claim-unproved |
+
+Reading: the "12/12 saturation" was one draw from a distribution whose observed range across four
+runs is 10-12/12, with failures concentrated in js-yaml-15 and scattered ms cases, and effort-low
+matches default accuracy at a third of the cost. The corpus is near-ceiling but not flat: the
+honest headroom is reliability across repetitions, not single-run proof rate. Canonical config from
+here: provider pinned, reasoning effort explicit, both recorded in every trajectory.

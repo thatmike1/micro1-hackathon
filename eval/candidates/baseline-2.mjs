@@ -24,7 +24,7 @@ const MAX_STEPS = 12;
  * @param {string} options.model
  * @param {string} options.apiKey
  */
-export async function run({ record, workspace, trajectory, model, apiKey }) {
+export async function run({ record, workspace, trajectory, model, apiKey, requestExtras = {} }) {
   const { entry, suite, diff } = changeUnderReview(record);
   const roots = [workspace.pristine, workspace.mutant];
 
@@ -93,7 +93,7 @@ export async function run({ record, workspace, trajectory, model, apiKey }) {
     trajectory,
     maxSteps: MAX_STEPS,
     apiKey,
-    extraBody: { usage: { include: true } },
+    extraBody: { usage: { include: true }, ...requestExtras },
   });
 }
 
