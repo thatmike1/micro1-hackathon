@@ -253,7 +253,45 @@ followed by the primary metric and a per-case outcome matrix. Its marks are
 `P` proved, `u` claim-unproved, `.` miss, `C` control correct, `A` false alarm, `?` no-verdict,
 `E` error.
 
-<!-- REPRO_ARM -->
+### what that arm actually produced
+
+Run on the clean clone on 2026-08-29, three repetitions of stage 2 on flash, the shipped
+configuration. This is `node eval/analyze-k3.mjs repro-stage2-` verbatim:
+
+```
+## flash  (k=3)
+model z-ai/glm-5.3-flash   request {"reasoning":{"effort":"low"},"max_tokens":4096,"provider":{"order":["Z.AI"],"allow_fallbacks":false,"require_parameters":true}}
+
+rep     proof rate  false alarms  claim-unproved  miss  no-verdict  error   tokens    cost       wall
+1       12/12       0/3           0               0     0           0       480121    $0.0242    2.7 min
+2       12/12       0/3           0               0     0           0       566738    $0.0189    2.5 min
+3       12/12       0/3           0               0     0           0       470140    $0.0143    2.0 min
+
+proved in ALL 3 reps   **12/12**
+proved in at least one         12/12
+cases that flip between reps   0/12
+controls false-alarmed at least once  0/3
+```
+
+| | row 2 | this re-measurement |
+|---|---|---|
+| proved in all three | 12/12 | **12/12** |
+| false alarms | 0/3 every rep | 0/3 every rep |
+| cases that flip | 0 | 0 |
+| gate attempts | 45 | **45** |
+| cost | $0.0613 | $0.0574 |
+| tokens | 1.55M | 1.52M |
+| wall (3 reps, `--concurrency 4`) | 7.8 min | 7.2 min |
+
+This is the cleanest arm in the project and it came back identical on the metric. That is not the
+general case — see [the noise floor](#the-noise-floor) — and it is worth saying why this one holds:
+row 2 closed flash's headroom, so there is no case left that is only sometimes provable.
+
+The gate aggregates matched as well: 45 attempts, 7 runs that revised at least once, 7 proofs that
+needed a revision, in both. What moved is which case spent them. In the committed arm `bytes-52`
+took four attempts in rep 3 (`1/1 1/1 1/1 1/0`); in the re-measurement
+it took four in rep 2 (`1/1 2/2 1/1 1/0`), and rep 3 proved it first try. Same answer, different
+route to it — which is the level at which this arm is actually stochastic.
 
 ### the other audit tools
 
