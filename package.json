@@ -9,6 +9,7 @@
     "smoke": "node scripts/smoke.mjs",
     "test": "node --test",
     "render": "node src/render-trajectory.mjs",
+    "render:review": "node src/render-review-package.mjs",
     "corpus:setup": "node corpus/setup.mjs",
     "corpus:verify": "node corpus/verify.mjs",
     "corpus:probe": "node corpus/probe.mjs",
