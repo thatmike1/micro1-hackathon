@@ -305,7 +305,7 @@ route to it — which is the level at which this arm is actually stochastic.
 
 ### the other audit tools
 
-All four read committed runs, so they cost nothing:
+All of these read committed runs, so they cost nothing:
 
 ```bash
 node eval/analyze-k3.mjs  stage2-       # scores, primary metric, per-case matrix
