@@ -328,3 +328,51 @@ test('sends the tool registry as JSON-schema function definitions', async () => 
     { role: 'user', content: 'do the thing' },
   ]);
 });
+
+test('a tool call cut off by the completion cap is reported, not executed or echoed back raw', async () => {
+  const calls = [];
+  const tools = [
+    {
+      name: 'submit',
+      description: 'submit something long',
+      parameters: { type: 'object', properties: { content: { type: 'string' } } },
+      execute: (args) => {
+        calls.push(args);
+        return 'accepted';
+      },
+    },
+  ];
+  const truncated = {
+    choices: [
+      {
+        finish_reason: 'tool_calls',
+        message: {
+          role: 'assistant',
+          content: null,
+          tool_calls: [
+            { id: 'c1', type: 'function', function: { name: 'submit', arguments: '{"content": "abc' } },
+          ],
+        },
+      },
+    ],
+  };
+  const sent = [];
+  const trajectory = recorder();
+  const result = await runAgent({
+    ...base,
+    tools,
+    trajectory,
+    maxSteps: 2,
+    transport: scripted([truncated, assistantBody({ content: 'shorter next time' })], sent),
+  });
+
+  assert.deepEqual(calls, [], 'the tool never sees half an argument object');
+  const [toolResult] = trajectory.ofType('tool-result');
+  assert.equal(toolResult.ok, false);
+  assert.match(toolResult.result, /cut off/);
+
+  // the follow-up request must carry parseable arguments, or the provider rejects the history
+  const echoed = sent[1].messages.find((m) => m.role === 'assistant').tool_calls[0];
+  assert.doesNotThrow(() => JSON.parse(echoed.function.arguments));
+  assert.equal(result.text, 'shorter next time');
+});

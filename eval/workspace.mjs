@@ -158,3 +158,39 @@ export function isInside(candidate, roots) {
     return target === base || target.startsWith(base + sep);
   });
 }
+
+/**
+ * The double run. A candidate's test is written into both checkouts at the library's proof
+ * location and run with the library's own runner; only exit codes decide the outcome. Red on the
+ * mutant and green on pristine is a proof. Anything else is not, including a test that fails both
+ * ways because it does not parse.
+ *
+ * One definition, used twice: stage 1's gate calls it to decide whether the agent may answer, and
+ * `run-eval.mjs` calls it again to score whatever answer comes back. The scorer never takes a
+ * candidate's word for its own gate.
+ *
+ * @param {object} options
+ * @param {string} options.library library id, selects the runner
+ * @param {Workspace} options.workspace
+ * @param {string} options.content complete test file source
+ * @param {number} [options.timeoutMs] per-side runner timeout
+ * @returns {{path: string, command: string, testFile: string, mutant: {code: number|null, ms: number, tail: string},
+ *   pristine: {code: number|null, ms: number, tail: string}, proved: boolean}}
+ */
+export function doubleRun({ library: libraryId, workspace, content, timeoutMs = 60_000 }) {
+  const runner = proofRunner(libraryId);
+  const sides = {};
+  for (const side of ['mutant', 'pristine']) {
+    materialiseTest(workspace[side], runner, content);
+    const result = capture(runner.command, workspace[side], { timeoutMs });
+    sides[side] = { code: result.code, ms: result.ms, tail: tail(result.output, 12).trim() };
+  }
+  return {
+    path: runner.path,
+    command: runner.command,
+    testFile: content,
+    mutant: sides.mutant,
+    pristine: sides.pristine,
+    proved: sides.mutant.code !== 0 && sides.pristine.code === 0,
+  };
+}

@@ -2,19 +2,18 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadCases } from '../corpus/case-edit.mjs';
-import { capture, tail } from '../corpus/exec.mjs';
 import { openTrajectory } from '../src/trajectory.mjs';
 import { formatReport } from './report.mjs';
 import { classify, emptyUsage, totals } from './score.mjs';
 import { parseVerdict } from './verdict.mjs';
-import { materialiseTest, prepareCase, proofRunner } from './workspace.mjs';
+import { doubleRun, prepareCase } from './workspace.mjs';
 
 const DEFAULT_MODEL = 'z-ai/glm-5.3-flash';
 const PROOF_TIMEOUT_MS = 60_000;
 
 /**
  * CLI: `npm run eval:run -- --candidate baseline-1 [--model <id>] [--cases <id>...] [--out <dir>]
- *       [--concurrency <n>] [--reasoning <off|effort>] [--provider <name>] [--require-parameters]`
+ *       [--concurrency <n>] [--reasoning <off|effort>] [--provider <name>] [--require-parameters] [--max-tokens <n>]`
  *
  * Runs one candidate over the corpus and scores it. Per case a pristine and a mutated checkout are
  * prepared under a temp dir — the shared corpus checkout is never written to — the candidate
@@ -44,6 +43,7 @@ async function main(argv) {
     ...(args.reasoning
       ? { reasoning: args.reasoning === 'off' ? { enabled: false } : { effort: args.reasoning } }
       : {}),
+    ...(args.maxTokens ? { max_tokens: args.maxTokens } : {}),
     ...(args.provider
       ? {
           provider: {
@@ -148,27 +148,16 @@ async function runCase({ record, candidate, outDir, model, apiKey, requestExtras
 }
 
 /**
- * The double run. The candidate's test is written into both checkouts at the library's own test
- * location and run with the library's own runner; only exit codes are read. Red on the mutant and
- * green on pristine is a proof. Anything else is not, including a test that fails both ways
- * because it does not parse.
+ * Score the claim with the same double run stage 1's gate uses (`doubleRun` in `workspace.mjs`).
+ * A candidate that gated its own answer is verified again here rather than believed.
  */
 function proveClaim(record, workspace, content) {
-  const runner = proofRunner(record.library);
-  const sides = {};
-  for (const side of ['mutant', 'pristine']) {
-    materialiseTest(workspace[side], runner, content);
-    const result = capture(runner.command, workspace[side], { timeoutMs: PROOF_TIMEOUT_MS });
-    sides[side] = { code: result.code, ms: result.ms, tail: tail(result.output, 12).trim() };
-  }
-  return {
-    path: runner.path,
-    command: runner.command,
-    testFile: content,
-    mutant: sides.mutant,
-    pristine: sides.pristine,
-    proved: sides.mutant.code !== 0 && sides.pristine.code === 0,
-  };
+  return doubleRun({
+    library: record.library,
+    workspace,
+    content,
+    timeoutMs: PROOF_TIMEOUT_MS,
+  });
 }
 
 /** @param {string[]} argv */
@@ -180,6 +169,7 @@ function parseArgs(argv) {
     out: null,
     concurrency: 1,
     reasoning: null,
+    maxTokens: null,
     provider: null,
     requireParameters: false,
   };
@@ -190,6 +180,7 @@ function parseArgs(argv) {
     else if (flag === '--out') args.out = argv[++i];
     else if (flag === '--concurrency') args.concurrency = Number(argv[++i]);
     else if (flag === '--reasoning') args.reasoning = argv[++i];
+    else if (flag === '--max-tokens') args.maxTokens = Number(argv[++i]);
     else if (flag === '--provider') args.provider = argv[++i];
     else if (flag === '--require-parameters') args.requireParameters = true;
     else if (flag === '--cases') {

@@ -128,7 +128,7 @@ export async function runAgent({
       messages.push({
         role: 'assistant',
         content: message.content ?? null,
-        ...(message.tool_calls ? { tool_calls: message.tool_calls } : {}),
+        ...(message.tool_calls ? { tool_calls: message.tool_calls.map(repairArguments) } : {}),
       });
 
       if (toolCalls.length === 0) {
@@ -170,6 +170,16 @@ async function executeCall({ call, byName, step, trajectory, onCheckpoint }) {
 
   if (!tool) {
     return finish(false, `error: no such tool "${call.name}"`);
+  }
+
+  // a completion cap cuts a long tool call off mid-argument. The tool is never given half an
+  // argument object; the model is told why, so it can send a shorter one.
+  if (call.arguments?._parseError) {
+    return finish(
+      false,
+      `error: the arguments for "${call.name}" were not valid JSON — the message was cut off ` +
+        'before the call finished. Send the call again, shorter.',
+    );
   }
 
   if (tool.requiresApproval) {
@@ -268,6 +278,23 @@ function toToolSchema(tool) {
       parameters: tool.parameters,
     },
   };
+}
+
+/**
+ * A tool call is echoed back into the conversation verbatim, and a provider re-parses its
+ * `arguments` when it reads the history. A call truncated by the completion cap therefore turns
+ * the next request into an HTTP 400 and kills the run. Unparseable arguments are replaced with an
+ * empty object so the history stays valid; the model learns what happened from the tool result.
+ */
+function repairArguments(call) {
+  const raw = call.function?.arguments;
+  if (typeof raw !== 'string' || raw === '') return call;
+  try {
+    JSON.parse(raw);
+    return call;
+  } catch {
+    return { ...call, function: { ...call.function, arguments: '{}' } };
+  }
 }
 
 /** tool arguments arrive as a JSON string; malformed JSON is surfaced to the model, not thrown */

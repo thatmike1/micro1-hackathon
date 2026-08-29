@@ -8,6 +8,7 @@ import { pristineEntry } from '../corpus/libraries.mjs';
 import { formatReport } from './report.mjs';
 import { classify, totals } from './score.mjs';
 import { parseVerdict } from './verdict.mjs';
+import { formatGate, run as runStage1, settle } from './candidates/stage-1.mjs';
 import { isInside, materialiseTest, prepareCase, proofRunner } from './workspace.mjs';
 
 describe('verdict parsing', () => {
@@ -151,6 +152,146 @@ describe('double-run gate', { skip: !existsSync(pristineEntry('ms')) }, () => {
       }
       assert.notEqual(codes.mutant, 0);
       assert.equal(codes.pristine, 0);
+    } finally {
+      workspace.cleanup();
+    }
+  });
+});
+
+describe('stage 1 gate', () => {
+  const runner = proofRunner('ms');
+  const trace = () => {
+    const written = [];
+    return { events: written, written, write: (type, payload) => written.push({ type, ...payload }) };
+  };
+  const gate = (mutantCode, pristineCode) => ({
+    path: runner.path,
+    command: runner.command,
+    mutant: { code: mutantCode, ms: 1, tail: 'mutant output' },
+    pristine: { code: pristineCode, ms: 1, tail: 'pristine output' },
+    proved: mutantCode !== 0 && pristineCode === 0,
+  });
+
+  it('names the failure shape rather than just repeating the exit codes', () => {
+    assert.match(formatGate(1, gate(0, 0)), /Green on both/);
+    assert.match(formatGate(1, gate(1, 1)), /Red on both/);
+    assert.match(formatGate(1, gate(0, 1)), /Backwards/);
+    assert.match(formatGate(1, gate(1, 0)), /GATE PASSED/);
+  });
+
+  it('returns both runner outputs and the attempts left on a failure', () => {
+    const text = formatGate(2, gate(0, 0));
+    assert.match(text, /attempt 2 of 4\. 2 attempt\(s\) left/);
+    assert.match(text, /mutant output/);
+    assert.match(text, /pristine output/);
+  });
+
+  it('answers a defect with the exact test that passed the gate', () => {
+    const t = trace();
+    const attempts = [
+      { attempt: 1, passed: false, content: 'bad', result: gate(0, 0) },
+      { attempt: 2, passed: true, content: 'good', result: gate(1, 0) },
+    ];
+    const settled = settle({ text: 'prose only', stopReason: 'final' }, attempts, runner, t);
+    const verdict = parseVerdict(settled.text).verdict;
+    assert.equal(verdict.defect, true);
+    assert.equal(verdict.testFile.content, 'good');
+    assert.deepEqual(t.written, [
+      { type: 'gate-outcome', resolution: 'proved', attempts: 2, passedOn: 2 },
+    ]);
+  });
+
+  it('lets a clean answer stand untouched when the gate was never passed', () => {
+    const t = trace();
+    const answer = { text: '{"defect": false, "note": "equivalent"}', stopReason: 'final' };
+    const settled = settle(answer, [], runner, t);
+    assert.equal(settled.text, answer.text);
+    assert.equal(t.written[0].resolution, 'clean');
+  });
+
+  it('withholds a defect claim that never passed the gate, so it scores no-verdict', () => {
+    const t = trace();
+    const attempts = [1, 2, 3, 4].map((attempt) => ({
+      attempt,
+      passed: false,
+      content: 'x',
+      result: gate(0, 0),
+    }));
+    const answer = { text: '{"defect": true, "testFile": {"path": "p", "content": "x"}}' };
+    const settled = settle(answer, attempts, runner, t);
+    assert.equal(parseVerdict(settled.text).ok, false);
+    assert.equal(t.written[0].resolution, 'withheld');
+    assert.equal(t.written[0].attempts, 4);
+  });
+});
+
+// the whole prover loop against a real checkout with a scripted model: a test that does not
+// separate the builds, the gate's rejection, then a test that does
+describe('stage 1 prover loop', { skip: !existsSync(pristineEntry('ms')) }, () => {
+  it('rejects a non-separating test, accepts the revision, and logs both attempts', async () => {
+    const record = loadCases().find((c) => c.id === 'ms-4');
+    const workspace = await prepareCase(record);
+    const events = [];
+    const trajectory = { events, write: (type, payload) => events.push({ type, ...payload }) };
+
+    const proof = (assertion) =>
+      [
+        "var assert = require('assert');",
+        "var ms = require('./');",
+        "describe('proof', function () {",
+        "  it('checks a year', function () {",
+        `    ${assertion}`,
+        '  });',
+        '});',
+      ].join('\n');
+    const submissions = [
+      proof("assert.equal(ms('1s'), 1000);"),
+      proof("assert.equal(ms('1y'), 31557600000);"),
+    ];
+    let turn = 0;
+
+    const transport = async () => {
+      turn += 1;
+      const message =
+        turn <= submissions.length
+          ? {
+              content: null,
+              tool_calls: [
+                {
+                  id: `call-${turn}`,
+                  type: 'function',
+                  function: {
+                    name: 'submit-proof',
+                    arguments: JSON.stringify({ content: submissions[turn - 1] }),
+                  },
+                },
+              ],
+            }
+          : { content: '```json\n{"defect": true, "note": "year constant divided"}\n```' };
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ choices: [{ message, finish_reason: 'stop' }] }),
+      };
+    };
+
+    try {
+      const answer = await runStage1({ record, workspace, trajectory, model: 'mock', transport });
+      const gates = events.filter((e) => e.type === 'gate-attempt');
+      assert.deepEqual(
+        gates.map((g) => g.passed),
+        [false, true],
+      );
+      assert.equal(gates[0].mutant.code, 0, 'the non-separating test passes on the mutant too');
+      assert.notEqual(gates[1].mutant.code, 0);
+      assert.equal(gates[1].pristine.code, 0);
+
+      const verdict = parseVerdict(answer.text).verdict;
+      assert.equal(verdict.defect, true);
+      assert.equal(verdict.testFile.content, submissions[1]);
+      assert.equal(verdict.note, 'year constant divided');
+      assert.equal(events.at(-1).resolution, 'proved');
+      assert.equal(events.at(-1).passedOn, 2);
     } finally {
       workspace.cleanup();
     }

@@ -31,6 +31,15 @@ import { dirname, join } from 'node:path';
  * `checkpoint`  a human approval point: the run paused for a decision.
  *   { step: number, label: string, question: string, decision: string|null, note: string|null }
  *
+ * `gate-attempt` one double-run gate attempt by a prover candidate: the test it submitted and the
+ *   two exit codes it came back with. Written once per attempt, passed or failed, so a case that
+ *   failed the gate and then passed it reads as the sequence it was.
+ *   { step: number|null, attempt: number, of: number, passed: boolean, path: string,
+ *     command: string, testFile: string, mutant: {code, ms, tail}, pristine: {code, ms, tail} }
+ *
+ * `gate-outcome` how the gate resolved the run, written after `run-end`.
+ *   { resolution: 'proved'|'clean'|'withheld', attempts: number, passedOn?: number, reason?: string }
+ *
  * `run-end`     last line of every file.
  *   { result: string|null, stopReason: 'final'|'max-steps'|'error', error: string|null,
  *     usage: Usage, steps: number, wallMs: number }
@@ -38,7 +47,7 @@ import { dirname, join } from 'node:path';
  * Usage is `{ promptTokens, completionTokens, totalTokens, costUsd }`; costUsd is null when
  * the provider does not report it.
  *
- * @typedef {'run-start'|'step'|'tool-result'|'retry'|'checkpoint'|'run-end'} EventType
+ * @typedef {'run-start'|'step'|'tool-result'|'retry'|'checkpoint'|'gate-attempt'|'gate-outcome'|'run-end'} EventType
  */
 
 /** @typedef {{promptTokens:number, completionTokens:number, totalTokens:number, costUsd:number|null}} Usage */
