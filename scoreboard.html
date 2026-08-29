@@ -690,6 +690,16 @@ h2 + .attest { border-top: 0; padding-top: var(--space-1); }
   overflow-x: auto;
 }
 
+/* a sheet that has taken the printed margin cannot also be keyed from it,
+   so its label is set above the sheet rather than beside it */
+.sheet-label {
+  margin: var(--space-2) 0 0;
+  font: var(--weight-print) var(--size-apparatus)/var(--lead) var(--font-print);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  color: var(--ink-print);
+}
+
 /* the measurement table: ruled heavy under the head, feint between rows,
    closed by a rule at the foot, the way a results sheet is ruled */
 table.record {
@@ -1106,7 +1116,7 @@ table.record {
   </div>
   <p class="key-line">Withheld = a buggy case claimed but not proved, or left without a verdict.
   A withheld claim asks for a human; a miss ships the defect.</p>
-  <p class="marginal at-block">Controls</p>
+  <p class="sheet-label">Controls that were never answered</p>
   <div class="wide">
   <table class="record">
     <thead><tr><th>Arm</th><th>Control</th><th>Outcome</th></tr></thead>
@@ -1117,7 +1127,7 @@ table.record {
   </div>
   <p class="key-line">A control left without a verdict is counted in neither column above. The
   false-alarm rate in that repetition is over the controls that were answered.</p>
-  <p class="marginal at-block">Per case</p>
+  <p class="sheet-label">Per case, every arm read across</p>
   <div class="wide">
   <table class="record matrix">
     <thead><tr>
@@ -1307,7 +1317,7 @@ table.record {
   </div>
   <p class="key-line">Withheld = a buggy case claimed but not proved, or left without a verdict.
   A withheld claim asks for a human; a miss ships the defect.</p>
-  <p class="marginal at-block">Controls</p>
+  <p class="sheet-label">Controls that were never answered</p>
   <div class="wide">
   <table class="record">
     <thead><tr><th>Arm</th><th>Control</th><th>Outcome</th></tr></thead>
@@ -1323,7 +1333,7 @@ table.record {
   </div>
   <p class="key-line">A control left without a verdict is counted in neither column above. The
   false-alarm rate in that repetition is over the controls that were answered.</p>
-  <p class="marginal at-block">Per case</p>
+  <p class="sheet-label">Per case, every arm read across</p>
   <div class="wide">
   <table class="record matrix">
     <thead><tr>

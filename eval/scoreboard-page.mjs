@@ -34,6 +34,16 @@ const SCOREBOARD = String.raw`
   overflow-x: auto;
 }
 
+/* a sheet that has taken the printed margin cannot also be keyed from it,
+   so its label is set above the sheet rather than beside it */
+.sheet-label {
+  margin: var(--space-2) 0 0;
+  font: var(--weight-print) var(--size-apparatus)/var(--lead) var(--font-print);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  color: var(--ink-print);
+}
+
 /* the measurement table: ruled heavy under the head, feint between rows,
    closed by a rule at the foot, the way a results sheet is ruled */
 table.record {
@@ -344,7 +354,7 @@ function engineSection(engine, board, section) {
     ),
   );
   if (unanswered.length > 0) {
-    parts.push(`  <p class="marginal at-block">Controls</p>
+    parts.push(`  <p class="sheet-label">Controls that were never answered</p>
   <div class="wide">
   <table class="record">
     <thead><tr><th>Arm</th><th>Control</th><th>Outcome</th></tr></thead>
@@ -462,7 +472,7 @@ function caseMatrix(engine) {
       .join('');
     return `      <tr><td class="id">${esc(id)}</td><td class="id">${esc(kind)}</td>${cells}</tr>`;
   });
-  return `  <p class="marginal at-block">Per case</p>
+  return `  <p class="sheet-label">Per case, every arm read across</p>
   <div class="wide">
   <table class="record matrix">
     <thead><tr>
