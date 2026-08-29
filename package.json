@@ -16,6 +16,7 @@
     "corpus:screen": "node corpus/screen.mjs",
     "corpus:make-case": "node corpus/make-case.mjs",
     "eval:run": "node eval/run-eval.mjs",
-    "eval:report": "node eval/report.mjs"
+    "eval:report": "node eval/report.mjs",
+    "eval:scoreboard": "node eval/scoreboard.mjs"
   }
 }
