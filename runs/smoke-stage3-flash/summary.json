@@ -1,0 +1,155 @@
+{
+  "candidate": "stage-3",
+  "description": "cross-case memory: a written file of lessons carried from case to case, over the shipped stage of each engine",
+  "model": "z-ai/glm-5.3-flash",
+  "requestExtras": {
+    "reasoning": {
+      "effort": "low"
+    },
+    "max_tokens": 4096,
+    "provider": {
+      "order": [
+        "Z.AI"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true
+    }
+  },
+  "candidateOptions": {
+    "base": "stage-2",
+    "memory": "on"
+  },
+  "concurrency": 1,
+  "order": [
+    "ms-12",
+    "ms-4",
+    "ms-70"
+  ],
+  "startedAt": "2026-08-29T13:40:35.506Z",
+  "finishedAt": "2026-08-29T13:43:25.987Z",
+  "wallMs": 170481,
+  "totals": {
+    "cases": 3,
+    "buggy": 3,
+    "controls": 0,
+    "proved": 3,
+    "proofRate": 1,
+    "claimUnproved": 0,
+    "misses": 0,
+    "falseAlarms": 0,
+    "controlsCorrect": 0,
+    "noVerdict": 0,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 33465,
+      "completionTokens": 2570,
+      "totalTokens": 36035,
+      "costUsd": 0.002376695
+    },
+    "wallMsTotal": 170452
+  },
+  "cases": [
+    {
+      "id": "ms-12",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "proved",
+      "defect": true,
+      "note": "Replacing the type check with `true` means arrays (which have a .length) are parsed instead of throwing; ms(['100']) now returns 100 instead of throwing the documented error.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('throws on array input', function () {\n    assert.throws(function () { ms(['100']); }, /val is not a non-empty string/);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 152,
+          "tail": "\u001b[92m \u001b[0m\u001b[32m 0 passing\u001b[0m\u001b[90m (5ms)\u001b[0m\n\u001b[31m  1 failing\u001b[0m\n\n\u001b[0m  1) proof\n       throws on array input:\n\u001b[0m\u001b[31m     AssertionError [ERR_ASSERTION]: Missing expected exception.\u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 139,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m throws on array input\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (3ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 11500,
+        "completionTokens": 866,
+        "totalTokens": 12366,
+        "costUsd": 0.00072956
+      },
+      "wallMs": 66442,
+      "trajectory": "ms-12.jsonl"
+    },
+    {
+      "id": "ms-4",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "constant",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The year constant was changed from d * 365.25 to d / 365.25, so ms('1y') now returns ~236550 ms instead of 31557600000 ms.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('parses years correctly', function () {\n    assert.strictEqual(ms('1y'), 365.25 * 24 * 60 * 60 * 1000);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 150,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-236550.30800821356\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 145,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m parses years correctly\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 11488,
+        "completionTokens": 1048,
+        "totalTokens": 12536,
+        "costUsd": 0.0008355999999999999
+      },
+      "wallMs": 62396,
+      "trajectory": "ms-4.jsonl"
+    },
+    {
+      "id": "ms-70",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "fall-through",
+      "outcome": "proved",
+      "defect": true,
+      "note": "Removing `return n * y` makes year cases fall through to weeks, so ms('1y') returns 604800000 (one week) instead of 31557600000 (one year).",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('parses years as years', function () {\n    assert.strictEqual(ms('1y'), 365.25 * 24 * 60 * 60 * 1000);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 168,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-604800000\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 153,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m parses years as years\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 10477,
+        "completionTokens": 656,
+        "totalTokens": 11133,
+        "costUsd": 0.000811535
+      },
+      "wallMs": 41614,
+      "trajectory": "ms-70.jsonl"
+    }
+  ]
+}

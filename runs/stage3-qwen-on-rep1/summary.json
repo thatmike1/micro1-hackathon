@@ -1,0 +1,332 @@
+{
+  "candidate": "stage-3",
+  "description": "cross-case memory: a written file of lessons carried from case to case, over the shipped stage of each engine",
+  "model": "qwen/qwen3-30b-a3b-instruct-2507",
+  "requestExtras": {
+    "max_tokens": 4096,
+    "provider": {
+      "order": [
+        "CoreWeave"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true
+    }
+  },
+  "candidateOptions": {
+    "base": "stage-1",
+    "memory": "on"
+  },
+  "concurrency": 1,
+  "order": [
+    "bytes-12",
+    "bytes-15",
+    "bytes-52",
+    "bytes-control-loop",
+    "ms-12",
+    "ms-170",
+    "ms-27",
+    "ms-30",
+    "ms-4",
+    "ms-70",
+    "ms-72",
+    "ms-control-lookup"
+  ],
+  "startedAt": "2026-08-29T13:44:28.677Z",
+  "finishedAt": "2026-08-29T13:51:29.467Z",
+  "wallMs": 420790,
+  "totals": {
+    "cases": 12,
+    "buggy": 10,
+    "controls": 2,
+    "proved": 3,
+    "proofRate": 0.3,
+    "claimUnproved": 0,
+    "misses": 4,
+    "falseAlarms": 0,
+    "controlsCorrect": 2,
+    "noVerdict": 3,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 301676,
+      "completionTokens": 45346,
+      "totalTokens": 347022,
+      "costUsd": 0.043771399999999995
+    },
+    "wallMsTotal": 420698
+  },
+  "cases": [
+    {
+      "id": "bytes-12",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "anchor",
+      "outcome": "miss",
+      "defect": false,
+      "note": "",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 21223,
+        "completionTokens": 13257,
+        "totalTokens": 34480,
+        "costUsd": 0.0060994000000000005
+      },
+      "wallMs": 103744,
+      "trajectory": "bytes-12.jsonl"
+    },
+    {
+      "id": "bytes-15",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "quantifier",
+      "outcome": "miss",
+      "defect": false,
+      "note": "The change removes the ^ anchor from the regex, making it match substrings instead of requiring the entire string to match. However, this change is not observable in practice because the `parse` function only processes the entire string input. The regex is applied to the full input string, and the `parseRegExp.exec(val)` call will still only match the full string if it starts with the pattern. The removal of ^ does not affect behavior for valid inputs, and the library's test suite does not cover substring matching. Thus, the change is an equivalent refactor with no observable effect on callers.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 20182,
+        "completionTokens": 1908,
+        "totalTokens": 22090,
+        "costUsd": 0.0025906
+      },
+      "wallMs": 24083,
+      "trajectory": "bytes-15.jsonl"
+    },
+    {
+      "id": "bytes-52",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "option-ignored",
+      "outcome": "miss",
+      "defect": false,
+      "note": "The change replaces a condition checking for undefined with a constant true, but the logic remains functionally equivalent because the ternary operator still defaults to 2 when options.decimalPlaces is undefined. The original code uses `options.decimalPlaces !== undefined` to check for explicit presence, while the patch uses `true`, which means it will use `options.decimalPlaces` even if undefined. However, since `options.decimalPlaces` is undefined, it falls back to 2 in both cases. The behavior is identical.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 28506,
+        "completionTokens": 3043,
+        "totalTokens": 31549,
+        "costUsd": 0.0037634999999999995
+      },
+      "wallMs": 39636,
+      "trajectory": "bytes-52.jsonl"
+    },
+    {
+      "id": "bytes-control-loop",
+      "kind": "control",
+      "library": "bytes",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 21783,
+        "completionTokens": 1378,
+        "totalTokens": 23161,
+        "costUsd": 0.0025917
+      },
+      "wallMs": 17433,
+      "trajectory": "bytes-control-loop.jsonl"
+    },
+    {
+      "id": "ms-12",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 31780,
+        "completionTokens": 10639,
+        "totalTokens": 42419,
+        "costUsd": 0.0063697
+      },
+      "wallMs": 83710,
+      "trajectory": "ms-12.jsonl"
+    },
+    {
+      "id": "ms-170",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "threshold",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change from `>=` to `>` in the `plural` function alters the output at exactly 1.5 times the unit, causing singular form where plural was used before. The test verifies this by checking that `ms(1500, { long: true })` returns '2 seconds' in the original but not in the patched version.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    // The issue: the test is failing on both because the string '2 minutes' is not produced\n    // Let's debug: what is the actual output of ms(90000, { long: true })?\n    // We need to see what the library actually returns\n    // The change is in `plural`: from `>=` to `>`\n    // So at exactly 1.5 * n, original uses plural, patched uses singular\n    // But we need to find a case where the rounded value is not an integer?\n    // No, Math.round is used\n    // Let's try with a value that is not exactly 1.5 * n, but close\n    // But the difference is only at exactly 1.5 * n\n    // Let's try with 90001\n    // msAbs = 90001\n    // n = 60000\n    // 1.5 * n = 90000\n    // original: 90001 >= 90000 → true → plural → '2 minutes'\n    // patched: 90001 > 90000 → true → plural → '2 minutes'\n    // So same\n    // Only at exactly 90000: original: 90000 >= 90000 → true → plural\n    // patched: 90000 > 90000 → false → singular\n    // So the difference is at 90000\n    // But why is the test failing on both?\n    // Because the output is not '2 minutes' at all?\n    // Let's check: what is the actual output?\n    // We need to print it\n    // But we can't use console.log in mocha tests?\n    // We can, but it might not be visible\n    // Or the test might be failing due to an assertion error\n    // Let's check: what is the actual output of ms(90000, { long: true })?\n    // We need to run it\n    // But the test is failing on both, so the library is not returning '2 minutes'\n    // Let's try to see what it returns\n    // The function fmtLong calls plural with (ms, msAbs, m, 'minute')\n    // ms = 90000\n    // msAbs = 90000\n    // m = 60000\n    // So: Math.round(90000 / 60000) = Math.round(1.5) = 2\n    // Then: isPlural = (msAbs > n * 1.5) = 90000 > 90000 → false\n    // So: '2' + ' ' + 'minute' + (false ? 's' : '') → '2 minute'\n    // So the output is '2 minute'\n    // But the test is asserting '2 minutes'\n    // So it fails\n    // But why does it fail on the original too?\n    // Because in the original, isPlural = (msAbs >= n * 1.5) = 90000 >= 90000 → true\n    // So it returns '2 minutes'\n    // So the original returns '2 minutes', patched returns '2 minute'\n    // So the test should pass on original and fail on patched\n    // But it fails on both\n    // That means the test is not running?\n    // Or the library is not returning '2 minutes' on the original?\n    // Let's check: what is the actual output of the original?\n    // We need to see\n    // Perhaps the test is not using the correct value?\n    // Let's try with a different value\n    // What if we try 89999?\n    // msAbs = 89999\n    // n = 60000\n    // 1.5 * n = 90000\n    // 89999 < 90000\n    // So in both: isPlural = false → '2 minute'\n    // But 89999 / 60000 = 1.49998 → Math.round = 1\n    // So it would be '1 minute'\n    // So not relevant\n    // Only at 90000 is the difference\n    // But the test is failing on both, so the library is not returning '2 minutes' on the original?\n    // Let's check the original behavior\n    // The original code: isPlural = msAbs >= n * 1.5\n    // For 90000: 90000 >= 90000 → true → '2 minutes'\n    // So it should return '2 minutes'\n    // But the test is failing\n    // Unless the test is not using the correct input\n    // Wait: in the test, we have:\n    // const val = 90000;\n    // const result = ms(val, { long: true });\n    // But the function ms calls fmtLong only if the input is a number and finite\n    // And 90000 is a number and finite\n    // And the options have long: true\n    // So it should call fmtLong(90000)\n    // Then in fmtLong:\n    // msAbs = 90000\n    // if (msAbs >= d) → 90000 >= 86400000? no\n    // if (msAbs >= h) → 90000 >= 3600000? no\n    // if (msAbs >= m) → 90000 >= 60000? yes\n    // so it calls plural(90000, 90000, 60000, 'minute')\n    // which returns '2 minute' in the patched version, '2 minutes' in the original\n    // So the test should pass on original and fail on patched\n    // But it fails on both\n    // That means the test is not running?\n    // Or there's a syntax error?\n    // Let's check the test file\n    // It looks correct\n    // Perhaps the mocha test is not being run?\n    // Or the library is not being imported correctly?\n    // The import is: var ms = require('./');\n    // That should work\n    // But the output shows an error in mocha.js, line 514\n    // That's not helpful\n    // Let's try a simpler test\n    // What if we just try to require the library?\n    // Maybe the library has a syntax error?\n    // But the original test suite passes\n    // Perhaps the test is not being run because of an uncaught exception?\n    // Let's try to run the test with a try-catch\n    // But we can't\n    // Alternatively, let's try a different value\n    // What if we try 90000.1?\n    // Then Math.round(90000.1 / 60000) = Math.round(1.500001666) = 2\n    // And 90000.1 > 90000 → true → plural → '2 minutes' in both\n    // So same\n    // Only at exactly 90000\n    // But the test is failing on both\n    // Perhaps the issue is that the test is not using the correct value for n?\n    // Let's try to debug\n    // We need to see what the actual output is\n    // Let's modify the test to print the result\n    // But we can't use console.log in mocha tests?\n    // We can, but it might not be visible\n    // Or the test might be failing due to an assertion error\n    // Let's try to run the test with a different assertion\n    // Instead of asserting '2 minutes', let's assert that the result is '2 minute' or '2 minutes'\n    // But that won't help\n    // Alternatively, let's try to see if the library returns anything at all\n    // What if we try a smaller value?\n    // Let's try 60000\n    // msAbs = 60000\n    // n = 60000\n    // 1.5 * n = 90000\n    // 60000 < 90000\n    // So isPlural = false → '1 minute'\n    // So both return '1 minute'\n    // Not helpful\n    // What if we try 90000, but with a different unit?\n    // The function fmtLong uses the same logic for all units\n    // But the issue is at exactly 1.5 * n\n    // Let's try with seconds\n    // n = s = 1000\n    // 1.5 * n = 1500\n    // ms = 1500\n    // msAbs = 1500\n    // 1500 >= 1500 → true → plural → '2 seconds'\n    // 1500 > 1500 → false → singular → '2 second'\n    // So difference at 1500\n    // But 1500 / 1000 = 1.5 → Math.round = 2\n    // So result: '2 seconds' vs '2 second'\n    // Let's try that\n    const val = 1500;\n    const result = ms(val, { long: true });\n    // In original: '2 seconds'\n    // In patched: '2 second'\n    // So we can assert that result === '2 seconds'\n    // This should pass on original, fail on patched\n    assert.strictEqual(result, '2 seconds');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 139,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-2 second\u001b[0m\n      \u001b[32m+2 seconds\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:156:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 134,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 18547,
+        "completionTokens": 4012,
+        "totalTokens": 22559,
+        "costUsd": 0.0030583000000000003
+      },
+      "wallMs": 38783,
+      "trajectory": "ms-170.jsonl"
+    },
+    {
+      "id": "ms-27",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "diagnostic",
+      "outcome": "miss",
+      "defect": false,
+      "note": "The change only modifies the error message string by removing a prefix, but the behavior of throwing an error for invalid inputs remains unchanged. The test suite passes on both builds, and the error is still thrown with a valid JSON string message in the patched version. The change is an equivalent refactor that does not alter observable behavior.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 25626,
+        "completionTokens": 2292,
+        "totalTokens": 27918,
+        "costUsd": 0.0032502
+      },
+      "wallMs": 23952,
+      "trajectory": "ms-27.jsonl"
+    },
+    {
+      "id": "ms-30",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 27775,
+        "completionTokens": 2160,
+        "totalTokens": 29935,
+        "costUsd": 0.0034254999999999997
+      },
+      "wallMs": 24788,
+      "trajectory": "ms-30.jsonl"
+    },
+    {
+      "id": "ms-4",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "constant",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change from `y = d * 365.25` to `y = d / 365.25` incorrectly defines a year as a fraction of a day instead of a multiple, breaking the expected behavior of parsing '1y'.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    // The original y = d * 365.25 means 1 year = 365.25 days\n    // The patched version y = d / 365.25 means 1 year = 1/365.25 days, which is wrong\n    // So parsing '1y' should give a large number in original, small in patched\n    const result = ms('1y');\n    \n    // Original: 1 year = 365.25 * 24 * 60 * 60 * 1000 = ~31,557,600,000 ms\n    // Patched: 1 year = (24 * 60 * 60 * 1000) / 365.25 ≈ 236.5 ms\n    \n    // The original should return a large number (~31.5 billion ms)\n    assert(result > 1e10, 'Original should return a large number for 1 year');\n    \n    // The patched version returns a tiny number, so this assertion will fail on the patched build\n    // But we need to check that the original passes and the patched fails\n    // So we must run this test in both checkouts and compare\n    \n    // We'll check the actual value and compare\n    // If the value is ~31.5e9, it's correct\n    // If it's ~236, it's wrong\n    \n    // The original version should return ~31.5e9\n    // The patched version returns ~236\n    \n    // So if result is less than 1000, it's the patched version\n    // But we need to know which build we're in\n    // Instead, we'll just assert the correct behavior\n    \n    // The correct behavior is that 1 year = 365.25 days\n    // So 1y should be about 31.5e9 ms\n    assert(result > 3e10, '1y should be about 31.5 billion ms');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 150,
+          "tail": "\u001b[31mAssertionError [ERR_ASSERTION]: Original should return a large number for 1 year\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-false\u001b[0m\n      \u001b[32m+true\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:15:5)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 147,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 16293,
+        "completionTokens": 1384,
+        "totalTokens": 17677,
+        "costUsd": 0.0020445000000000003
+      },
+      "wallMs": 14807,
+      "trajectory": "ms-4.jsonl"
+    },
+    {
+      "id": "ms-70",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "fall-through",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 31483,
+        "completionTokens": 1785,
+        "totalTokens": 33268,
+        "costUsd": 0.0036838
+      },
+      "wallMs": 20345,
+      "trajectory": "ms-70.jsonl"
+    },
+    {
+      "id": "ms-72",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "arithmetic",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change inverts the calculation for years, turning multiplication into division, which drastically reduces the output. The test verifies that the original version returns a large number for '1y' while the patched version does not, confirming the behavioral change.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('should parse years as large number in original', function () {\n    const result = ms('1y');\n    assert.ok(result > 1e10, `Expected large number for '1y', got ${result}`);\n  });\n\n  it('should not parse years as large number in patched', function () {\n    const result = ms('1y');\n    // In the patched version, '1y' returns a tiny number, so it should NOT be large\n    // We want this test to fail in the patched version\n    assert.ok(result > 1e10, `Expected large number for '1y' in patched, got ${result}`);\n  });\n});\n",
+        "mutant": {
+          "code": 2,
+          "ms": 143,
+          "tail": "\u001b[31mAssertionError [ERR_ASSERTION]: Expected large number for '1y' in patched, got 3.168808781402895e-11\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-false\u001b[0m\n      \u001b[32m+true\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:14:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 136,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m should parse years as large number in original\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m should not parse years as large number in patched\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 2 passing\u001b[0m\u001b[90m (5ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 29778,
+        "completionTokens": 2505,
+        "totalTokens": 32283,
+        "costUsd": 0.0037292999999999996
+      },
+      "wallMs": 20512,
+      "trajectory": "ms-72.jsonl"
+    },
+    {
+      "id": "ms-control-lookup",
+      "kind": "control",
+      "library": "ms",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "The change replaces a switch statement with a lookup object for unit multipliers, which is functionally equivalent. The multipliers object in the patched version includes all the same keys and values as the switch cases, so the behavior remains identical. No observable change in output occurs for any input, including '1y', which continues to return the same large number in both versions.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 28700,
+        "completionTokens": 983,
+        "totalTokens": 29683,
+        "costUsd": 0.0031649
+      },
+      "wallMs": 8905,
+      "trajectory": "ms-control-lookup.jsonl"
+    }
+  ]
+}

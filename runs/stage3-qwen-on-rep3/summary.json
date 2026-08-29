@@ -1,0 +1,302 @@
+{
+  "candidate": "stage-3",
+  "description": "cross-case memory: a written file of lessons carried from case to case, over the shipped stage of each engine",
+  "model": "qwen/qwen3-30b-a3b-instruct-2507",
+  "requestExtras": {
+    "max_tokens": 4096,
+    "provider": {
+      "order": [
+        "CoreWeave"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true
+    }
+  },
+  "candidateOptions": {
+    "base": "stage-1",
+    "memory": "on"
+  },
+  "concurrency": 1,
+  "order": [
+    "bytes-12",
+    "bytes-15",
+    "bytes-52",
+    "bytes-control-loop",
+    "ms-12",
+    "ms-170",
+    "ms-27",
+    "ms-30",
+    "ms-4",
+    "ms-70",
+    "ms-72",
+    "ms-control-lookup"
+  ],
+  "startedAt": "2026-08-29T13:56:01.140Z",
+  "finishedAt": "2026-08-29T14:01:24.237Z",
+  "wallMs": 323097,
+  "totals": {
+    "cases": 12,
+    "buggy": 10,
+    "controls": 2,
+    "proved": 1,
+    "proofRate": 0.1,
+    "claimUnproved": 0,
+    "misses": 3,
+    "falseAlarms": 0,
+    "controlsCorrect": 2,
+    "noVerdict": 6,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 312360,
+      "completionTokens": 37218,
+      "totalTokens": 349578,
+      "costUsd": 0.0424014
+    },
+    "wallMsTotal": 323003
+  },
+  "cases": [
+    {
+      "id": "bytes-12",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "anchor",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 16894,
+        "completionTokens": 1071,
+        "totalTokens": 17965,
+        "costUsd": 0.0020107
+      },
+      "wallMs": 10648,
+      "trajectory": "bytes-12.jsonl"
+    },
+    {
+      "id": "bytes-15",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "quantifier",
+      "outcome": "miss",
+      "defect": false,
+      "note": "",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 30657,
+        "completionTokens": 8212,
+        "totalTokens": 38869,
+        "costUsd": 0.005529300000000001
+      },
+      "wallMs": 56314,
+      "trajectory": "bytes-15.jsonl"
+    },
+    {
+      "id": "bytes-52",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "option-ignored",
+      "outcome": "miss",
+      "defect": false,
+      "note": "",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 19903,
+        "completionTokens": 1438,
+        "totalTokens": 21341,
+        "costUsd": 0.0024216999999999997
+      },
+      "wallMs": 14443,
+      "trajectory": "bytes-52.jsonl"
+    },
+    {
+      "id": "bytes-control-loop",
+      "kind": "control",
+      "library": "bytes",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 23144,
+        "completionTokens": 1712,
+        "totalTokens": 24856,
+        "costUsd": 0.002828
+      },
+      "wallMs": 17982,
+      "trajectory": "bytes-control-loop.jsonl"
+    },
+    {
+      "id": "ms-12",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change allows non-string objects with a length property to bypass the type check, leading to undefined behavior instead of throwing an error, which is a behavioral difference.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    // Test object with length property but not a string\n    const obj = { length: 10 };\n    // Original: type !== 'string' → skip → throw error\n    // Patched: true && obj.length > 0 → true → call parse → String(obj) → '[object Object]'\n    // Then parse tries to match → fails → returns undefined\n    // Then ms returns undefined\n    // But original throws error\n    // So the patched version does not throw an error\n    // So it's a defect\n    // But the test must check that the original throws and the patched does not\n    // So we need to check both\n    assert.throws(() => ms(obj), Error, 'Original should throw for non-string with length property');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 140,
+          "tail": "\u001b[92m \u001b[0m\u001b[32m 0 passing\u001b[0m\u001b[90m (5ms)\u001b[0m\n\u001b[31m  1 failing\u001b[0m\n\n\u001b[0m  1) proof\n       fails on the patched build:\n\u001b[0m\u001b[31m     AssertionError [ERR_ASSERTION]: Missing expected exception (Error): Original should throw for non-string with length property\u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:17:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 134,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 23990,
+        "completionTokens": 6147,
+        "totalTokens": 30137,
+        "costUsd": 0.0042431
+      },
+      "wallMs": 51444,
+      "trajectory": "ms-12.jsonl"
+    },
+    {
+      "id": "ms-170",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "threshold",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 30777,
+        "completionTokens": 3432,
+        "totalTokens": 34209,
+        "costUsd": 0.0041072999999999995
+      },
+      "wallMs": 39328,
+      "trajectory": "ms-170.jsonl"
+    },
+    {
+      "id": "ms-27",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "diagnostic",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 25185,
+        "completionTokens": 1830,
+        "totalTokens": 27015,
+        "costUsd": 0.0030675000000000003
+      },
+      "wallMs": 21968,
+      "trajectory": "ms-27.jsonl"
+    },
+    {
+      "id": "ms-30",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 27675,
+        "completionTokens": 2138,
+        "totalTokens": 29813,
+        "costUsd": 0.0034089
+      },
+      "wallMs": 18435,
+      "trajectory": "ms-30.jsonl"
+    },
+    {
+      "id": "ms-4",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "constant",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 27565,
+        "completionTokens": 2284,
+        "totalTokens": 29849,
+        "costUsd": 0.0034417000000000007
+      },
+      "wallMs": 20529,
+      "trajectory": "ms-4.jsonl"
+    },
+    {
+      "id": "ms-70",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "fall-through",
+      "outcome": "miss",
+      "defect": false,
+      "note": "",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 26345,
+        "completionTokens": 1376,
+        "totalTokens": 27721,
+        "costUsd": 0.0030473
+      },
+      "wallMs": 12257,
+      "trajectory": "ms-70.jsonl"
+    },
+    {
+      "id": "ms-72",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "arithmetic",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 27389,
+        "completionTokens": 5946,
+        "totalTokens": 33335,
+        "costUsd": 0.0045227
+      },
+      "wallMs": 42755,
+      "trajectory": "ms-72.jsonl"
+    },
+    {
+      "id": "ms-control-lookup",
+      "kind": "control",
+      "library": "ms",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 32836,
+        "completionTokens": 1632,
+        "totalTokens": 34468,
+        "costUsd": 0.0037732
+      },
+      "wallMs": 16900,
+      "trajectory": "ms-control-lookup.jsonl"
+    }
+  ]
+}

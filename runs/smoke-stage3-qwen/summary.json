@@ -1,0 +1,137 @@
+{
+  "candidate": "stage-3",
+  "description": "cross-case memory: a written file of lessons carried from case to case, over the shipped stage of each engine",
+  "model": "qwen/qwen3-30b-a3b-instruct-2507",
+  "requestExtras": {
+    "max_tokens": 4096,
+    "provider": {
+      "order": [
+        "CoreWeave"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true
+    }
+  },
+  "candidateOptions": {
+    "base": "stage-1",
+    "memory": "on"
+  },
+  "concurrency": 1,
+  "order": [
+    "ms-12",
+    "ms-4",
+    "ms-70"
+  ],
+  "startedAt": "2026-08-29T13:43:34.169Z",
+  "finishedAt": "2026-08-29T13:44:01.332Z",
+  "wallMs": 27163,
+  "totals": {
+    "cases": 3,
+    "buggy": 3,
+    "controls": 0,
+    "proved": 2,
+    "proofRate": 0.6666666666666666,
+    "claimUnproved": 0,
+    "misses": 0,
+    "falseAlarms": 0,
+    "controlsCorrect": 0,
+    "noVerdict": 1,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 32947,
+      "completionTokens": 3798,
+      "totalTokens": 36745,
+      "costUsd": 0.0044341
+    },
+    "wallMsTotal": 27130
+  },
+  "cases": [
+    {
+      "id": "ms-12",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "no-verdict",
+      "defect": null,
+      "note": null,
+      "error": "no JSON object with a \"defect\" field in the answer",
+      "proof": null,
+      "usage": {
+        "promptTokens": 18439,
+        "completionTokens": 2055,
+        "totalTokens": 20494,
+        "costUsd": 0.0024604
+      },
+      "wallMs": 14227,
+      "trajectory": "ms-12.jsonl"
+    },
+    {
+      "id": "ms-4",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "constant",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change incorrectly defines a year as one day divided by 365.25, making a year ~24.5 seconds long instead of ~31.5 million seconds. This breaks the library's core functionality.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    // Original behavior: y = d * 365.25 → 1 year = 365.25 days\n    // Patched behavior: y = d / 365.25 → 1 year = 1/365.25 days (~24.5 minutes)\n    // This is clearly wrong: a year should be longer than a day.\n    // Test: parse '1y' should return a large number in original, tiny in patched.\n    // We expect the original to return ~31,557,600,000 ms (365.25 * 24 * 60 * 60 * 1000)\n    // The patched version returns ~24,500 ms, which is wrong.\n    \n    const originalYearMs = 365.25 * 24 * 60 * 60 * 1000; // ~31.5576 million seconds\n    const parsed = ms('1y');\n    \n    // In original, '1y' should be ~31.5576 million seconds\n    // In patched, it's ~24.5 seconds → clearly wrong\n    // So the patched version is broken.\n    \n    // We assert that the patched version does NOT return the correct value\n    // The original should pass, the patched should fail.\n    assert.notEqual(parsed, 24500, 'Year should not be 24.5 seconds');\n    assert(parsed > 30000000, 'Year should be over 30 million ms');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 146,
+          "tail": "\u001b[31mAssertionError [ERR_ASSERTION]: Year should be over 30 million ms\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-false\u001b[0m\n      \u001b[32m+true\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:23:5)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 136,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 7444,
+        "completionTokens": 1112,
+        "totalTokens": 8556,
+        "costUsd": 0.001078
+      },
+      "wallMs": 7557,
+      "trajectory": "ms-4.jsonl"
+    },
+    {
+      "id": "ms-70",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "fall-through",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change removes the 'y' case from the parse function, causing '1y' to return undefined instead of the correct value for one year in milliseconds.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    // The original code should correctly convert '1y' to approximately 365.25 days\n    // The patched code removes the 'y' case, so '1y' returns undefined\n    const original = 1 * 365.25 * 24 * 60 * 60 * 1000; // 1 year in ms\n    const result = ms('1y');\n    assert.strictEqual(result, original, 'Expected 1 year to be parsed correctly');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 147,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-604800000\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:10:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 139,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 7064,
+        "completionTokens": 631,
+        "totalTokens": 7695,
+        "costUsd": 0.0008957
+      },
+      "wallMs": 5346,
+      "trajectory": "ms-70.jsonl"
+    }
+  ]
+}
