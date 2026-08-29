@@ -401,8 +401,8 @@ Four packages are committed in `review/`, chosen to cover the shapes:
 
 | file | what it shows |
 |---|---|
-| `stage2-flash-rep1-ms-170.html` | a clean stage-2 proof: ledger, one gate attempt, red/green |
-| `stage1-flash-rep1-js-yaml-18.html` | stage 1 revising: three gate attempts before one holds |
+| `stage2-flash-rep1-ms-170.html` | a stage-2 proof: a four-entry ranked ledger, two gate attempts, the second red/green |
+| `stage1-flash-rep1-js-yaml-18.html` | stage 1 revising with no ledger above it: three gate attempts before one holds |
 | `stage2-qwen-rep1-bytes-12.html` | the empty-ledger exit on qwen, a buggy case ended without an attempt |
 | `stage1-qwen-rep3-bytes-control-loop.html` | a control claimed as a defect in four attempts, none of which passed, so the proof space prints empty |
 
@@ -452,12 +452,14 @@ Per stage, including the trial and smoke runs the rows record:
 | row 2, stage 2 | $0.1044 |
 | row 3, stage 3 | $0.3773 |
 
-That is about **$1.9** for the whole measured programme, and the frontier sweep in row 0d is half
-of it. The eight arms that make up the shipped result are under $0.50 together.
+That is about **$1.89** for the whole measured programme, and the frontier sweep in row 0d is half
+of it. The twelve k=3 arms in the table above — every number the stage rows are argued from — are
+$0.805 together. The rest is engine selection.
 
-The free live checks are cheap enough to be worth naming: `npm run smoke` is $0.000143 for one
-three-step run (`docs/dev-notes.md`), and `scripts/tool-call-probe.mjs` cost $0.0010 for all six
-endpoint probes in row 0e.
+Two live checks are cheap enough to be worth naming even though they are paid: `npm run smoke` is
+$0.000143 for one three-step run (`docs/dev-notes.md`), and `scripts/tool-call-probe.mjs` cost
+$0.0010 for all six endpoint probes in row 0e. Either is a fine way to confirm a key works before
+committing to an arm.
 
 ## the noise floor
 
