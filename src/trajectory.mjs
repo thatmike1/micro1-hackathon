@@ -31,6 +31,12 @@ import { dirname, join } from 'node:path';
  * `checkpoint`  a human approval point: the run paused for a decision.
  *   { step: number, label: string, question: string, decision: string|null, note: string|null }
  *
+ * `ledger`      the ranked hypotheses a split candidate produced before any gate attempt. An empty
+ *   `hypotheses` with `source` other than `none` is the hypothesizer asserting an equivalent
+ *   refactor; `source: 'none'` means no ledger arrived at all.
+ *   { entries: number, source: 'tool'|'text'|'none',
+ *     hypotheses: [{ rank, claim, input, expected, observed }] }
+ *
  * `gate-attempt` one double-run gate attempt by a prover candidate: the test it submitted and the
  *   two exit codes it came back with. Written once per attempt, passed or failed, so a case that
  *   failed the gate and then passed it reads as the sequence it was.
@@ -47,7 +53,7 @@ import { dirname, join } from 'node:path';
  * Usage is `{ promptTokens, completionTokens, totalTokens, costUsd }`; costUsd is null when
  * the provider does not report it.
  *
- * @typedef {'run-start'|'step'|'tool-result'|'retry'|'checkpoint'|'gate-attempt'|'gate-outcome'|'run-end'} EventType
+ * @typedef {'run-start'|'step'|'tool-result'|'retry'|'checkpoint'|'ledger'|'gate-attempt'|'gate-outcome'|'run-end'} EventType
  */
 
 /** @typedef {{promptTokens:number, completionTokens:number, totalTokens:number, costUsd:number|null}} Usage */

@@ -47,12 +47,16 @@ export function changeUnderReview(record) {
 }
 
 /**
- * Shared framing for both baselines: what the library is, what the change is, and the fact that
- * the suite is green on it either way.
+ * What every candidate is told about the library and the change, with no output contract attached:
+ * what the library is, that the suite is green either way, and that the queue mixes real defects
+ * with equivalent refactors.
+ *
+ * Split out from `reviewInstructions` because stage 2's hypothesizer answers with a ledger rather
+ * than a verdict, and has to read the same framing to be comparable.
  *
  * @param {import('../corpus/case-edit.mjs').CaseRecord} record
  */
-export function reviewInstructions(record) {
+export function reviewFraming(record) {
   return [
     'You are reviewing a proposed change to a small, widely used JavaScript library.',
     `The library is \`${record.library}\` at tag ${record.tag}. Its own test suite`,
@@ -61,7 +65,14 @@ export function reviewInstructions(record) {
     '',
     'Decide whether the change breaks behaviour a caller can observe. Some changes in this review',
     'queue are equivalent refactors with no behavioural difference at all.',
-    '',
-    verdictContract(record),
   ].join('\n');
+}
+
+/**
+ * Shared framing for both baselines: the framing above plus the verdict contract.
+ *
+ * @param {import('../corpus/case-edit.mjs').CaseRecord} record
+ */
+export function reviewInstructions(record) {
+  return [reviewFraming(record), '', verdictContract(record)].join('\n');
 }

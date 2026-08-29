@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { runAgent } from '../../src/agent-loop.mjs';
 import { changeUnderReview, reviewInstructions } from '../prompt.mjs';
 import { parseVerdict } from '../verdict.mjs';
+import { formatGate, gateRules, gateToolDescription } from '../gate.mjs';
 import { doubleRun, proofRunner } from '../workspace.mjs';
 
 export const id = 'stage-1';
@@ -70,12 +71,7 @@ export async function run({ record, workspace, trajectory, model, apiKey, reques
   const tools = [
     {
       name: 'submit-proof',
-      description:
-        `Run a candidate test through the gate. The harness writes it to \`${runner.path}\` in ` +
-        'two checkouts — one with the change applied, one untouched original — runs ' +
-        `\`${runner.command}\` in each, and reads the two exit codes. The gate passes only if the ` +
-        'run on the changed checkout fails and the run on the original passes. A failure comes ' +
-        `back with both runners' output. At most ${MAX_GATE_ATTEMPTS} attempts per review.`,
+      description: gateToolDescription(runner, MAX_GATE_ATTEMPTS),
       parameters: {
         type: 'object',
         properties: {
@@ -207,14 +203,7 @@ function gateContract(runner) {
   return [
     'Before you may answer `defect: true`, your test has to pass a gate you do not control.',
     '',
-    `- call \`submit-proof\` with the complete source of the test file. The harness writes it to`,
-    `  \`${runner.path}\` in two checkouts — one with the change applied, one an untouched`,
-    `  original — runs \`${runner.command}\` in each, and reads the two exit codes.`,
-    '- the gate passes only if the run on the changed checkout fails and the run on the original',
-    '  passes. Green on both means your assertion does not separate the two builds. Red on both',
-    '  means your test asserts something the library never did, or does not run at all.',
-    "- a failed gate comes back with both runners' output. Read it, fix the test, submit again.",
-    `- you get at most ${MAX_GATE_ATTEMPTS} gate attempts in total.`,
+    gateRules(runner, MAX_GATE_ATTEMPTS),
     '',
     'Answer `defect: false` at any point, with no gate attempt at all, if the change is an',
     'equivalent refactor. If you claim a defect and never pass the gate, the review is recorded as',
@@ -224,49 +213,4 @@ function gateContract(runner) {
   ].join('\n');
 }
 
-/** the gate's reply to one submission: the two exit codes, what they mean, and both tails */
-export function formatGate(attempt, result) {
-  const left = MAX_GATE_ATTEMPTS - attempt;
-  const codes = [
-    `changed checkout : exit ${result.mutant.code} (${result.mutant.code === 0 ? 'passed' : 'failed'})`,
-    `original checkout: exit ${result.pristine.code} (${result.pristine.code === 0 ? 'passed' : 'failed'})`,
-  ].join('\n');
-
-  if (result.proved) {
-    return [
-      `GATE PASSED on attempt ${attempt} of ${MAX_GATE_ATTEMPTS}.`,
-      codes,
-      '',
-      'The test separates the two builds. Answer with the verdict JSON now, carrying this exact',
-      'test file as `testFile.content`.',
-    ].join('\n');
-  }
-
-  return [
-    `GATE FAILED on attempt ${attempt} of ${MAX_GATE_ATTEMPTS}. ${left} attempt(s) left.`,
-    codes,
-    '',
-    diagnose(result),
-    '',
-    '--- output on the changed checkout ---',
-    result.mutant.tail || '(no output)',
-    '',
-    '--- output on the original checkout ---',
-    result.pristine.tail || '(no output)',
-  ].join('\n');
-}
-
-/** name the failure shape, so the agent revises against the right problem */
-function diagnose(result) {
-  const red = (side) => result[side].code !== 0;
-  if (!red('mutant') && !red('pristine')) {
-    return 'Green on both: the assertion holds for the original as well, so it does not touch the changed behaviour.';
-  }
-  if (red('mutant') && red('pristine')) {
-    return 'Red on both: the test also fails on the original, so it asserts something this library never did, or it does not run (bad import, syntax error, wrong dialect).';
-  }
-  if (!red('mutant') && red('pristine')) {
-    return 'Backwards: the test passes on the changed checkout and fails on the original. It is asserting the changed behaviour, not the correct one.';
-  }
-  return 'The exit codes do not show a red-on-changed, green-on-original split.';
-}
+export { formatGate };
