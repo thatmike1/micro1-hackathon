@@ -206,3 +206,117 @@ runs is 10-12/12, with failures concentrated in js-yaml-15 and scattered ms case
 matches default accuracy at a third of the cost. The corpus is near-ceiling but not flat: the
 honest headroom is reliability across repetitions, not single-run proof rate. Canonical config from
 here: provider pinned, reasoning effort explicit, both recorded in every trajectory.
+
+## Engine pair settled, and stage-0 baselines re-measured at k=3 (2026-08-29)
+
+Day-2 step 2. Two questions: can `qwen/qwen3-30b-a3b-instruct-2507` drive a tool loop at all (it
+has to, for the prover stages), and what do the canonical baselines look like when every run is
+pinned and repeated three times instead of once.
+
+### Tool calling: verified, on every provider that declares it
+
+`scripts/tool-call-probe.mjs` drives the real agent loop — the same `runAgent` the stages use —
+once per provider, pinned with `provider: { order: [name], allow_fallbacks: false,
+require_parameters: true }`, on a two-step scenario (look an order up, then ask a policy tool about
+its age) where the answer is only reachable through the tools.
+
+| provider | tool calls | arguments parsed | stop | answer correct | tokens | cost |
+|---|---|---|---|---|---|---|
+| StreamLake | 4 | yes | final | yes | 1,380 | $0.000090 |
+| SiliconFlow | 4 | yes | final | yes | 1,438 | $0.000164 |
+| CoreWeave | 4 | yes | final | yes | 1,416 | $0.000175 |
+| Nebius | 4 | yes | final | yes | 1,416 | $0.000175 |
+| Alibaba | 4 | yes | final | yes | 1,414 | $0.000247 |
+
+All five endpoints that declare `tools` for this model emit well-formed calls and finish the loop
+correctly, so **the engine pair is qwen (frontier) + flash (saturated control)**, as the sweep
+recommended. The Luna effort-dial fallback from the model shortlist is not needed and was not run.
+`z-ai/glm-5.3-flash` on Z.AI at `effort: low` was probed the same way and is also clean (4 calls,
+correct answer, 1,346 tokens).
+
+### Two config facts that fell out of the probe
+
+- **`--require-parameters` is now a flag on `eval:run`** (`provider.require_parameters: true`), so a
+  tool-using arm cannot be routed to an endpoint that does not declare tools.
+- **The instruct build cannot carry an explicit `reasoning` field under it.** No endpoint for
+  `qwen3-30b-a3b-instruct-2507` declares the `reasoning` parameter, so `require_parameters` plus any
+  `reasoning` value is HTTP 404 "No endpoints found that can handle the requested parameters" from
+  the router. Without `require_parameters` the field is accepted and silently ignored
+  (`reasoning_tokens: 0` measured on both `{enabled:false}` and `{effort:'low'}`). The qwen arms
+  therefore send no `reasoning` field, which is recorded in every `summary.json` by its absence
+  from `requestExtras`; the flash arms keep `effort: low`.
+
+### The provider is a bigger lever than the repetition
+
+Same model id, same 12 ms+bytes cases, one repetition each, provider pinned:
+
+| provider | quantisation | proof rate | notes |
+|---|---|---|---|
+| CoreWeave | bf16 | **5/10** (three times) | the pin chosen for the qwen arms |
+| SiliconFlow | fp8 | 4/10 | 2/2 false alarms |
+| Nebius | fp8 | 3/10 | 3 no-verdicts, 1/2 false alarms |
+| Alibaba | unknown | 1/10 | 9 claims unproved |
+| StreamLake | unknown | — | 12/12 HTTP 429, "temporarily rate-limited upstream", after 4 retries each |
+
+A 1/10-to-5/10 spread across endpoints of one model id is larger than anything the repetitions
+show, and StreamLake — the cheapest endpoint and the one an unpinned request is most likely to
+land on — was unusable at `--concurrency 4`. This is the concrete reason the pin exists.
+
+### The k=3 baselines
+
+`eval/run-baselines-k3.sh <flash|qwen>` runs both candidates three times at the pinned config;
+`node eval/analyze-k3.mjs` prints the tables below from the run summaries. Flash arms are all 15
+cases; qwen arms are the 12 ms+bytes cases only, per the sweep's measured 0/58 on js-yaml.
+
+Primary metric, per the day-2 decision: **cases proved in every repetition**, with false alarms
+still hard-zero. Single-run rates are alongside, and they are the thing that turns out to move.
+
+| arm | model, config | single-run proof rates | proved in ALL 3 | false alarms | cost (3 reps) |
+|---|---|---|---|---|---|
+| baseline 1, flash | `z-ai/glm-5.3-flash`, Z.AI, effort low | 11/12, 11/12, 9/12 | **7/12** | 0/3 every rep | $0.0162 |
+| baseline 2, flash | same | 5/12, 7/12, 11/12 | **3/12** | 0/3 every rep | $0.0150 |
+| baseline 1, qwen | `qwen3-30b-a3b-instruct-2507`, CoreWeave | 5/10, 5/10, 5/10 | **5/10** | 2/2, 2/2, 0/2 | $0.0671 |
+| baseline 2, qwen | same | 4/10, 5/10, 2/10 | **2/10** | 0/2, 1/2, 1/2 | $0.1382 |
+
+What the third repetition bought:
+
+- **Baseline 1 on flash is 7/12, not 12/12.** Five of the twelve buggy cases (`bytes-52`,
+  `js-yaml-15`, `js-yaml-18`, `ms-12`, `ms-30`) fail at least one repetition. Every case proves at
+  least once, so nothing here is stably hard — but nothing above 7/12 is stably solved either.
+  That is the headroom the gate has to close, and it is a real number rather than a coin flip
+  reported as a ceiling.
+- **Baseline 2 on flash is worse and much noisier: 3/12 in all three, 8 of 12 cases flipping.**
+  Repetition 1 spent 3.7 minutes and returned two no-verdicts; repetition 3 scored 11/12 in 1.7
+  minutes. Tools without a verification contract are the least reliable configuration measured so
+  far, which is the failure mode stage 1 exists to fix.
+- **Qwen's baseline 1 is flat at 5/10 across all three repetitions** — the same five cases every
+  time (`bytes-15`, `ms-4`, `ms-70`, `ms-72`, `ms-170`), the same five failing. On this 12-case
+  slice it is stable; the 10-case instability band in the sweep was over the wider 41-case pool.
+  Zero misses in all three, matching the sweep.
+- **Qwen with tools acquires misses.** Baseline 2 misses one case per repetition (`ms-170` twice,
+  `bytes-12` once) — it calls a defective change clean, which baseline 1 never did. It also drops
+  to 2/10 in repetition 3. Tools make this model worse in exactly the way they make flash worse,
+  only from a lower start.
+- **The always-true verdict bit holds.** Qwen false-alarms on both controls in baseline-1
+  repetitions 1 and 2; repetition 3's 0/2 is not a correct answer, it is two runaway generations
+  (below) that never produced a verdict at all.
+
+### The runaway generation, and what stage 1 should do about it
+
+Three of twelve cases in qwen baseline-1 repetition 3 (`ms-30` and both controls) degenerated into
+a repetition loop, ran to the 65,536-token completion cap (`finish_reason: length`), and returned
+an unterminated JSON string. Each cost about $0.020 and 9-11 minutes of wall time, against $0.0002
+and 3 seconds for a normal case: that one repetition cost $0.062 against $0.0027 for its twins.
+The same shape appears in qwen baseline 2 (`ms-control-lookup` in repetition 1 came back as HTTP
+400 "Unterminated string", the provider's version of the same failure).
+
+The harness sends no `max_tokens`. A cap around 4,096 would turn a runaway into a fast no-verdict
+instead of a ten-minute $0.02 one, and it is a request knob, not a code change to the loop. It is
+deliberately **not** applied to the numbers above, because that would change the config the
+baselines were measured at; it is the first thing to set when stage 1's config is pinned.
+
+### Spend
+
+$0.2482 for the whole of step 2: $0.2365 for the twelve k=3 runs, $0.0107 for the three usable
+provider checks, $0.0010 for the tool-call probes. 1.95M tokens. The qwen baseline-2 arm is 56% of
+that, and the three runaway generations are $0.06 of it.

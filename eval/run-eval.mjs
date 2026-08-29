@@ -14,7 +14,7 @@ const PROOF_TIMEOUT_MS = 60_000;
 
 /**
  * CLI: `npm run eval:run -- --candidate baseline-1 [--model <id>] [--cases <id>...] [--out <dir>]
- *       [--concurrency <n>]`
+ *       [--concurrency <n>] [--reasoning <off|effort>] [--provider <name>] [--require-parameters]`
  *
  * Runs one candidate over the corpus and scores it. Per case a pristine and a mutated checkout are
  * prepared under a temp dir — the shared corpus checkout is never written to — the candidate
@@ -37,12 +37,22 @@ async function main(argv) {
   const outDir = args.out ?? join('runs', `stage0-${candidate.id}-${stamp(new Date())}`);
   // explicit request config: recorded in every trajectory's run-start and in summary.json, so a
   // run always carries the knobs it ran at. `--reasoning off` disables reasoning; any other value
-  // is passed as the effort. `--provider` pins OpenRouter routing to one provider, no fallbacks.
+  // is passed as the effort. `--provider` pins OpenRouter routing to one provider, no fallbacks;
+  // `--require-parameters` additionally refuses to route to an endpoint that does not declare
+  // every parameter in the request, which is how a tool-using arm is held to declared tool support.
   const requestExtras = {
     ...(args.reasoning
       ? { reasoning: args.reasoning === 'off' ? { enabled: false } : { effort: args.reasoning } }
       : {}),
-    ...(args.provider ? { provider: { order: [args.provider], allow_fallbacks: false } } : {}),
+    ...(args.provider
+      ? {
+          provider: {
+            order: [args.provider],
+            allow_fallbacks: false,
+            ...(args.requireParameters ? { require_parameters: true } : {}),
+          },
+        }
+      : {}),
   };
   const startedAt = new Date();
   const results = new Array(cases.length);
@@ -171,6 +181,7 @@ function parseArgs(argv) {
     concurrency: 1,
     reasoning: null,
     provider: null,
+    requireParameters: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
@@ -180,6 +191,7 @@ function parseArgs(argv) {
     else if (flag === '--concurrency') args.concurrency = Number(argv[++i]);
     else if (flag === '--reasoning') args.reasoning = argv[++i];
     else if (flag === '--provider') args.provider = argv[++i];
+    else if (flag === '--require-parameters') args.requireParameters = true;
     else if (flag === '--cases') {
       while (argv[i + 1] && !argv[i + 1].startsWith('--')) args.cases.push(argv[++i]);
     } else throw new Error(`unknown argument: ${flag}`);

@@ -1,6 +1,6 @@
 # build plan — silent mutant
 
-Agent reviews a diff against a green-suite library and proves the bug: a test that fails on the patched checkout and passes on pristine, both via exit codes. Primary metric: proof rate over 12 buggy cases + false-alarm rate over 3 clean controls. Full sketch: ideation report §3.1 (external), measured corpus feasibility: spike report (external).
+Agent reviews a diff against a green-suite library and proves the bug: a test that fails on the patched checkout and passes on pristine, both via exit codes. Primary metric: cases proved in EVERY one of k=3 repetitions, plus false-alarm rate over the clean controls; single-run proof rates are reported alongside (see CHANGELOG row 0f for why the single run was hiding the headroom). Two engines: `qwen/qwen3-30b-a3b-instruct-2507` pinned to CoreWeave over the ms+bytes cases (the frontier tier) and `z-ai/glm-5.3-flash` pinned to Z.AI at effort low over all 15 (the saturated control). Full sketch: ideation report §3.1 (external), measured corpus feasibility: spike report (external).
 
 ## phases
 
@@ -9,6 +9,7 @@ Agent reviews a diff against a green-suite library and proves the bug: a test th
 - [x] notebook design applied to trajectory renderer (tokens + structure; witness lines only from checkpoint events)
 - [x] stage 0: baseline 1 (single prompt, no execution) over full corpus — record scores in CHANGELOG.md
 - [x] stage 0b: baseline 2 (agent with read/bash tools, no verification contract) — record
+- [x] stage 0 re-measure: both baselines, both engines, pinned configs, k=3 reps each — record
 - [ ] stage 1: prover loop with double-run gate, max 3 retries — measure, record
 - [ ] stage 2: hypothesizer/prover split — measure, record
 - [ ] stage 3: cross-case memory file — measure, record, keep the on/off ablation
