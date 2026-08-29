@@ -11,8 +11,8 @@ shipped configuration, is about six cents.
 
 | | needs a key | wall time |
 |---|---|---|
-| `npm test`, `npm run demo` | no | ~3s |
 | `npm run corpus:setup` + `corpus:verify` | no | ~70s (network) |
+| `npm test`, `npm run demo` | no | ~3s |
 | read the shipped runs (`analyze-k3.mjs`, `gate-audit.mjs`, …) | no | instant |
 | render a trajectory or a review package | no | instant |
 | one live case | **yes** | ~20s, $0.0005 |
@@ -109,6 +109,32 @@ It exits non-zero on any failure. Pass case ids to check a subset:
   makes a re-run nearly free.
 - **You do not need Stryker.** `corpus/screen.mjs` is generation tooling and `verify.mjs` never
   calls it. The shipped cases carry their own diffs.
+
+## the offline suite
+
+**Free, no key.** Run the corpus setup first: five `describe` blocks in `eval/` are gated on a real
+checkout existing and silently do not register without one.
+
+```bash
+npm test        # 57 passing in 3.1s with the corpus present; 49 without it
+npm run demo    # offline scripted run against a mock transport, no network at all
+```
+
+The gated blocks are the ones that matter most for this project's claims: the double-run gate
+against a real checkout, and stage 1, stage 2 and stage 3 driven end to end against scripted model
+responses. The stage-3 pair is the byte-for-byte comparison that holds a memory-off run to sending
+exactly what the shipped stage sends.
+
+`npm run demo` writes `runs/demo.jsonl` and `demo.html`, exercising all six trajectory event types
+including a retry and a checkpoint. It is the fastest way to see what a trajectory page looks like
+without a key.
+
+Both of those files are committed, so the demo leaves `git status` dirty, and in two different
+ways. `runs/demo.jsonl` is **appended to**, not replaced: after one demo it holds two runs, which
+is deliberate and is what the renderer's multi-run keying is exercised against. `demo.html` is
+**stale in the repo** — it was committed before the renderer's design pass, so re-rendering it
+rewrites most of the file. The page you get from `npm run demo` is the current one; the committed
+copy is not. `git checkout demo.html runs/demo.jsonl` puts both back.
 
 ## running one case
 
