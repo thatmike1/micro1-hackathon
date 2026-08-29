@@ -3,6 +3,20 @@ import { writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { readTrajectory } from './trajectory.mjs';
 import { STYLESHEET } from './render/stylesheet.mjs';
+import {
+  bytes,
+  clock,
+  count,
+  duration,
+  esc,
+  join,
+  machine,
+  number,
+  particular,
+  said,
+  stamp,
+  tokens,
+} from './render/format.mjs';
 
 /**
  * CLI: `node src/render-trajectory.mjs runs/<file>.jsonl -o out.html`
@@ -324,16 +338,6 @@ function tally({ events, runs }) {
   return `${events.length} events recorded, ${range}, unbroken${many}`;
 }
 
-/** printed label, machine value: one field of the ruled particulars block */
-function particular(label, value) {
-  return `<div><dt>${esc(label)}</dt><dd>${esc(value ?? 'not recorded')}</dd></div>`;
-}
-
-/** the event key written across the join of a tipped-in sheet — never initials */
-function join(key) {
-  return `<span class="join">${esc(key ?? 'e??')}</span>`;
-}
-
 /** a tool call in the machine hand, under its printed key */
 function call(toolCall) {
   const args = toolCall.arguments && typeof toolCall.arguments === 'object'
@@ -344,50 +348,6 @@ function call(toolCall) {
   return `      <p class="call"><span class="key">Call</span><code>${esc(toolCall.name)}(${esc(args)})</code></p>`;
 }
 
-/**
- * what the agent wrote, in the written hand. Blank lines separate paragraphs so the record
- * keeps the lead; every other line break is preserved by the block's `pre-wrap`. The only
- * markup read out of the text is `**bold**`, which the models emit constantly and which
- * would otherwise print as asterisks in a document claiming to be typeset.
- */
-function said(text) {
-  if (!text) return '';
-  return String(text)
-    .split(/\n[ \t]*\n/)
-    .map((para) => para.replace(/^\n+|\n+$/g, ''))
-    .filter((para) => para !== '')
-    .map((para) => `      <p class="said">${bold(esc(para))}</p>`)
-    .join('\n');
-}
-
-function bold(escaped) {
-  return escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-}
-
-/**
- * instrument output, hard-wrapped at 48 columns so no soft wrap reads as an extra emitted
- * line at desktop or print width, with each emitted line its own block so a soft wrap on a
- * narrow screen hangs instead.
- */
-function machine(text) {
-  const lines = String(text ?? '').split('\n').flatMap((line) => wrap(line, 48));
-  return `<pre>${lines.map((line) => `<span>${esc(line)}</span>`).join('')}</pre>`;
-}
-
-/** @returns {string[]} `line` broken at `width`, on a space where there is one */
-function wrap(line, width) {
-  const out = [];
-  let rest = line;
-  while (rest.length > width) {
-    const space = rest.lastIndexOf(' ', width);
-    const cut = space > 0 ? space : width;
-    out.push(rest.slice(0, cut));
-    rest = rest.slice(space > 0 ? cut + 1 : cut);
-  }
-  out.push(rest);
-  return out;
-}
-
 /** `mm:ss` since the run started, the chain's absolute position in the run */
 function elapsed(origin, t) {
   if (!origin || !t) return '--:--';
@@ -395,45 +355,6 @@ function elapsed(origin, t) {
   if (!Number.isFinite(ms) || ms < 0) return '--:--';
   const total = Math.round(ms / 1000);
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-}
-
-/** `2026-08-28 · 17:15:15 UTC` */
-function stamp(iso) {
-  return `${iso.slice(0, 10)} · ${clock(iso)}`;
-}
-
-/** `17:15:15 UTC` */
-function clock(iso) {
-  return iso ? `${iso.slice(11, 19)} UTC` : 'time not recorded';
-}
-
-function tokens(usage) {
-  if (!usage?.totalTokens) return null;
-  return `${number(usage.promptTokens)} in · ${number(usage.completionTokens)} out`;
-}
-
-function duration(ms) {
-  return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`;
-}
-
-function bytes(text) {
-  const n = Buffer.byteLength(String(text ?? ''), 'utf8');
-  return n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} kB`;
-}
-
-function number(value) {
-  return Number(value ?? 0).toLocaleString('en-US');
-}
-
-function count(n, singular, plural = `${singular}s`) {
-  return `${n} ${n === 1 ? singular : plural}`;
-}
-
-function esc(value) {
-  return String(value ?? '').replace(
-    /[&<>"']/g,
-    (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch],
-  );
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) main(process.argv);
