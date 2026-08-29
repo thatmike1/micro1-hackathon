@@ -15,8 +15,8 @@ shipped configuration, is about six cents.
 | `npm test`, `npm run demo` | no | ~3s |
 | read the shipped runs (`analyze-k3.mjs`, `gate-audit.mjs`, …) | no | instant |
 | render a trajectory or a review package | no | instant |
-| one live case | **yes** | ~20s, $0.0005 |
-| a full k=3 arm | **yes** | see [the arms](#running-a-full-k3-arm) |
+| one live case | **yes** | ~20s, $0.0005 on flash / $0.0024 on qwen |
+| a full k=3 arm | **yes** | 7 min and $0.06 for stage 2 on flash; see [the table](#what-a-run-costs) for the rest |
 
 Everything below was run end to end from a fresh clone into an empty directory on 2026-08-29.
 Where a number is from that run it says so; where it is from a measured arm it names the
@@ -106,8 +106,9 @@ It exits non-zero on any failure. Pass case ids to check a subset:
   `generatedAt`, `node` and the three `setupSeconds` moved. The three commit SHAs were byte
   identical, which is the actual check that the tag pins still resolve to the same code.
 - **`corpus/.work/` is gitignored and disposable.** `npm run corpus:setup -- --fresh` deletes the
-  checkouts and starts over; without it an existing checkout at the pinned SHA is reused, which
-  makes a re-run nearly free.
+  checkouts and starts over; without it an existing checkout at the pinned SHA is reused. The
+  `--fresh` rebuild took 50.4s, within a second of the first build, and landed on the same three
+  SHAs again.
 - **You do not need Stryker.** `corpus/screen.mjs` is generation tooling and `verify.mjs` never
   calls it. The shipped cases carry their own diffs.
 
@@ -139,11 +140,12 @@ copy is not. `git checkout demo.html runs/demo.jsonl` puts both back.
 
 ## running one case
 
-**Paid**, about $0.0005 and 20 seconds.
+**Paid**, about 20 seconds, half a cent at most.
 
 The measured configuration is per engine, and the flags are not optional decoration: the provider
 pin, the reasoning setting and `--max-tokens` are all part of what was measured. Row 0e in
-`CHANGELOG.md` is the reason the pin exists at all, and the arms below reproduce it exactly.
+`CHANGELOG.md` is why the pin exists at all. Change any of them and you are measuring a different
+arm than the one the rows report.
 
 Stage 2 (hypothesizer/prover split) on `z-ai/glm-5.3-flash`, which is the shipped configuration on
 that engine:
@@ -177,8 +179,8 @@ the pristine one, under the library's own runner. `run-eval.mjs` re-runs that pa
 than believing the candidate's gate.
 
 Stage 1 (prover loop) on `qwen/qwen3-30b-a3b-instruct-2507`, the shipped configuration on the other
-engine. Note the differences: no `--reasoning` flag at all, and the case list is the 12 ms+bytes
-cases only.
+engine. Two differences, and both matter: no `--reasoning` flag at all, and a full arm on this
+engine runs the 12 ms+bytes cases rather than all 15.
 
 ```bash
 node eval/run-eval.mjs \
@@ -190,10 +192,18 @@ node eval/run-eval.mjs \
   --out runs/try-qwen-ms-170
 ```
 
+```
+proved         ms-170                 23.8s  20111 tok  $0.002391
+```
+
 Sending a `reasoning` field on this model is an HTTP 404 from OpenRouter's router: no endpoint for
 the instruct build declares the parameter, and `--require-parameters` refuses to route to an
 endpoint that does not. Row 0e has the detail. The js-yaml cases are excluded because the frontier
 sweep measured this model at 0/58 on them (row 0d).
+
+Note the price difference on the same case: $0.0024 on qwen against $0.0005 on flash. The frontier
+engine is roughly five times the cost per case and proves fewer of them; that trade is what rows 0d
+through 3 are about.
 
 ### the flags
 
