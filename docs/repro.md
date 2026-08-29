@@ -33,9 +33,9 @@ Where a number is from that run it says so; where it is from a measured arm it n
 | OS | Linux x86-64, 2 cores, 4 GB | wall times below are from this box |
 
 **There is nothing to `npm install` at the top level.** This repo has zero dependencies, runtime or
-dev; `package-lock.json` holds no packages. The clean-clone run went straight from `git clone` to
-`npm test` and it passed. The only installs that happen are the ones `corpus/setup.mjs` performs
-inside `corpus/.work/`, which is gitignored.
+dev; `package-lock.json` holds no packages. `npm install` was never run in the clean clone and
+nothing needed it. The only installs that happen are the ones `corpus/setup.mjs` performs inside
+`corpus/.work/`, which is gitignored.
 
 ```bash
 git clone <this repo> silent-mutant
@@ -59,6 +59,7 @@ chmod 600 .env
 Check the key and the remaining balance before starting an arm:
 
 ```bash
+set -a; . ./.env; set +a
 curl -s -H "Authorization: Bearer $OPENROUTER_API_KEY" https://openrouter.ai/api/v1/credits
 # {"data":{"total_credits":10,"total_usage":2.687445097}}
 ```
@@ -296,21 +297,21 @@ one from a bare JSONL and names whichever parts of the record were missing.
 ## reading a summary.json
 
 The top of the file is the configuration the run actually ran at, recorded rather than asserted.
-This is `runs/stage2-flash-rep1/summary.json`:
+A run written by the current code, here `runs/stage3-flash-off-rep1/summary.json`:
 
 ```json
 {
-  "candidate": "stage-2",
+  "candidate": "stage-3",
   "model": "z-ai/glm-5.3-flash",
   "requestExtras": {
     "reasoning": { "effort": "low" },
     "max_tokens": 4096,
     "provider": { "order": ["Z.AI"], "allow_fallbacks": false, "require_parameters": true }
   },
-  "candidateOptions": {},
-  "concurrency": 4,
+  "candidateOptions": { "base": "stage-2", "memory": "off" },
+  "concurrency": 1,
   "order": ["bytes-12", "bytes-15", "..."],
-  "wallMs": 142325,
+  "wallMs": 546522,
   "totals": { "...": "..." },
   "cases": ["..."]
 }
@@ -319,6 +320,12 @@ This is `runs/stage2-flash-rep1/summary.json`:
 `requestExtras` is the exact knob set sent to OpenRouter. Two arms are only comparable if this
 block matches; a missing `reasoning` key on a qwen arm is the recorded absence described above, not
 an omission.
+
+**The recorded fields grew as the measurement did, so older runs carry fewer of them.** Three
+generations are committed: the row-0 runs predate `requestExtras` entirely, which is the gap row 0e
+was opened to close; the `day2-`, `stage1-` and `stage2-` runs carry `requestExtras` but not
+`candidateOptions`, `concurrency` or `order`, which stage 3 added when case ordering became part of
+the measurement. Read a `stage2-` summary expecting `order` and you will not find it.
 
 `totals` is the run's headline:
 
@@ -407,16 +414,17 @@ made after they were rendered; the body markup is byte identical.
 
 Prices below are the ones recorded in the `CHANGELOG.md` rows, not estimates. Every run reports
 cost from OpenRouter's own usage fields, which only appear because the loop sends
-`usage: { include: true }`.
+`usage: { include: true }`, and the table is the sum over each arm's three committed
+`summary.json` files rather than a number retyped from the rows.
 
 Per k=3 arm, three repetitions of one candidate on one engine:
 
 | arm | row | cases | cost | tokens | wall |
 |---|---|---|---|---|---|
-| baseline 1, flash | 0f | 15 | $0.0162 | | 1.8 min |
-| baseline 2, flash | 0f | 15 | $0.0150 | | |
-| baseline 1, qwen | 0f | 12 | $0.0671 | | 11.4 min |
-| baseline 2, qwen | 0f | 12 | $0.1382 | | |
+| baseline 1, flash | 0f | 15 | $0.0162 | 0.39M | 1.8 min |
+| baseline 2, flash | 0f | 15 | $0.0150 | 0.28M | 7.3 min |
+| baseline 1, qwen | 0f | 12 | $0.0671 | 0.26M | 11.4 min |
+| baseline 2, qwen | 0f | 12 | $0.1382 | 0.95M | 37.7 min |
 | **stage 1, flash** | 1 | 15 | $0.0249 | 0.85M | 3.6 min |
 | **stage 1, qwen** (shipped) | 1 | 12 | $0.0709 | 0.55M | 5.2 min |
 | **stage 2, flash** (shipped) | 2 | 15 | $0.0613 | 1.55M | 7.8 min |
