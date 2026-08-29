@@ -577,3 +577,178 @@ direction it moves in is the thing to check before shipping.
 
 $0.1044 for stage 2: $0.1020 for the six k=3 runs ($0.0613 flash, $0.0407 qwen) and $0.0024 for
 the two live smoke runs that pinned the config. 1.94M tokens.
+
+## Stage 3: the cross-case memory file (2026-08-29)
+
+`eval/candidates/stage-3.mjs` with `eval/memory.mjs`, measured by `eval/run-stage3-k3.sh
+<flash|qwen> [on|off]`. `node eval/analyze-k3.mjs stage3-` prints the scores, `node
+eval/gate-audit.mjs stage3-` the gate, `node eval/ledger-audit.mjs stage3-flash` the ledger, and
+`node eval/memory-audit.mjs stage3-` the memory and the cost of carrying it.
+
+The candidate carries one markdown file per run. Before each case every role is shown whatever the
+file already holds, as notes the reviewer wrote on earlier changes in the same queue. After the
+verdict has settled, a scribe turn reads what the review did — the diff, the ledger if there was
+one, each gate attempt's exit-code pair and failure shape, the test that passed or the last one
+that did not — and appends at most three one-sentence lessons. `--option memory=off` is the
+ablation arm: no read, no scribe, no file.
+
+The scribe never sees `record.kind` and never sees the scorer's outcome. The memory is written
+from the review's own evidence, so it can carry a wrong lesson forward, and on qwen it does.
+
+### What it is measured on top of, and in what order
+
+Row 2 left the shipped configuration split, so stage 3 is not one candidate over both engines.
+`--option base=stage-2` runs the hypothesizer/prover split underneath on flash; `--option
+base=stage-1` runs the single prover loop underneath on qwen. Everything else is stages 1 and 2's:
+same engines and pins, same case slices, same four gate attempts, same `--max-tokens 4096`.
+
+Two things had to change, and both are forced by the feature:
+
+- **`--concurrency 1`.** A candidate that carries a file between cases has to answer them one at a
+  time. Earlier stages ran four cases in parallel, so their wall times are not comparable with
+  these.
+- **A recorded order.** `loadCases()` sorts by id, and `summary.json` now records `order`,
+  `concurrency` and `candidateOptions`. Both arms run the same sequence:
+
+      bytes-12 → bytes-15 → bytes-52 → bytes-control-loop → [js-yaml-15 → js-yaml-18 →
+      js-yaml-control-hoist →] ms-12 → ms-170 → ms-27 → ms-30 → ms-4 → ms-70 → ms-72 →
+      ms-control-lookup
+
+  the js-yaml block on flash only. This order groups the cases by library, which is the friendliest
+  order a cross-case memory could ask for: a lesson about `bytes` is written immediately before two
+  more `bytes` cases. A shuffled order would be a harder test, and is not what these numbers are.
+
+### The off arm is the shipped stage, and that is enforced
+
+Neither shipped candidate exposes a seam the memory can enter through, and neither may be edited,
+so stage 3 reproduces each loop rather than importing it. What is imported is the part that must
+not drift: the gate (`eval/gate.mjs`) and each stage's `settle`, which decides what the scorer
+sees.
+
+The equivalence is a test, not a claim. `eval/stage-3.test.mjs` drives stage 1, stage 2 and stage 3
+against the same scripted model over the same case and compares every request body byte for byte.
+With the memory empty they are identical — one body for the stage-1 shape, four for the stage-2
+shape including the second prover's abandoned-hypothesis lines. An empty memory renders as no
+prompt block at all, so a memory-off run and the first case of a memory-on run send exactly what
+the shipped stage sends.
+
+### The numbers
+
+| arm | single-run proof rates | proved in ALL 3 | false alarms | miss | no-verdict | gate attempts | review tokens | total tokens | cost | wall |
+|---|---|---|---|---|---|---|---|---|---|---|
+| flash, memory off | 12/12, 12/12, 11/12 | **11/12** | 0/3 every rep | 0, 0, 1 | 0, 0, 0 | 46 | 1.66M | 1.66M | $0.0721 | 26.3 min |
+| flash, memory on | 12/12, 11/12, 12/12 | **11/12** | 0/3 every rep | 0, 1, 0 | 1, 0, 0 | 39 | 1.57M | 1.75M | $0.0816 | 41.0 min |
+| qwen, memory off | 6/10, 3/10, 6/10 | **3/10** | 0/2 every rep | 1, 3, 2 | 3, 4, 2 | 109 | 0.67M | 0.67M | $0.0927 | 17.0 min |
+| qwen, memory on | 3/10, 5/10, 1/10 | **0/10** | 0/2 every rep | 4, 2, 3 | 3, 3, 6 | 125 | 0.85M | 1.00M | $0.1242 | 16.9 min |
+
+Review tokens are the case's total minus the scribe's, which is the only column the two arms of a
+pair can be compared on directly; the gap between review and total is what the memory costs to
+write. Wall times were measured with the four arms running at once on a two-core box, so they are
+comparable within an engine pair and not across the table.
+
+Both off arms land one case below the row they re-measure: flash's stage-2 row is 12/12 and its
+memory-off arm is 11/12, qwen's stage-1 row is 4/10 and its memory-off arm is 3/10. Same candidate,
+same pins, fresh sampling under a different order and no parallelism. That is why the ablation is
+scored against its own off arm rather than against rows 1 and 2 — and it is worth knowing that the
+primary metric moves by a case on a re-measure of an unchanged candidate.
+
+### Flash: the ceiling holds, and the saving does not pay for the writing
+
+The question row 2 left for flash was whether memory defends 12/12 more cheaply, since there is no
+proof-rate headroom there. Both halves of the answer are no.
+
+On reliability the two arms are level at 11/12, each losing a different single case in a single
+repetition. Memory-off drops `js-yaml-18` in rep 3: the hypothesizer ranked the defect correctly,
+both tests came back red on both checkouts, and the prover retracted. Memory-on drops `ms-30` in
+rep 2, where the hypothesizer recorded a genuinely empty ledger on a buggy case and spent no
+attempt. Memory-on also has one no-verdict, on the `bytes-control-loop` control in rep 1: the
+hypothesizer wrote its empty ledger as the prose `{hypotheses: []}` instead of calling the tool,
+and stage 2's rule that a missing ledger is withheld rather than clean fired for the first time in
+any measured run. It was correct to fire, and it is still a no-verdict the off arm does not have.
+
+On cost the memory does buy something real, and then loses it at the till:
+
+- gate attempts **46 → 39**, runs that revised at least once **9 → 4**, proofs that needed a
+  revision **8 → 4**, and all 35 proofs came from the first-ranked hypothesis against 33-of-35
+  without memory. Fewer attempts per proof is exactly the effect the notes were written to produce.
+- review tokens fall 5% (1.66M → 1.57M), and that is the whole saving.
+- the scribe costs 174k tokens and $0.0101, so total tokens go **up** 6% and cost **up** 13%.
+
+The notebook flash writes is good: 58 lessons over 45 runs, 19 of those runs adding nothing, 46 of
+the 58 naming a concrete library symbol or call, and one of the 58 opening with a generic "a
+test…". Two of them, verbatim:
+
+    In `bytes`' parse regex, the `^` anchor is load-bearing: removing it lets leading-garbage
+    strings like 'foo 1kb' match and parse as the unit value instead of returning null.
+
+    assert.throws(fn, Error) cannot separate builds when a defect changes only an error's message
+    text, not its type — the verifier callback must assert the exact full message string.
+
+That is the shape of note a maintainer would want, and it still does not move a metric that was
+already at its ceiling. What it moves is the number of attempts spent reaching that ceiling, and
+the scribe turn costs more than the attempts it saves.
+
+### Qwen: the notebook fills with restated rules, and the arm collapses
+
+Qwen goes from 3/10 proved in every repetition to **0/10**, with single-run rates 6/10, 3/10, 6/10
+against 3/10, 5/10, 1/10, and cases that flip between repetitions going 6/10 → 9/10. It spends more
+to do it: 125 gate attempts against 109, 1.5x the tokens, 1.34x the cost. The false-alarm rate is
+0/2 in every repetition either way, so nothing was traded for it.
+
+The mechanism is in what the scribe writes. Qwen appended exactly three lessons after every one of
+its 36 runs — 108 lessons, the quota filled every time, against flash's 58 with 19 blank. Half of
+them (54 of 108) open with "A test that…", and only 37 of 108 name a library symbol or call. The
+notebook is not a record of the library, it is the gate's own rules paraphrased back, and several
+of the paraphrases have the direction reversed:
+
+    A test that passes on both original and patched builds cannot detect behavioral changes, so it
+    must compare outcomes on strings that the original rejects but the patched accepts.
+
+    When testing a relaxation of parsing rules, use inputs with prefix garbage to ensure the
+    original fails and the patched succeeds, confirming the intended permissiveness increase.
+
+The gate passes on red-on-changed and green-on-original. Both of those sentences describe the
+opposite, both were written after `bytes-12` and `bytes-15`, and from then on they are in every
+prompt of the run. Rep 1's `bytes` block also shows the memory conflating cases: the lessons
+written after the `bytes-control-loop` control are about removing the `^` anchor, which is
+`bytes-12`'s mutation and not the control's change at all.
+
+This is the failure row 2 documented, arriving through a different door. Stage 2 gave this model a
+cheap exit and it took it without reading; stage 3 gives it a notebook, it fills the quota without
+having learned anything, and then reads its own filler back as instruction. On an engine whose
+judgment does not survive being asked to summarise itself, a self-written memory is a feedback
+loop rather than a memory.
+
+### Two implementation notes
+
+- **The lesson cap cut 9 of flash's 58 lessons.** Lessons are trimmed to 300 characters and flash
+  writes long ones; nine ended mid-sentence. Qwen's were all under the cap. The cap stays, because
+  the notebook is in every subsequent prompt, but 300 is tight for this engine.
+- **The read budget fired on qwen and not on flash.** The block is trimmed to about 6,000
+  characters, oldest case blocks dropped first. Qwen's notebook reached 8,506 characters by the end
+  of a repetition, so its last cases read 7 or 8 blocks out of 11; flash's reached 6,667 and its
+  last cases read 13 or 14 out of 14. Qwen's collapse is not the trimming — the arm is already
+  losing cases in the `bytes` block, before anything is dropped.
+
+### Decision
+
+Drop on both engines. The shipped configuration is unchanged: stage 2 on flash, stage 1 on qwen.
+
+On flash the primary metric does not move, total cost rises 13%, and the arm acquires a no-verdict
+on a control. The gate saving is real and worth remembering — first-ranked hypotheses landed more
+often and proofs needed half as many revisions — but a scribe turn per case is the wrong way to buy
+it when the reviewing turns are this cheap. If the saving is wanted, the thing to try is a fixed
+set of library notes written once, not a notebook the agent rewrites after every case.
+
+On qwen it is not close: 3/10 → 0/10 for 1.34x the cost.
+
+The general reading is stage 2's, from the other side. Both stages are levers on what the model
+writes down before it decides, and both work in the direction the model's own judgment already
+points. Flash writes an honest notebook and gets a small, real efficiency out of it; qwen writes
+filler and reads it back as fact. A memory feature inherits the quality of the model's self-summary,
+and there is no gate on that summary the way there is on the test.
+
+### Spend
+
+$0.3773 for stage 3: $0.3705 for the twelve k=3 runs ($0.0721 + $0.0816 flash, $0.0927 + $0.1242
+qwen) and $0.0068 for the two live smoke runs that pinned the config. 5.14M tokens.
