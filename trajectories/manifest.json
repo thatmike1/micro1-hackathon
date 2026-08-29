@@ -1,0 +1,54 @@
+{
+  "entries": [
+    {
+      "stem": "stage0-baseline1-flash-rep3-ms-12",
+      "run": "day2-baseline-1-flash-rep3",
+      "caseId": "ms-12",
+      "extras": []
+    },
+    {
+      "stem": "stage0-baseline1-qwen-rep1-bytes-control-loop",
+      "run": "day2-baseline-1-qwen-rep1",
+      "caseId": "bytes-control-loop",
+      "extras": []
+    },
+    {
+      "stem": "stage0b-baseline2-flash-ms-72",
+      "run": "stage0-baseline-2-2026-08-28T18-56-15",
+      "caseId": "ms-72",
+      "extras": []
+    },
+    {
+      "stem": "stage1-flash-rep2-ms-27",
+      "run": "stage1-flash-rep2",
+      "caseId": "ms-27",
+      "extras": []
+    },
+    {
+      "stem": "stage1-qwen-rep1-bytes-control-loop",
+      "run": "stage1-qwen-rep1",
+      "caseId": "bytes-control-loop",
+      "extras": []
+    },
+    {
+      "stem": "stage2-flash-rep3-ms-170",
+      "run": "stage2-flash-rep3",
+      "caseId": "ms-170",
+      "extras": []
+    },
+    {
+      "stem": "stage2-qwen-rep1-bytes-control-loop",
+      "run": "stage2-qwen-rep1",
+      "caseId": "bytes-control-loop",
+      "extras": []
+    },
+    {
+      "stem": "stage3-qwen-memory-on-rep1-bytes-15",
+      "run": "stage3-qwen-on-rep1",
+      "caseId": "bytes-15",
+      "extras": [
+        "stage3-qwen-memory-on-rep1-notebook.md"
+      ]
+    }
+  ]
+}

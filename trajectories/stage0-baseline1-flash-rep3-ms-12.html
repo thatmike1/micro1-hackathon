@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trajectory — ms-12</title>
+<style>
+
+/* ===== BEGIN tokens.css — inlined verbatim, the only styling authority ===== */
+/* ==========================================================================
+   THE BOUND RECORD — token sheet
+   micro1 hackathon output artifacts (report + trajectory viewer)
+
+   The world is a countersigned laboratory notebook: a bound, page-numbered,
+   feint-ruled book in which nothing is erased. Two inks do all the work —
+   what the STATIONER PRINTED (rules, page numbers, column heads, signature
+   lines: cool grey-green) and what a PERSON WROTE (the record itself:
+   blue-black iron gall). A third, machine mono, is what the instrument
+   produced. A rationed correction red strikes errors and stamps
+   countersignatures, and carries no status meaning: the document is
+   complete in greyscale.
+
+   Every value the two artifacts use lives here. The emitted HTML inlines
+   this block verbatim inside a single <style> and touches nothing else,
+   so the runtime restyles by swapping this sheet alone.
+   ========================================================================== */
+
+:root {
+  /* ---- inks ------------------------------------------------------------
+     Contrast on --paper: record 14.7:1, record-soft 6.9:1, print 4.85:1,
+     machine 11.0:1, correct 7.2:1; the dark remap runs 6.8–15:1. Everything
+     clears 4.5:1, but --ink-print on --paper-inset is 4.55:1 with no margin
+     left, so a caption ink may not be lightened and an inset ground may not
+     be darkened without recomputing. */
+  --paper:            #f9faf8;  /* hard sized stock, cool, never cream     */
+  --paper-inset:      #f1f3ef;  /* pasted-in attachment, table stripe      */
+  --rule-feint:       #d5ded7;  /* the printed feint rule of the book      */
+  --rule-print:       #a9b7b0;  /* printed heavy rule, column heads        */
+  --ink-print:        #61726c;  /* printed apparatus: heads, folios, keys  */
+  --ink-record:       #182634;  /* written record — the primary voice      */
+  --ink-record-soft:  #45596b;  /* secondary written matter                */
+  --ink-machine:      #2b3b47;  /* tool payloads, ids, figures             */
+  --ink-correct:      #9c2a2a;  /* correction ink + countersign stamp only */
+  --ink-selection:    #dfe6df;
+
+  /* ---- the rule --------------------------------------------------------
+     One lead governs everything. Every vertical value below is a multiple
+     of it, so all type sits on the same printed rule down the page. */
+  --lead:             26px;
+  --rule-offset:      19px;     /* rule sits under the baseline, not on it */
+  --rule-weight:      1px;
+
+  --space-0:          0;
+  --space-h:          13px;     /* half lead — inside a tight group only   */
+  --space-1:          26px;
+  --space-2:          52px;
+  --space-3:          78px;
+  --space-4:          104px;
+  --space-5:          156px;
+
+  /* ---- faces -----------------------------------------------------------
+     Three registers, three kinds of truth. No web requests: every stack is
+     resolvable locally. Charter (X11 licence, freely redistributable) is
+     the intended record face and may be embedded as a base64 woff2 subset
+     without breaking the single-file rule. */
+  --font-record:  Charter, "Bitstream Charter", "Sitka Text", Cambria,
+                  "Source Serif 4", Georgia, serif;
+  --font-print:   "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow",
+                  "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-machine: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono",
+                  "DejaVu Sans Mono", Consolas, monospace;
+
+  /* ---- scale -----------------------------------------------------------
+     Four sizes, no intermediate steps. Rank is carried by one big jump
+     (44 → 22) rather than by a ladder of near-identical headings. */
+  --size-title:       44px;
+  --size-title-lead:  52px;     /* 2 leads */
+  --size-section:     22px;
+  --size-body:        17px;
+  --size-apparatus:   11.5px;   /* printed small caps + marginal folios    */
+  --size-machine:     14.5px;
+
+  --track-apparatus:  0.09em;
+  --track-title:      -0.012em;
+  --weight-record:    400;
+  --weight-record-em: 700;
+  --weight-print:     500;
+
+  /* ---- the page --------------------------------------------------------
+     An asymmetric two-column book page: a narrow printed margin carrying
+     folios, elapsed time and keys, then the record measure at ~65ch. */
+  --col-margin:       104px;
+  --col-gutter:       26px;
+  --measure:          34rem;    /* 544px ≈ 65ch of the record face         */
+  --page-pad-y:       var(--space-3);
+  --page-pad-x:       var(--space-2);
+
+  /* ---- printed devices ------------------------------------------------- */
+  --box-border:       1px solid var(--rule-print);
+  --box-pad:          calc(var(--space-1) - 1px) var(--space-1);
+  --table-rule-head:  2px solid var(--ink-record);
+  --table-rule-row:   1px solid var(--rule-feint);
+  --table-rule-foot:  1px solid var(--ink-record);
+
+  /* the spine of the step chain, and the stroke patterns that carry state.
+     No hue encodes state anywhere: the patterns survive greyscale print. */
+  --spine-x:          calc(var(--col-margin) + var(--col-gutter) / 2);
+  --spine-color:      var(--rule-print);
+  --spine-weight:     1px;
+  --detent:           9px;      /* the square struck on the spine per step */
+
+  --sig-rule:         1px solid var(--ink-record);
+  --sig-width:        15rem;
+  --sig-space:        var(--space-2);   /* clear height to sign into       */
+  --stamp-border:     1px solid var(--ink-correct);
+
+  /* printed key column: the label a stationer sets beside a ruled field   */
+  --key-width:        3.25rem;
+
+  /* measurement table: figure columns are fixed so the delta never crowds */
+  --col-figure:       5.25rem;
+  --col-count:        2.75rem;
+}
+
+/* The book at night. Light is primary — print is the reference rendering —
+   but the trajectory viewer gets read at 3am, so the same tokens remap. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:            #14181a;
+    --paper-inset:      #1b2022;
+    --rule-feint:       #28312f;
+    --rule-print:       #3f4d49;
+    --ink-print:        #93a49d;
+    --ink-record:       #e7ecea;
+    --ink-record-soft:  #a9bac4;
+    --ink-machine:      #c9d6d3;
+    --ink-correct:      #e08d84;
+    --ink-selection:    #2c3a38;
+  }
+}
+
+/* Narrow: the printed margin folds into the column and the figure columns
+   give back width so a measure label is not squeezed to three lines. */
+@media (max-width: 800px) {
+  :root {
+    --page-pad-x:       var(--space-1);
+    --col-margin:       0px;
+    --col-gutter:       0px;
+    --col-figure:       4rem;
+    --col-count:        2.25rem;
+    --size-machine:     13px;   /* machine output keeps ~44 columns on a phone */
+  }
+}
+
+@media print {
+  :root {
+    --paper:            #ffffff;
+    --page-pad-y:       0;
+    --page-pad-x:       0;
+    --col-margin:       78px;
+    --measure:          32rem;
+  }
+}
+/* ===== END tokens.css ===== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  background: var(--paper);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+body {
+  margin: 0;
+  padding: var(--page-pad-y) var(--page-pad-x) var(--space-5);
+  background: var(--paper);
+  color: var(--ink-record);
+  font: var(--weight-record) var(--size-body)/var(--lead) var(--font-record);
+  font-variant-numeric: oldstyle-num proportional-nums;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--ink-selection); color: var(--ink-record); }
+:focus-visible {
+  outline: var(--rule-weight) solid var(--ink-record);
+  outline-offset: 3px;
+}
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: var(--paper); }
+::-webkit-scrollbar-thumb {
+  background: var(--rule-print);
+  border: 3px solid var(--paper);
+}
+* { scrollbar-color: var(--rule-print) var(--paper); scrollbar-width: thin; }
+
+/* the book leaf: a printed margin carrying folios and keys, then the record
+   measure, both sitting on one printed feint rule repeating at the lead */
+.leaf {
+  display: grid;
+  grid-template-columns: var(--col-margin) var(--measure);
+  column-gap: var(--col-gutter);
+  justify-content: center;
+  max-width: calc(var(--col-margin) + var(--col-gutter) + var(--measure));
+  margin: 0 auto;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--lead) - var(--rule-weight)),
+    var(--rule-feint) calc(var(--lead) - var(--rule-weight)),
+    var(--rule-feint) var(--lead)
+  );
+  background-position: 0 var(--rule-offset);
+}
+
+.leaf > * { grid-column: 2; min-width: 0; }
+.leaf > .marginal { grid-column: 1; text-align: right; }
+
+.printed {
+  font: var(--weight-print) var(--size-apparatus)/var(--lead) var(--font-print);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  color: var(--ink-print);
+  font-variant-numeric: lining-nums tabular-nums;
+  margin: 0;
+}
+
+.marginal {
+  font: var(--weight-print) var(--size-apparatus)/var(--lead) var(--font-print);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  color: var(--ink-print);
+  font-variant-numeric: lining-nums tabular-nums;
+  margin: 0;
+  align-self: start;
+}
+/* a marginal shares its row with the block it keys, so it carries that
+   block's own top margin and the two sit on the same printed rule */
+.marginal.at-block { margin-top: var(--space-2); }
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-1);
+  border-bottom: var(--rule-weight) solid var(--ink-record);
+  padding-bottom: calc(var(--lead) - 1px);
+}
+.masthead span { white-space: nowrap; }
+
+h1 {
+  font: var(--weight-record) var(--size-title)/var(--size-title-lead) var(--font-record);
+  letter-spacing: var(--track-title);
+  color: var(--ink-record);
+  margin: var(--space-1) 0 0;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* the standfirst is the page's payload and is set at full strength */
+.standfirst { margin: var(--space-1) 0 0; color: var(--ink-record); }
+.standfirst b { font-weight: var(--weight-record-em); color: var(--ink-record); }
+
+.particulars {
+  margin: var(--space-2) 0 0;
+  border-top: var(--rule-weight) solid var(--rule-print);
+  border-bottom: var(--rule-weight) solid var(--rule-print);
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.particulars div {
+  padding: calc(var(--space-h) - 1px) 0 var(--space-h);
+  border-bottom: var(--rule-weight) solid var(--rule-feint);
+}
+.particulars div:nth-child(odd) { padding-right: var(--space-1); }
+.particulars div:nth-last-child(-n+2) { border-bottom: 0; }
+.particulars dt {
+  font: var(--weight-print) var(--size-apparatus)/var(--lead) var(--font-print);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  color: var(--ink-print);
+}
+.particulars dd {
+  margin: 0;
+  font-family: var(--font-machine);
+  font-size: var(--size-machine);
+  line-height: var(--lead);
+  color: var(--ink-machine);
+  font-variant-numeric: lining-nums tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+h2 {
+  position: relative;
+  font: var(--weight-record) var(--size-section)/var(--lead) var(--font-record);
+  color: var(--ink-record);
+  margin: var(--space-3) 0 var(--space-1);
+  padding-bottom: calc(var(--lead) - 1px);
+  border-bottom: var(--rule-weight) solid var(--ink-record);
+  text-wrap: balance;
+}
+/* the section key lives in the heading and is thrown out into the printed margin
+   from there, so when the margin folds away the key runs in on the heading's own
+   line and the numbering a reader cites survives at every width */
+h2 .key {
+  position: absolute;
+  right: 100%;
+  margin-right: var(--col-gutter);
+  white-space: nowrap;
+  font: var(--weight-print) var(--size-apparatus)/var(--lead) var(--font-print);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  color: var(--ink-print);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+h2 + p, h2 + figure, h2 + section { margin-top: 0; }
+
+p { margin: var(--space-1) 0 0; }
+strong { font-weight: var(--weight-record-em); }
+
+code, .num {
+  font-family: var(--font-machine);
+  font-size: var(--size-machine);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--ink-machine);
+  overflow-wrap: anywhere;
+}
+
+/* what the agent wrote is the written record, kept verbatim: its own line breaks
+   are part of what it said, so they are preserved rather than reflowed away */
+.said { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* a tipped-in sheet: the instrument's output, pasted into the book */
+figure {
+  margin: var(--space-1) 0 0;
+  background: var(--paper-inset);
+  border: var(--box-border);
+  padding: var(--box-pad);
+}
+figure pre {
+  margin: 0;
+  font-family: var(--font-machine);
+  font-size: var(--size-machine);
+  line-height: var(--lead);
+  color: var(--ink-machine);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+/* machine output is hard-wrapped at 48 columns; each emitted line is its own block
+   so any further soft wrap on a narrow screen hangs rather than reading as an
+   extra line the instrument produced */
+figure pre span { display: block; padding-left: 2ch; text-indent: -2ch; }
+figcaption {
+  font: var(--weight-print) var(--size-apparatus)/var(--lead) var(--font-print);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  color: var(--ink-print);
+  margin: var(--space-h) calc(var(--space-1) * -1) 0;
+  padding: calc(var(--space-h) - 1px) var(--space-1) 0;
+  border-top: var(--rule-weight) solid var(--rule-print);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+/* the mark written across the join, the way a tipped-in sheet is signed so it
+   cannot be swapped. A generated document has no hand to sign with, so what
+   crosses the join is the event key: the sheet carries the id of the trajectory
+   event that produced it, half on the sheet and half on the page. */
+.join {
+  position: relative;
+  top: calc((var(--space-1) - 1px) * -1);
+  margin: 0 var(--space-h) 0 calc(var(--space-h) * -1);
+  padding: 0 var(--space-h);
+  background: var(--paper-inset);
+  font-family: var(--font-machine);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-print);
+  white-space: nowrap;
+}
+figcaption .what { flex: 1 1 auto; min-width: 0; }
+figcaption .measure { white-space: nowrap; }
+
+/* ======================================================================
+   THE CHAIN
+   One spine runs the full height of the record, uninterrupted, because a
+   record with a gap in it is a record nobody can sign. State is carried by
+   the stroke of the spine and the shape of the mark struck on it — never by
+   hue, so the whole chain survives a greyscale print.
+
+     filled square   step executed
+     open square     step retried; the struck attempt hangs below the line
+     ringed square   human checkpoint — the spine doubles through it
+     open circle     step failed and was abandoned; the spine gaps through it
+   ====================================================================== */
+.chain {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: var(--col-margin) var(--measure);
+  column-gap: var(--col-gutter);
+  margin-top: var(--space-1);
+  background-image: linear-gradient(
+    to right, var(--spine-color) 0, var(--spine-color) 100%);
+  background-size: var(--spine-weight) 100%;
+  background-position: var(--spine-x) 0;
+  background-repeat: no-repeat;
+}
+
+.chain > .marginal {
+  grid-column: 1;
+  text-align: right;
+  padding-top: var(--space-1);
+}
+
+.step {
+  grid-column: 2;
+  position: relative;
+  padding: var(--space-1) 0 var(--space-1);
+}
+
+/* the mark struck on the spine, one per step */
+.step::before {
+  content: "";
+  position: absolute;
+  width: var(--detent);
+  height: var(--detent);
+  left: calc((var(--col-gutter) / 2 + var(--detent) / 2) * -1);
+  top: calc(var(--space-1) + (var(--lead) - var(--detent)) / 2);
+  background: var(--ink-record);
+}
+
+/* the spine segment this step owns, redrawn when its state differs */
+.step::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--col-gutter) / -2);
+  top: 0;
+  bottom: 0;
+  width: var(--spine-weight);
+  background: transparent;
+}
+
+.step.retried::before {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 var(--rule-weight) var(--ink-record);
+}
+
+.step.checkpoint::before {
+  background: var(--ink-record);
+  box-shadow:
+    0 0 0 3px var(--paper),
+    0 0 0 calc(3px + var(--rule-weight)) var(--ink-record);
+}
+/* the spine doubles through a checkpoint: two hairlines, paper between */
+.step.checkpoint::after {
+  left: calc(var(--col-gutter) / -2 - 1.5px);
+  width: 4px;
+  background:
+    linear-gradient(to right,
+      var(--ink-record) 0, var(--ink-record) var(--rule-weight),
+      var(--paper) var(--rule-weight), var(--paper) calc(4px - var(--rule-weight)),
+      var(--ink-record) calc(4px - var(--rule-weight)), var(--ink-record) 4px);
+}
+
+.step.failed::before {
+  background: var(--paper);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 var(--rule-weight) var(--ink-record);
+}
+/* the spine gaps through an abandoned step */
+.step.failed::after {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--paper) 0, var(--paper) 5px,
+    var(--spine-color) 5px, var(--spine-color) 9px);
+  width: calc(var(--spine-weight) + 1px);
+}
+
+.step-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-1);
+  border-bottom: var(--rule-weight) solid var(--rule-feint);
+  padding-bottom: calc(var(--lead) - 1px);
+  margin-bottom: 0;
+}
+.step-head span:last-child { white-space: nowrap; }
+.step > p { margin-top: var(--space-0); }
+.step > p + p, .step > p.said { margin-top: var(--space-1); }
+
+/* a tool call: printed key, then the call itself in the machine hand */
+.call {
+  margin-top: var(--space-1);
+  border-top: var(--rule-weight) solid var(--rule-feint);
+  padding-top: calc(var(--space-h) - 1px);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-h);
+}
+.call .key {
+  flex: 0 0 var(--key-width);
+  font: var(--weight-print) var(--size-apparatus)/var(--lead) var(--font-print);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  color: var(--ink-print);
+}
+.call code {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: var(--lead);
+}
+
+/* the trim: an attempt that was struck and left hanging under the line, because
+   the record is corrected, never rewritten */
+.trim {
+  margin-top: var(--space-1);
+  padding-top: calc(var(--space-h) - 1px);
+  border-top: var(--rule-weight) solid var(--rule-print);
+  color: var(--ink-record-soft);
+  font-size: var(--size-machine);
+  font-family: var(--font-machine);
+  line-height: var(--lead);
+}
+.trim .struck {
+  text-decoration: line-through var(--rule-weight) var(--ink-correct);
+  text-decoration-skip-ink: none;
+}
+.correction {
+  white-space: nowrap;
+  color: var(--ink-correct);
+  font-family: var(--font-print);
+  font-size: var(--size-apparatus);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  font-weight: var(--weight-print);
+}
+
+/* a human checkpoint interrupts the chain with a signature block. Every line of
+   it renders from a recorded checkpoint event; with nothing recorded, the rule
+   and its printed label print with the space above them empty. */
+.attest {
+  margin: var(--space-1) 0 0;
+  border-top: var(--rule-weight) solid var(--ink-record);
+  padding-top: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+/* the attestation at the foot of the page opens under its own section rule, so it does
+   not print a second heavy rule directly beneath the heading's */
+h2 + .attest { border-top: 0; padding-top: var(--space-1); }
+.attest div { flex: 1 1 var(--sig-width); min-width: 0; }
+/* the space is signed into, the rule closes it, the printed label names what was
+   signed — in that order, the way a form is actually filled */
+.attest .sign {
+  display: flex;
+  align-items: flex-end;
+  min-height: var(--sig-space);
+  border-bottom: var(--sig-rule);
+  padding-bottom: 2px;
+  margin-bottom: calc(var(--space-h) - 1px);
+}
+.attest .hand {
+  margin: 0;
+  font-size: var(--size-body);
+  line-height: var(--lead);
+  font-family: var(--font-record);
+  color: var(--ink-record);
+  overflow-wrap: anywhere;
+}
+.attest .hand.machine {
+  font-family: var(--font-machine);
+  font-size: var(--size-machine);
+  color: var(--ink-machine);
+}
+/* a stamped countersignature is itself the mark, so it clears the signature rule
+   rather than sitting on it */
+.sign.stamped { padding-bottom: var(--space-h); }
+.stamp {
+  border: var(--stamp-border);
+  color: var(--ink-correct);
+  font: var(--weight-print) var(--size-apparatus)/var(--lead) var(--font-print);
+  letter-spacing: var(--track-apparatus);
+  text-transform: uppercase;
+  padding: 0 var(--space-h);
+  display: inline-block;
+  transform: rotate(-1.4deg);
+}
+
+.colophon {
+  margin: var(--space-2) 0 0;
+  border-top: var(--rule-weight) solid var(--rule-print);
+  padding-top: var(--space-h);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: var(--space-1);
+}
+.colophon .note { grid-column: 1 / -1; }
+
+/* the key to the marks, printed once at the foot like a stationer's legend */
+.legend {
+  margin: var(--space-2) 0 0;
+  border-top: var(--rule-weight) solid var(--rule-print);
+  padding-top: var(--space-h);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0 var(--space-1);
+}
+.legend p { margin: 0; display: flex; align-items: baseline; gap: var(--space-h); }
+.legend i {
+  flex: 0 0 var(--detent);
+  height: var(--detent);
+  background: var(--ink-record);
+  translate: 0 -1px;
+}
+.legend .m-retried {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 var(--rule-weight) var(--ink-record);
+}
+.legend .m-checkpoint {
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 calc(2px + var(--rule-weight)) var(--ink-record);
+}
+.legend .m-failed {
+  background: var(--paper);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 var(--rule-weight) var(--ink-record);
+}
+
+/* narrow: the token sheet folds the printed margin to zero, but the chain still
+   needs a gutter to carry the spine outboard of the record */
+@media (max-width: 800px) {
+  :root { --col-gutter: 40px; }
+  .leaf { grid-template-columns: minmax(0, var(--measure)); }
+  .leaf > * { grid-column: 1; }
+  /* the section key rejoins its heading's line rather than disappearing */
+  h2 .key { position: static; margin: 0 var(--space-h) 0 0; }
+  /* the leaf's keys are apparatus for the margin, so they leave with it; the
+     chain's time keys stay, because elapsed time is information no step head
+     repeats */
+  .leaf > .marginal { display: none; }
+  .particulars { grid-template-columns: 1fr; }
+  .particulars div:nth-child(odd) { padding-right: 0; }
+  .particulars div:nth-last-child(-n+2):not(:last-child) {
+    border-bottom: var(--rule-weight) solid var(--rule-feint);
+  }
+  /* the spine moves outboard and the record runs full measure beside it */
+  .chain {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: var(--col-gutter);
+    background-position: calc(var(--col-gutter) / 2) 0;
+  }
+  .chain > .marginal {
+    grid-column: 1;
+    text-align: left;
+    padding-top: var(--space-1);
+    padding-bottom: 0;
+  }
+  .chain > .marginal br { display: none; }
+  /* the hidden line break still separates the two spans, so the run-in separator has to
+     be selected across it: a span-plus-span selector never matches here */
+  .chain > .marginal br + span::before { content: "\00a0\00b7\00a0"; }
+  .step { grid-column: 1; padding-top: 0; }
+  .step::before { top: calc((var(--lead) - var(--detent)) / 2); }
+}
+
+@media print {
+  @page { size: A4; margin: 18mm 16mm 20mm; }
+  body { padding: 0; font-size: 10.5pt; }
+  .leaf { max-width: none; }
+  h2, .attest, .step-head { break-after: avoid; }
+  figure, .particulars, .step, .legend { break-inside: avoid; }
+  a { text-decoration: none; }
+}
+
+</style>
+</head>
+<body>
+<main class="leaf">
+
+  <p class="marginal">Fol. 1</p>
+  <header class="masthead printed">
+    <span>Trajectory &middot; ms-12.jsonl</span>
+    <span>2026-08-29 · 09:24:17 UTC</span>
+  </header>
+
+  <h1>ms-12</h1>
+
+  <p class="standfirst"><b>1 step</b> recorded. The run ended <b>final</b> after 6.0 s.</p>
+
+  <p class="marginal at-block">Particulars</p>
+  <dl class="particulars">
+    <div><dt>Model</dt><dd>z-ai/glm-5.3-flash</dd></div>
+    <div><dt>Steps</dt><dd>1 of 1 max</dd></div>
+    <div><dt>Tools</dt><dd>not recorded</dd></div>
+    <div><dt>Tokens</dt><dd>1,508 in · 252 out</dd></div>
+    <div><dt>Wall time</dt><dd>6.0 s</dd></div>
+    <div><dt>Cost</dt><dd>$0.000088</dd></div>
+  </dl>
+
+  <h2><span class="key">&sect; 1</span>Instructions as issued</h2>
+  <figure>
+    <pre><span>You are reviewing a proposed change to a small,</span><span>widely used JavaScript library.</span><span>The library is `ms` at tag 2.1.3. Its own test</span><span>suite</span><span>(`./node_modules/.bin/mocha tests.js`) passes</span><span>with the change applied, so a green suite is not</span><span>evidence that the change is correct.</span><span></span><span>Decide whether the change breaks behaviour a</span><span>caller can observe. Some changes in this review</span><span>queue are equivalent refactors with no</span><span>behavioural difference at all.</span><span></span><span>Answer with exactly one JSON object, inside a</span><span>```json fence, as the last thing you write:</span><span></span><span>```json</span><span>{&quot;defect&quot;: true, &quot;testFile&quot;: {&quot;path&quot;: &quot;&lt;path&gt;&quot;,</span><span>&quot;content&quot;: &quot;&lt;test source&gt;&quot;}, &quot;note&quot;: &quot;&lt;one or</span><span>two sentences&gt;&quot;}</span><span>```</span><span></span><span>- `defect`: true if the change alters behaviour</span><span>a caller can observe, false if it is an</span><span>  equivalent refactor.</span><span>- `testFile`: required when `defect` is true,</span><span>omitted when it is false. Its `content` is a</span><span>  complete, runnable test file, JSON-escaped as</span><span>a single string.</span><span>- The file is written to `proof-test.js` in the</span><span>checkout and run with `./node_modules/.bin/mocha</span><span>proof-test.js`,</span><span>  so it must import the library exactly as the</span><span>skeleton below does:</span><span></span><span>```</span><span>var assert = require(&#39;assert&#39;);</span><span>var ms = require(&#39;./&#39;);</span><span></span><span>describe(&#39;proof&#39;, function () {</span><span>  it(&#39;fails on the patched build&#39;, function () {</span><span>    // assert the correct behaviour here</span><span>  });</span><span>});</span><span>```</span></pre>
+    <figcaption><span class="join">e00</span><span class="what">Instructions as issued &middot; verbatim</span><span class="measure">1290 chars</span></figcaption>
+  </figure>
+
+  <h2><span class="key">&sect; 2</span>The record</h2>
+  <div class="chain">
+    <p class="marginal"><span>00:06</span><br><span>Step 1</span></p>
+    <div class="step">
+      <p class="printed step-head"><span>Assistant</span><span>1,760 tok</span></p>
+      <p class="printed">Final text &middot; set at &sect; 3</p>
+    </div>
+  </div>
+
+  <h2><span class="key">&sect; 3</span>Result</h2>
+        <p class="said">```json
+{&quot;defect&quot;: true, &quot;testFile&quot;: {&quot;path&quot;: &quot;proof-test.js&quot;, &quot;content&quot;: &quot;var assert = require(&#39;assert&#39;);\nvar ms = require(&#39;./&#39;);\n\ndescribe(&#39;proof&#39;, function () {\n  it(&#39;rejects non-string values even if they have a length&#39;, function () {\n    assert.strictEqual(ms([&#39;1d&#39;]), 86400000);\n  });\n});\n&quot;}, &quot;note&quot;: &quot;The `type === &#39;string&#39;` guard was dropped, so any value with a truthy `length` is passed to parse. For example `ms([&#39;1d&#39;])` now returns 86400000 instead of throwing an error, an observable behaviour change.&quot;}
+```</p>
+
+  <h2><span class="key">&sect; 4</span>Attestation</h2>
+  <section class="attest">
+    <div>
+      <div class="sign"><p class="hand machine">z-ai/glm-5.3-flash</p></div>
+      <p class="printed">Recorded by &middot; agent loop, unattended</p>
+    </div>
+    <div>
+      <div class="sign"></div>
+      <p class="printed">Witnessed by &mdash; no human checkpoint recorded in this run</p>
+    </div>
+  </section>
+
+  <div class="legend printed">
+    <p><i></i>Step executed</p>
+    <p><i class="m-retried"></i>Retried</p>
+    <p><i class="m-checkpoint"></i>Human checkpoint</p>
+    <p><i class="m-failed"></i>Failed, not retried</p>
+  </div>
+
+  <p class="marginal at-block">Fol. 1</p>
+  <footer class="colophon printed">
+    <span>Rendered from ms-12.jsonl</span>
+    <span>Fol. 1 of 1</span>
+    <span class="note">3 events recorded, e00–e02, unbroken</span>
+  </footer>
+
+</main>
+</body>
+</html>
