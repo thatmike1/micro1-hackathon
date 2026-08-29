@@ -15,3 +15,44 @@ what was decided as a result.
 | 1 | stage 1: prover loop with a double-run gate (`eval/candidates/stage-1.mjs`). Baseline 1's information plus one tool it does not control: the harness runs its test on both checkouts, reads exit codes only, and returns both runners' output on a failure, max 3 revisions. The gate produces the answer — an unproved claim is withheld as a no-verdict. `--max-tokens 4096` pinned, per row 0f | `runs/stage1-*`, `node eval/analyze-k3.mjs stage1-`, `node eval/gate-audit.mjs stage1-`: flash 11/12, 12/12, 11/12 single-run → **10/12 in all three** (baseline 1: 7/12), 0/3 false alarms every rep; qwen 5/10, 6/10, 5/10 → **4/10** (baseline 1: 5/10), **0/2 false alarms every rep** against 2/2, 2/2, 0/2. Zero unproved claims in all 81 runs, both engines. $0.1028, 1.50M tokens | keep it. Flash gains three cases on the primary metric for 1.5x the cost; qwen trades one case for its entire false-alarm rate, which the plan treats as hard-zero. 7 of flash's 34 proofs came only after the gate rejected a first answer. Qwen's always-`true` verdict bit is intact — it spent 24 gate attempts trying to prove the two controls defective — but none got through, so it no longer reaches the output. The cap fired 9 times on qwen and needed a loop fix: a truncated tool call echoed back was an HTTP 400 and killed the run |
 | 2 | stage 2: hypothesizer/prover split (`eval/candidates/stage-2.mjs`). One role reads the diff and records a ranked ledger of candidate defects, or records it empty and ends the review; a second role takes one entry at a time and tries to prove it through the stage-1 gate, two attempts per entry out of the same four-attempt total, falling to the next entry when they are spent. Gate, metric, case slices, engines and `--max-tokens 4096` all unchanged; the gate itself is now one module (`eval/gate.mjs`) both stages import, and stage 1's request body is byte-identical after the extraction | `runs/stage2-*`, `node eval/analyze-k3.mjs stage2-`, `node eval/gate-audit.mjs stage2-`, `node eval/ledger-audit.mjs stage2-`: flash 12/12, 12/12, 12/12 single-run → **12/12 in all three** (stage 1: 10/12), 0/3 false alarms every rep, zero flips, zero no-verdicts, 45 gate attempts against stage 1's 48. Qwen 4/10, 4/10, 5/10 → **3/10** (stage 1: 4/10), 0/2 false alarms every rep, zero no-verdicts, but misses 6, 6, 5 against stage 1's 3, 1, 2. Qwen's control gate attempts went 24 → **0**: all six control runs exited on an empty ledger. $0.0613 flash / $0.0407 qwen, 1.92M tokens | **split.** Keep on flash: the two cases stage 1 could not hold (`ms-30`, `ms-170`) are stable, the arm is now clean on every case in every repetition, for 1.8x stage 1's tokens and 2.5x its cost. Drop on qwen and keep stage 1 as the shipped configuration there: the empty-ledger exit cut the wasted control attempts to zero as intended, but this model takes it on the first turn without reading — it ends 11 of 30 buggy runs clean, and the always-`true` verdict bit becomes an always-`false` one. Trading stage 1's no-verdicts for misses is the wrong direction: a withheld claim asks for a human, a miss ships the defect |
 | 3 | stage 3: cross-case memory file (`eval/candidates/stage-3.mjs`, `eval/memory.mjs`). One markdown notebook per run: every role is shown what it holds before the review, and after the verdict settles a scribe turn reads the diff, the ledger, each gate attempt's exit-code pair and the test that passed or last failed, and appends at most three one-sentence lessons. It never sees the case kind or the scorer's outcome, so a wrong lesson propagates. Measured as an on/off ablation over the shipped stage of each engine per row 2 — base stage 2 on flash, stage 1 on qwen — at `--concurrency 1` in a fixed recorded order (`bytes-12 → bytes-15 → bytes-52 → bytes-control-loop → [js-yaml-15 → js-yaml-18 → js-yaml-control-hoist →] ms-12 → ms-170 → ms-27 → ms-30 → ms-4 → ms-70 → ms-72 → ms-control-lookup`, js-yaml on flash only), both arms. Gate, budget, slices, engines and `--max-tokens 4096` unchanged; `eval/stage-3.test.mjs` compares request bodies byte for byte against stages 1 and 2 and they are identical with the memory empty | `runs/stage3-*`, `node eval/analyze-k3.mjs stage3-`, `node eval/gate-audit.mjs stage3-`, `node eval/memory-audit.mjs stage3-`: flash off 12/12, 12/12, 11/12 → **11/12 in all three**, 0/3 false alarms every rep, 46 gate attempts, $0.0721; flash on 12/12, 11/12, 12/12 → **11/12**, 0/3 false alarms, but one no-verdict on a control, **39** gate attempts, revisions 9 → 4, review tokens −5%, total tokens +6%, $0.0816 (**+13%**). Qwen off 6/10, 3/10, 6/10 → **3/10**, 109 attempts, $0.0927; qwen on 3/10, 5/10, 1/10 → **0/10**, flips 6/10 → 9/10, 125 attempts, 1.5x tokens, $0.1242. False alarms 0/2 every rep in both qwen arms. $0.3773, 5.14M tokens | **drop on both engines**, shipped configuration unchanged (stage 2 on flash, stage 1 on qwen). On flash the notebook is genuinely good — 46 of 58 lessons name a library symbol, every proof came from the first-ranked hypothesis, revisions halved — but the metric was already at its ceiling and the scribe turn costs more than the attempts it saves. On qwen the scribe fills its three-lesson quota after all 36 runs, 54 of 108 lessons open with "A test that…", only 37 name a library symbol, and several state the gate's direction backwards ("the original rejects but the patched accepts"); those are then in every later prompt of the run. A memory inherits the quality of the model's self-summary and, unlike the test, that summary passes through no gate. Both off arms also land one case below the row they re-measure (flash 12/12 → 11/12, qwen 4/10 → 3/10) on an unchanged candidate under the sequential order |
+
+## where this fails
+
+The gate is only as good as the corpus's ability to tell two answers apart, and that is the
+constraint everything above ran into.
+
+**Discriminability is the scarce resource, not model capability.** The corpus took a full day to
+build and the first stage-0 measurement scored 12/12 against it — a result that reads as a solved
+problem and is really a statement about the corpus. Widening the pool made it worse, not better:
+the frontier sweep put 70 buggy cases and 3 controls in front of the same unchanged baseline and
+flash went *up*, to 69/70. Every mutation a mutation testing tool will generate is either caught by
+reading the diff or caught by nothing, and the band in between — a defect a competent reviewer
+would miss and a test can still separate — is thin enough that 73 verified cases yielded roughly a
+dozen worth arguing about. The scarce thing was never a better agent. It was a case that two
+candidates answer differently.
+
+That has a consequence the numbers here inherit. A 12-case slice cannot resolve a difference
+smaller than about one case, which is also the size of the run-to-run noise measured in row 3. Every
+comparison in this changelog above that resolution is real; anything at or below it is a coin the
+corpus is not big enough to call, and it is reported rather than rounded.
+
+**The failure mode in production is narrower and more honest than the one in evaluation.** The agent
+cannot prove what a test cannot separate. A defect needs a green suite to start from, a runnable
+checkout of both sides, and behaviour reachable from the library's public surface — and where any of
+those is missing the gate returns no-verdict rather than a wrong answer. That is the trade the whole
+design makes: it converts most of the reviewer's false positives into silence. Silence is cheap and
+a false positive is not, but silence is still not a review, and a run that withholds every case has
+told the maintainer nothing while looking exactly like a run that found nothing wrong.
+
+**What we would build next, in order.** A discriminability probe that scores a candidate case
+*before* it enters the corpus, so the build day spends itself on the thin band instead of
+discovering it afterwards. Then a second gate direction — a test that must pass on the mutant and
+fail on pristine — which would catch the backwards proofs that stage 0 shipped and stage 1 only
+rejects. Then the ablation this run could not afford: the same ladder against a frontier model, to
+separate what the gate contributes from what the engine does.
+
+**The hot take.** An LLM's confident output is not evidence of anything, including its own
+reliability, and the industry's habit of quoting a single run as a capability number is how a 7/12
+agent gets reported as a 12/12 one. That is not a model problem and no better model fixes it. The
+fix is structural: make the agent hand its claim to something it does not control, and report what
+survives.
