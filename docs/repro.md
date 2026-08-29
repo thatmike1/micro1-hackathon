@@ -530,6 +530,13 @@ repetitions in row 0f were 11/12, 11/12 and 9/12, for 7/12 held across all three
 flash flipped 8 of its 12 cases between repetitions. The k=3 metric exists because of exactly this,
 and it reduces the variance rather than removing it.
 
+The stage-2 flash arm re-measured [above](#what-that-arm-actually-produced) came back at 12/12 with
+zero flips, and that is not a counterexample. It is the one arm with no headroom left: all twelve
+buggy cases proved in all six repetitions now on record, three from row 2 and three from here, so
+there is nothing sitting near the boundary for the sampling to move. Expect a re-measurement to
+land on the row where the row is at a ceiling, and to move by a case where it is in between — which
+is where every arm worth arguing about sits.
+
 What is stable across every arm measured is the false-alarm column: 0 on flash in every repetition
 of every stage, and 0 on qwen in every repetition from stage 1 onward. That one is a real hard
 zero, and it is the number the corpus's three controls were built to test.
