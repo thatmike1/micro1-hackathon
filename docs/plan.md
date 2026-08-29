@@ -15,7 +15,7 @@ Agent reviews a diff against a green-suite library and proves the bug: a test th
 - [x] stage 3: cross-case memory file — measured as an on/off ablation over each engine's shipped
       stage, recorded, dropped on both (no metric gain on flash and +13% cost, 3/10 → 0/10 on qwen)
 - [x] review-package HTML per case (diff, hypothesis ledger, both runner outputs, retries)
-- [ ] eval runner + scoreboard (baseline vs stages, same cases, exit-code scored)
+- [x] eval runner + scoreboard (baseline vs stages, same cases, exit-code scored)
 - [x] repro guide, tested from a clean clone (setup, exact commands, versions, runtime, cost)
 - [x] README: user, bottleneck, value; disclosure that everything here was written during the event; third-party tools named (Stryker, mocha, OpenRouter)
 - [x] trajectories: representative runs per agent, rendered + raw JSONL
