@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-28T20:20:27.775Z",
-  "node": "v22.22.2",
+  "generatedAt": "2026-08-29T09:10:18.429Z",
+  "node": "v22.22.3",
   "libraries": [
     {
       "id": "ms",
@@ -10,7 +10,7 @@
       "entry": "index.js",
       "test": "./node_modules/.bin/mocha tests.js",
       "mutate": "index.js",
-      "setupSeconds": 3.7
+      "setupSeconds": 18.8
     },
     {
       "id": "js-yaml",
@@ -20,7 +20,7 @@
       "entry": "dist/js-yaml.mjs",
       "test": "node --test 'test/core/**/*.test.mjs'",
       "mutate": "dist/js-yaml.mjs:240:1-600:1",
-      "setupSeconds": 5.4
+      "setupSeconds": 17
     },
     {
       "id": "bytes",
@@ -30,7 +30,7 @@
       "entry": "index.js",
       "test": "./node_modules/.bin/mocha --reporter dot test/",
       "mutate": "index.js",
-      "setupSeconds": 6.8
+      "setupSeconds": 19.5
     }
   ],
   "selection": {

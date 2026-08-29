@@ -14,10 +14,10 @@ Agent reviews a diff against a green-suite library and proves the bug: a test th
 - [x] stage 2: hypothesizer/prover split — measured, recorded (kept on flash, dropped on qwen)
 - [x] stage 3: cross-case memory file — measured as an on/off ablation over each engine's shipped
       stage, recorded, dropped on both (no metric gain on flash and +13% cost, 3/10 → 0/10 on qwen)
-- [ ] review-package HTML per case (diff, hypothesis ledger, both runner outputs, retries)
+- [x] review-package HTML per case (diff, hypothesis ledger, both runner outputs, retries)
 - [ ] eval runner + scoreboard (baseline vs stages, same cases, exit-code scored)
-- [ ] repro guide, tested from a clean clone (setup, exact commands, versions, runtime, cost)
-- [ ] README: user, bottleneck, value; disclosure that everything here was written during the event; third-party tools named (Stryker, mocha, OpenRouter)
+- [x] repro guide, tested from a clean clone (setup, exact commands, versions, runtime, cost)
+- [x] README: user, bottleneck, value; disclosure that everything here was written during the event; third-party tools named (Stryker, mocha, OpenRouter)
 - [ ] trajectories: representative runs per agent, rendered + raw JSONL
 - [ ] video ≤5 min per the beat sheet in the ideation report
 - [ ] changelog closed with main failure mode + hot take (discriminability scarcity)
