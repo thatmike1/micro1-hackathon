@@ -13,7 +13,8 @@ const PROOF_TIMEOUT_MS = 60_000;
 
 /**
  * CLI: `npm run eval:run -- --candidate baseline-1 [--model <id>] [--cases <id>...] [--out <dir>]
- *       [--concurrency <n>] [--reasoning <off|effort>] [--provider <name>] [--require-parameters] [--max-tokens <n>]`
+ *       [--concurrency <n>] [--reasoning <off|effort>] [--provider <name>] [--require-parameters] [--max-tokens <n>]
+ *       [--option <key=value>...]`
  *
  * Runs one candidate over the corpus and scores it. Per case a pristine and a mutated checkout are
  * prepared under a temp dir — the shared corpus checkout is never written to — the candidate
@@ -30,6 +31,9 @@ async function main(argv) {
   const apiKey = process.env.OPENROUTER_API_KEY ?? readDotEnv().OPENROUTER_API_KEY;
   if (!apiKey) throw new Error('OPENROUTER_API_KEY is not set (env or .env)');
 
+  // `loadCases` sorts by id, so the run order is fixed by the corpus and not by the argument
+  // order. At `--concurrency 1` that order is also the order the cases are answered in, which is
+  // what a candidate carrying state from one case to the next has to be measured under.
   const cases = loadCases().filter((c) => args.cases.length === 0 || args.cases.includes(c.id));
   if (cases.length === 0) throw new Error('no matching cases');
 
@@ -64,7 +68,15 @@ async function main(argv) {
     Array.from({ length: Math.min(args.concurrency, cases.length) }, async () => {
       for (let i = next++; i < cases.length; i = next++) {
         const record = cases[i];
-        const result = await runCase({ record, candidate, outDir, model: args.model, apiKey, requestExtras });
+        const result = await runCase({
+          record,
+          candidate,
+          outDir,
+          model: args.model,
+          apiKey,
+          requestExtras,
+          options: args.options,
+        });
         results[i] = result;
         process.stdout.write(
           `${result.outcome.padEnd(14)} ${record.id.padEnd(22)} ` +
@@ -80,6 +92,9 @@ async function main(argv) {
     description: candidate.description,
     model: args.model,
     requestExtras,
+    candidateOptions: args.options,
+    concurrency: args.concurrency,
+    order: cases.map((c) => c.id),
     startedAt: startedAt.toISOString(),
     finishedAt: new Date().toISOString(),
     wallMs: Date.now() - startedAt.getTime(),
@@ -95,14 +110,14 @@ async function main(argv) {
  * One case end to end: prepare the checkouts, ask the candidate, score the answer.
  * @returns {Promise<object>} the record written into `summary.json`
  */
-async function runCase({ record, candidate, outDir, model, apiKey, requestExtras }) {
+async function runCase({ record, candidate, outDir, model, apiKey, requestExtras, options }) {
   const startedAt = Date.now();
   const trajectory = openTrajectory({ file: join(outDir, `${record.id}.jsonl`) });
   let workspace = null;
 
   try {
     workspace = await prepareCase(record);
-    const answer = await candidate.run({ record, workspace, trajectory, model, apiKey, requestExtras });
+    const answer = await candidate.run({ record, workspace, trajectory, model, apiKey, requestExtras, options });
 
     if (answer.stopReason === 'error') {
       return finish('error', { error: answer.error, usage: answer.usage });
@@ -172,6 +187,7 @@ function parseArgs(argv) {
     maxTokens: null,
     provider: null,
     requireParameters: false,
+    options: {},
   };
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
@@ -183,6 +199,14 @@ function parseArgs(argv) {
     else if (flag === '--max-tokens') args.maxTokens = Number(argv[++i]);
     else if (flag === '--provider') args.provider = argv[++i];
     else if (flag === '--require-parameters') args.requireParameters = true;
+    // candidate-level knobs, e.g. `--option memory=off`. Recorded in summary.json as
+    // `candidateOptions`, so an arm always carries the setting it was measured at.
+    else if (flag === '--option') {
+      const pair = argv[++i] ?? '';
+      const at = pair.indexOf('=');
+      if (at < 1) throw new Error(`--option expects key=value, got: ${pair}`);
+      args.options[pair.slice(0, at)] = pair.slice(at + 1);
+    }
     else if (flag === '--cases') {
       while (argv[i + 1] && !argv[i + 1].startsWith('--')) args.cases.push(argv[++i]);
     } else throw new Error(`unknown argument: ${flag}`);

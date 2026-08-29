@@ -37,6 +37,14 @@ import { dirname, join } from 'node:path';
  *   { entries: number, source: 'tool'|'text'|'none',
  *     hypotheses: [{ rank, claim, input, expected, observed }] }
  *
+ * `memory-read`  what a cross-case memory candidate was shown before the review started. `enabled`
+ *   is the ablation arm; an empty `text` renders as no prompt block at all.
+ *   { enabled: boolean, file: string|null, entries: number, chars: number, text: string }
+ *
+ * `memory-write` what the scribe appended to the memory after the verdict settled. `recorded` is
+ *   false when the scribe never called the tool, in which case `lessons` is empty.
+ *   { file: string, lessons: string[], recorded: boolean, usage: Usage }
+ *
  * `gate-attempt` one double-run gate attempt by a prover candidate: the test it submitted and the
  *   two exit codes it came back with. Written once per attempt, passed or failed, so a case that
  *   failed the gate and then passed it reads as the sequence it was.
@@ -53,7 +61,7 @@ import { dirname, join } from 'node:path';
  * Usage is `{ promptTokens, completionTokens, totalTokens, costUsd }`; costUsd is null when
  * the provider does not report it.
  *
- * @typedef {'run-start'|'step'|'tool-result'|'retry'|'checkpoint'|'ledger'|'gate-attempt'|'gate-outcome'|'run-end'} EventType
+ * @typedef {'run-start'|'step'|'tool-result'|'retry'|'checkpoint'|'ledger'|'memory-read'|'memory-write'|'gate-attempt'|'gate-outcome'|'run-end'} EventType
  */
 
 /** @typedef {{promptTokens:number, completionTokens:number, totalTokens:number, costUsd:number|null}} Usage */
