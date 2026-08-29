@@ -18,7 +18,7 @@ Agent reviews a diff against a green-suite library and proves the bug: a test th
 - [ ] eval runner + scoreboard (baseline vs stages, same cases, exit-code scored)
 - [x] repro guide, tested from a clean clone (setup, exact commands, versions, runtime, cost)
 - [x] README: user, bottleneck, value; disclosure that everything here was written during the event; third-party tools named (Stryker, mocha, OpenRouter)
-- [ ] trajectories: representative runs per agent, rendered + raw JSONL
+- [x] trajectories: representative runs per agent, rendered + raw JSONL
 - [ ] video ≤5 min per the beat sheet in the ideation report
 - [ ] changelog closed with main failure mode + hot take (discriminability scarcity)
 - [ ] submit before Mon 01:59 CEST
