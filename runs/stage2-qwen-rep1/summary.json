@@ -1,0 +1,328 @@
+{
+  "candidate": "stage-2",
+  "description": "hypothesizer/prover split: a ranked ledger of candidate defects, proved one entry at a time through the stage-1 gate",
+  "model": "qwen/qwen3-30b-a3b-instruct-2507",
+  "requestExtras": {
+    "max_tokens": 4096,
+    "provider": {
+      "order": [
+        "CoreWeave"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true
+    }
+  },
+  "startedAt": "2026-08-29T13:22:03.783Z",
+  "finishedAt": "2026-08-29T13:22:26.859Z",
+  "wallMs": 23076,
+  "totals": {
+    "cases": 12,
+    "buggy": 10,
+    "controls": 2,
+    "proved": 4,
+    "proofRate": 0.4,
+    "claimUnproved": 0,
+    "misses": 6,
+    "falseAlarms": 0,
+    "controlsCorrect": 2,
+    "noVerdict": 0,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 111251,
+      "completionTokens": 7675,
+      "totalTokens": 118926,
+      "costUsd": 0.0134276
+    },
+    "wallMsTotal": 71169
+  },
+  "cases": [
+    {
+      "id": "bytes-12",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "anchor",
+      "outcome": "miss",
+      "defect": false,
+      "note": "the ledger is empty: no candidate defect was ranked, the change is an equivalent refactor",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 3922,
+        "completionTokens": 138,
+        "totalTokens": 4060,
+        "costUsd": 0.0004336
+      },
+      "wallMs": 1920,
+      "trajectory": "bytes-12.jsonl"
+    },
+    {
+      "id": "bytes-15",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "quantifier",
+      "outcome": "miss",
+      "defect": false,
+      "note": "the ledger is empty: no candidate defect was ranked, the change is an equivalent refactor",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 3918,
+        "completionTokens": 69,
+        "totalTokens": 3987,
+        "costUsd": 0.0004125
+      },
+      "wallMs": 1350,
+      "trajectory": "bytes-15.jsonl"
+    },
+    {
+      "id": "bytes-52",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "option-ignored",
+      "outcome": "miss",
+      "defect": false,
+      "note": "The change does not alter observable behavior. Both the original and patched versions produce the same output for all inputs, including when options is null or undefined. The test that was attempted failed to distinguish between the builds because they behave identically, indicating the change is an equivalent refactor.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 22192,
+        "completionTokens": 1840,
+        "totalTokens": 24032,
+        "costUsd": 0.0027712
+      },
+      "wallMs": 16745,
+      "trajectory": "bytes-52.jsonl"
+    },
+    {
+      "id": "bytes-control-loop",
+      "kind": "control",
+      "library": "bytes",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "the ledger is empty: no candidate defect was ranked, the change is an equivalent refactor",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 7260,
+        "completionTokens": 541,
+        "totalTokens": 7801,
+        "costUsd": 0.0008882999999999999
+      },
+      "wallMs": 5068,
+      "trajectory": "bytes-control-loop.jsonl"
+    },
+    {
+      "id": "ms-12",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "miss",
+      "defect": false,
+      "note": "the ledger is empty: no candidate defect was ranked, the change is an equivalent refactor",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 3794,
+        "completionTokens": 101,
+        "totalTokens": 3895,
+        "costUsd": 0.00040970000000000004
+      },
+      "wallMs": 1523,
+      "trajectory": "ms-12.jsonl"
+    },
+    {
+      "id": "ms-170",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "threshold",
+      "outcome": "miss",
+      "defect": false,
+      "note": "the ledger is empty: no candidate defect was ranked, the change is an equivalent refactor",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 6240,
+        "completionTokens": 441,
+        "totalTokens": 6681,
+        "costUsd": 0.0007563000000000001
+      },
+      "wallMs": 3734,
+      "trajectory": "ms-170.jsonl"
+    },
+    {
+      "id": "ms-27",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "diagnostic",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change replaces a descriptive error message with an empty one, breaking diagnostics for callers.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    try {\n      ms(null);\n      assert.fail('Expected error to be thrown');\n    } catch (err) {\n      assert.strictEqual(err.message, 'val is not a non-empty string or a valid number. val=null');\n    }\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 145,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-null\u001b[0m\n      \u001b[32m+val is not a non-empty string or a valid number. val=null\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:10:14)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 145,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 8196,
+        "completionTokens": 418,
+        "totalTokens": 8614,
+        "costUsd": 0.000945
+      },
+      "wallMs": 4355,
+      "trajectory": "ms-27.jsonl"
+    },
+    {
+      "id": "ms-30",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "miss",
+      "defect": false,
+      "note": "The change removes a length check that previously rejected strings longer than 100 characters, but the test attempts to demonstrate a performance issue failed on both builds because the original version already short-circuits on long strings, making the timing assertion invalid. The behavior change is real, but the test cannot isolate it due to the early return in the original version, and no viable test was found within the two attempts.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 25475,
+        "completionTokens": 2246,
+        "totalTokens": 27721,
+        "costUsd": 0.0032213
+      },
+      "wallMs": 17991,
+      "trajectory": "ms-30.jsonl"
+    },
+    {
+      "id": "ms-4",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "constant",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change incorrectly calculates years in milliseconds, making it return a value that is too small by a factor of 365.25 squared.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    // Test that ms(\"1y\") returns approximately 31557600000 milliseconds\n    // The original value should be around 31,557,600,000 (1 year in ms)\n    // The changed version incorrectly returns d / 365.25, which is ~86,400,000 (1 day in ms)\n    const result = ms('1y');\n    assert.strictEqual(result, 31557600000, `Expected 31557600000ms for '1y', got ${result}`);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 156,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-236550.30800821356\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:10:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 144,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (5ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 8448,
+        "completionTokens": 838,
+        "totalTokens": 9286,
+        "costUsd": 0.0010961999999999999
+      },
+      "wallMs": 7236,
+      "trajectory": "ms-4.jsonl"
+    },
+    {
+      "id": "ms-70",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "fall-through",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change removes the use of 365.25 days per year, causing ms('1y') to return 31536000000 instead of the correct 31557600000.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    assert.strictEqual(ms('1y'), 31557600000);\n  });\n});",
+        "mutant": {
+          "code": 1,
+          "ms": 142,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-604800000\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 144,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 8472,
+        "completionTokens": 514,
+        "totalTokens": 8986,
+        "costUsd": 0.0010014
+      },
+      "wallMs": 4936,
+      "trajectory": "ms-70.jsonl"
+    },
+    {
+      "id": "ms-72",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "arithmetic",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change incorrectly divides by years instead of multiplying, resulting in a value that is off by a factor of the number of milliseconds in a year.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    assert.strictEqual(ms('1y'), 31557600000);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 145,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-3.168808781402895e-11\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 138,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 8720,
+        "completionTokens": 489,
+        "totalTokens": 9209,
+        "costUsd": 0.0010187
+      },
+      "wallMs": 5281,
+      "trajectory": "ms-72.jsonl"
+    },
+    {
+      "id": "ms-control-lookup",
+      "kind": "control",
+      "library": "ms",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "the ledger is empty: no candidate defect was ranked, the change is an equivalent refactor",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 4614,
+        "completionTokens": 40,
+        "totalTokens": 4654,
+        "costUsd": 0.0004734
+      },
+      "wallMs": 1030,
+      "trajectory": "ms-control-lookup.jsonl"
+    }
+  ]
+}

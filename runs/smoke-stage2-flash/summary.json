@@ -1,0 +1,96 @@
+{
+  "candidate": "stage-2",
+  "description": "hypothesizer/prover split: a ranked ledger of candidate defects, proved one entry at a time through the stage-1 gate",
+  "model": "z-ai/glm-5.3-flash",
+  "requestExtras": {
+    "reasoning": {
+      "effort": "low"
+    },
+    "max_tokens": 4096,
+    "provider": {
+      "order": [
+        "Z.AI"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true
+    }
+  },
+  "startedAt": "2026-08-29T13:13:05.303Z",
+  "finishedAt": "2026-08-29T13:13:36.027Z",
+  "wallMs": 30724,
+  "totals": {
+    "cases": 2,
+    "buggy": 1,
+    "controls": 1,
+    "proved": 1,
+    "proofRate": 1,
+    "claimUnproved": 0,
+    "misses": 0,
+    "falseAlarms": 0,
+    "controlsCorrect": 1,
+    "noVerdict": 0,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 12918,
+      "completionTokens": 644,
+      "totalTokens": 13562,
+      "costUsd": 0.00075737
+    },
+    "wallMsTotal": 45437
+  },
+  "cases": [
+    {
+      "id": "ms-4",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "constant",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The year constant was changed from d * 365.25 to d / 365.25, so ms('1y') returns ~2374 ms instead of 31557600000 ms.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('parses 1y correctly', function () {\n    assert.strictEqual(ms('1y'), 365.25 * 24 * 60 * 60 * 1000);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 139,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-236550.30800821356\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 135,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m parses 1y correctly\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 8287,
+        "completionTokens": 472,
+        "totalTokens": 8759,
+        "costUsd": 0.000501445
+      },
+      "wallMs": 30713,
+      "trajectory": "ms-4.jsonl"
+    },
+    {
+      "id": "ms-control-lookup",
+      "kind": "control",
+      "library": "ms",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "the ledger is empty: no candidate defect was ranked, the change is an equivalent refactor",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 4631,
+        "completionTokens": 172,
+        "totalTokens": 4803,
+        "costUsd": 0.000255925
+      },
+      "wallMs": 14724,
+      "trajectory": "ms-control-lookup.jsonl"
+    }
+  ]
+}
