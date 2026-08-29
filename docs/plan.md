@@ -10,7 +10,7 @@ Agent reviews a diff against a green-suite library and proves the bug: a test th
 - [x] stage 0: baseline 1 (single prompt, no execution) over full corpus — record scores in CHANGELOG.md
 - [x] stage 0b: baseline 2 (agent with read/bash tools, no verification contract) — record
 - [x] stage 0 re-measure: both baselines, both engines, pinned configs, k=3 reps each — record
-- [ ] stage 1: prover loop with double-run gate, max 3 retries — measure, record
+- [x] stage 1: prover loop with double-run gate, max 3 retries — measure, record
 - [ ] stage 2: hypothesizer/prover split — measure, record
 - [ ] stage 3: cross-case memory file — measure, record, keep the on/off ablation
 - [ ] review-package HTML per case (diff, hypothesis ledger, both runner outputs, retries)

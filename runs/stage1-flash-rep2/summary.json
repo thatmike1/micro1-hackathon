@@ -1,0 +1,508 @@
+{
+  "candidate": "stage-1",
+  "description": "prover loop: a claimed defect stands only once its test clears the double-run gate",
+  "model": "z-ai/glm-5.3-flash",
+  "requestExtras": {
+    "reasoning": {
+      "effort": "low"
+    },
+    "max_tokens": 4096,
+    "provider": {
+      "order": [
+        "Z.AI"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true
+    }
+  },
+  "startedAt": "2026-08-29T12:10:24.863Z",
+  "finishedAt": "2026-08-29T12:11:35.888Z",
+  "wallMs": 71025,
+  "totals": {
+    "cases": 15,
+    "buggy": 12,
+    "controls": 3,
+    "proved": 12,
+    "proofRate": 1,
+    "claimUnproved": 0,
+    "misses": 0,
+    "falseAlarms": 0,
+    "controlsCorrect": 3,
+    "noVerdict": 0,
+    "errors": 0,
+    "usage": {
+      "promptTokens": 278032,
+      "completionTokens": 6848,
+      "totalTokens": 284880,
+      "costUsd": 0.006670639999999999
+    },
+    "wallMsTotal": 259897
+  },
+  "cases": [
+    {
+      "id": "bytes-12",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "anchor",
+      "outcome": "proved",
+      "defect": true,
+      "note": "Removing the ^ anchor from parseRegExp lets strings with leading garbage (e.g. 'foo1kb') parse instead of returning null, a caller-observable behaviour change.",
+      "error": null,
+      "proof": {
+        "path": "test/proof-test.js",
+        "command": "./node_modules/.bin/mocha test/proof-test.js",
+        "testFile": "var assert = require('assert');\nvar bytes = require('..');\n\ndescribe('proof', function () {\n  it('fails on the patched build', function () {\n    assert.strictEqual(bytes.parse('foo1kb'), null);\n    assert.strictEqual(bytes.parse('garbage 1024mb'), null);\n    assert.strictEqual(bytes.parse('1kb'), 1024);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 211,
+          "tail": "\u001b[0m  1) proof\n       fails on the patched build:\n\u001b[0m\u001b[31m     AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1024 !== null\n\u001b[0m\u001b[90m\n      at Context.<anonymous> (test/proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 219,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  \u001b[32m✔\u001b[39m\u001b[0m\u001b[90m fails on the patched build\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (3ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 4354,
+        "completionTokens": 350,
+        "totalTokens": 4704,
+        "costUsd": 0.00016829
+      },
+      "wallMs": 16212,
+      "trajectory": "bytes-12.jsonl"
+    },
+    {
+      "id": "bytes-15",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "quantifier",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The regex change from \\d+ to \\d breaks parsing of multi-digit values like '100kb'; they now fail to match and fall back to parseInt, returning 100 instead of 102400.",
+      "error": null,
+      "proof": {
+        "path": "test/proof-test.js",
+        "command": "./node_modules/.bin/mocha test/proof-test.js",
+        "testFile": "var assert = require('assert');\nvar bytes = require('..');\n\ndescribe('proof', function () {\n  it('parses multi-digit values with units', function () {\n    assert.strictEqual(bytes('100kb'), 102400);\n    assert.strictEqual(bytes('1024kb'), 1048576);\n    assert.strictEqual(bytes('90mb'), 94371840);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 225,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-100\u001b[0m\n      \u001b[32m+102400\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (test/proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 209,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  \u001b[32m✔\u001b[39m\u001b[0m\u001b[90m parses multi-digit values with units\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 4370,
+        "completionTokens": 437,
+        "totalTokens": 4807,
+        "costUsd": 0.00019124000000000002
+      },
+      "wallMs": 17899,
+      "trajectory": "bytes-15.jsonl"
+    },
+    {
+      "id": "bytes-52",
+      "kind": "buggy",
+      "library": "bytes",
+      "category": "option-ignored",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change replaces `options.decimalPlaces !== undefined` with `true`, so any options object makes decimalPlaces undefined, and `toFixed(undefined)` rounds to 0 decimal places instead of the default 2.",
+      "error": null,
+      "proof": {
+        "path": "test/proof-test.js",
+        "command": "./node_modules/.bin/mocha test/proof-test.js",
+        "testFile": "var assert = require('assert');\nvar bytes = require('..');\n\ndescribe('proof', function () {\n  it('defaults to 2 decimals when options given without decimalPlaces', function () {\n    assert.strictEqual(bytes(1536, {}), '1.5KB');\n    assert.strictEqual(bytes(1536, { fixedDecimals: true }), '1.50KB');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 222,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-2KB\u001b[0m\n      \u001b[32m+1.5KB\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (test/proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 236,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  \u001b[32m✔\u001b[39m\u001b[0m\u001b[90m defaults to 2 decimals when options given without decimalPlaces\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (5ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 7030,
+        "completionTokens": 551,
+        "totalTokens": 7581,
+        "costUsd": 0.00027716
+      },
+      "wallMs": 24199,
+      "trajectory": "bytes-52.jsonl"
+    },
+    {
+      "id": "bytes-control-loop",
+      "kind": "control",
+      "library": "bytes",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "The loop replicates the original if/else chain exactly: same thresholds checked in descending order (PB→TB→GB→MB→KB) with 'B' as the fallback, so behaviour is identical.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 2227,
+        "completionTokens": 104,
+        "totalTokens": 2331,
+        "costUsd": 0.000062465
+      },
+      "wallMs": 7005,
+      "trajectory": "bytes-control-loop.jsonl"
+    },
+    {
+      "id": "js-yaml-15",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "character-class",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The explicit-integer pattern for the core int tag changed from [-+]?0b... to [^-+]?0b..., so explicitly tagged negative/positive binary literals like '!!int \"-0b11\"' now fail to resolve, whereas the original build accepted them.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load, CORE_SCHEMA } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('explicit !!int resolves signed binary literals (core schema)', () => {\n    assert.strictEqual(load('!!int \"-0b11\"', { schema: CORE_SCHEMA }), -3);\n    assert.strictEqual(load('!!int \"+0b11\"', { schema: CORE_SCHEMA }), 3);\n    assert.strictEqual(load('!!int \"0b11\"', { schema: CORE_SCHEMA }), 3);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 173,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 120.627986"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 174,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 117.907993"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 73134,
+        "completionTokens": 1112,
+        "totalTokens": 74246,
+        "costUsd": 0.00139313
+      },
+      "wallMs": 30769,
+      "trajectory": "js-yaml-15.jsonl"
+    },
+    {
+      "id": "js-yaml-18",
+      "kind": "buggy",
+      "library": "js-yaml",
+      "category": "quantifier",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The diff adds a '+' sign to the octal alternative in the core-scalar explicit integer pattern (`[-+]?0o` → `[-+]0o`), so unsigned octal like `!!int 0o17` no longer matches and is rejected, whereas the original resolved it to 15.",
+      "error": null,
+      "proof": {
+        "path": "test/core/proof.test.mjs",
+        "command": "node --test test/core/proof.test.mjs",
+        "testFile": "import { describe, it } from 'node:test';\nimport assert from 'node:assert';\nimport { load } from 'js-yaml';\n\ndescribe('proof', () => {\n  it('explicit !!int 0o17 (unsigned octal) resolves', () => {\n    assert.strictEqual(load('!!int 0o17'), 15);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 158,
+          "tail": "code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 104.747798"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 146,
+          "tail": "type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 98.13536"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 109945,
+        "completionTokens": 869,
+        "totalTokens": 110814,
+        "costUsd": 0.001892885
+      },
+      "wallMs": 28582,
+      "trajectory": "js-yaml-18.jsonl"
+    },
+    {
+      "id": "js-yaml-control-hoist",
+      "kind": "control",
+      "library": "js-yaml",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "Equivalent refactor: variable rename plus hoisting an unused-in-other-paths slice(2) call; all branches compute identical results.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 36603,
+        "completionTokens": 203,
+        "totalTokens": 36806,
+        "costUsd": 0.000603335
+      },
+      "wallMs": 8870,
+      "trajectory": "js-yaml-control-hoist.jsonl"
+    },
+    {
+      "id": "ms-12",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change replaces `type === 'string'` with `true`, dropping the string check. Any value with a truthy length property (objects, arrays) is now passed to parse() and returns a number instead of throwing an Error.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('throws on non-string values with a length property', function () {\n    assert.throws(function () { ms({ length: 2 }); });\n    assert.throws(function () { ms([1]); });\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 147,
+          "tail": "\u001b[92m \u001b[0m\u001b[32m 0 passing\u001b[0m\u001b[90m (5ms)\u001b[0m\n\u001b[31m  1 failing\u001b[0m\n\n\u001b[0m  1) proof\n       throws on non-string values with a length property:\n\u001b[0m\u001b[31m     AssertionError [ERR_ASSERTION]: Missing expected exception.\u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 145,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m throws on non-string values with a length property\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 7134,
+        "completionTokens": 840,
+        "totalTokens": 7974,
+        "costUsd": 0.00036105
+      },
+      "wallMs": 25903,
+      "trajectory": "ms-12.jsonl"
+    },
+    {
+      "id": "ms-170",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "threshold",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change from >= to > in plural() makes ms(1500, {long:true}) return '2 second' instead of '2 seconds' (and likewise at 1.5 minutes/hours), an observable formatting change.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('pluralizes at exactly 1.5 units', function () {\n    assert.strictEqual(ms(1500, { long: true }), '2 seconds');\n    assert.strictEqual(ms(90000, { long: true }), '2 minutes');\n    assert.strictEqual(ms(5400000, { long: true }), '2 hours');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 150,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-2 second\u001b[0m\n      \u001b[32m+2 seconds\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 138,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m pluralizes at exactly 1.5 units\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (3ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 4159,
+        "completionTokens": 424,
+        "totalTokens": 4583,
+        "costUsd": 0.00022208499999999999
+      },
+      "wallMs": 16369,
+      "trajectory": "ms-170.jsonl"
+    },
+    {
+      "id": "ms-27",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "diagnostic",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change replaces the descriptive error message ('val is not a non-empty string or a valid number. val=...') with only the JSON-stringified value, an observable change to the thrown Error's message.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('error message mentions val', function () {\n    var threw = false;\n    try {\n      ms(null);\n    } catch (e) {\n      threw = true;\n      assert(/val is not a non-empty string/.test(e.message), 'message: ' + e.message);\n    }\n    assert(threw, 'did not throw');\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 152,
+          "tail": "\u001b[31mAssertionError [ERR_ASSERTION]: message: null\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-false\u001b[0m\n      \u001b[32m+true\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:11:7)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 138,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m error message mentions val\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 10030,
+        "completionTokens": 630,
+        "totalTokens": 10660,
+        "costUsd": 0.00037599
+      },
+      "wallMs": 25245,
+      "trajectory": "ms-27.jsonl"
+    },
+    {
+      "id": "ms-30",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "guard",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change removes the guard that returns undefined for strings longer than 100 characters, so overly long but otherwise valid strings now parse instead of returning undefined.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('rejects overly long strings', function () {\n    assert.strictEqual(ms('1' + ' '.repeat(100) + 'ms'), undefined);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 140,
+          "tail": "\u001b[0m  1) proof\n       rejects overly long strings:\n\u001b[0m\u001b[31m     AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== undefined\n\u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 141,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m rejects overly long strings\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 4348,
+        "completionTokens": 355,
+        "totalTokens": 4703,
+        "costUsd": 0.00034573000000000004
+      },
+      "wallMs": 12265,
+      "trajectory": "ms-30.jsonl"
+    },
+    {
+      "id": "ms-4",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "constant",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The change inverts the year constant: `y = d / 365.25` (~68.7ms) instead of `d * 365.25` (~31.56 billion ms), so parsing '1y' (and formatting years) returns wildly wrong values.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('parses 1y as a year', function () {\n    assert.strictEqual(ms('1y'), 365.25 * 24 * 60 * 60 * 1000);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 148,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-236550.30800821356\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 144,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m parses 1y as a year\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 4131,
+        "completionTokens": 314,
+        "totalTokens": 4445,
+        "costUsd": 0.00026928499999999997
+      },
+      "wallMs": 13679,
+      "trajectory": "ms-4.jsonl"
+    },
+    {
+      "id": "ms-70",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "fall-through",
+      "outcome": "proved",
+      "defect": true,
+      "note": "The removed `return n * y` makes 'years' fall through to the 'weeks' case, so year strings are parsed as weeks (e.g. ms('1y') returns 604800000 instead of 31557600000).",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('parses years', function () {\n    assert.strictEqual(ms('1y'), 365.25 * 86400000);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 146,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-604800000\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 140,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m parses years\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 4044,
+        "completionTokens": 259,
+        "totalTokens": 4303,
+        "costUsd": 0.00017605
+      },
+      "wallMs": 13658,
+      "trajectory": "ms-70.jsonl"
+    },
+    {
+      "id": "ms-72",
+      "kind": "buggy",
+      "library": "ms",
+      "category": "arithmetic",
+      "outcome": "proved",
+      "defect": true,
+      "note": "`y` is already in milliseconds, so year parsing must multiply by `y`, not divide. The change makes ms('1y') return ~0.0000317 instead of 31557600000.",
+      "error": null,
+      "proof": {
+        "path": "proof-test.js",
+        "command": "./node_modules/.bin/mocha proof-test.js",
+        "testFile": "var assert = require('assert');\nvar ms = require('./');\n\ndescribe('proof', function () {\n  it('parses years', function () {\n    assert.strictEqual(ms('1y'), 31557600000);\n    assert.strictEqual(ms('2 years'), 63115200000);\n  });\n});\n",
+        "mutant": {
+          "code": 1,
+          "ms": 149,
+          "tail": "\u001b[0m\n      \u001b[32m+ expected\u001b[0m \u001b[31m- actual\u001b[0m\n\n      \u001b[31m-3.168808781402895e-11\u001b[0m\n      \u001b[32m+31557600000\u001b[0m\n      \u001b[0m\u001b[90m\n      at Context.<anonymous> (proof-test.js:6:12)\n      at process.processImmediate (node:internal/timers:484:21)\n\u001b[0m"
+        },
+        "pristine": {
+          "code": 0,
+          "ms": 141,
+          "tail": "\u001b[0m\u001b[0m\n\u001b[0m  proof\u001b[0m\n  \u001b[32m  ✓\u001b[0m\u001b[90m parses years\u001b[0m\n\n\n\u001b[92m \u001b[0m\u001b[32m 1 passing\u001b[0m\u001b[90m (4ms)\u001b[0m"
+        },
+        "proved": true
+      },
+      "usage": {
+        "promptTokens": 4098,
+        "completionTokens": 283,
+        "totalTokens": 4381,
+        "costUsd": 0.0001861
+      },
+      "wallMs": 15568,
+      "trajectory": "ms-72.jsonl"
+    },
+    {
+      "id": "ms-control-lookup",
+      "kind": "control",
+      "library": "ms",
+      "category": "equivalent-refactor",
+      "outcome": "correct",
+      "defect": false,
+      "note": "The switch is faithfully translated into a multiplier lookup; the regex constrains `type` to exactly these unit names, so behaviour is identical in all reachable cases.",
+      "error": null,
+      "proof": null,
+      "usage": {
+        "promptTokens": 2425,
+        "completionTokens": 117,
+        "totalTokens": 2542,
+        "costUsd": 0.000145845
+      },
+      "wallMs": 3674,
+      "trajectory": "ms-control-lookup.jsonl"
+    }
+  ]
+}

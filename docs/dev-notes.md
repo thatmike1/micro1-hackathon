@@ -320,3 +320,125 @@ baselines were measured at; it is the first thing to set when stage 1's config i
 $0.2482 for the whole of step 2: $0.2365 for the twelve k=3 runs, $0.0107 for the three usable
 provider checks, $0.0010 for the tool-call probes. 1.95M tokens. The qwen baseline-2 arm is 56% of
 that, and the three runaway generations are $0.06 of it.
+
+## Stage 1: the prover loop with a double-run gate (2026-08-29)
+
+`eval/candidates/stage-1.mjs`, measured with `eval/run-stage1-k3.sh <flash|qwen>` at the same
+pinned configs, case sets and k=3 as the stage-0 baselines. `node eval/analyze-k3.mjs stage1-`
+prints the tables; `node eval/gate-audit.mjs stage1-` prints what the gate did underneath them.
+
+The candidate is baseline 1 plus one thing baseline 1 did not have. It gets the same information —
+the changed file and the diff, no read or run tools — and one tool it does not control,
+`submit-proof`. The harness writes the submitted test into both checkouts at the library's own
+proof location, runs the library's own runner in each, and reads the two exit codes. Red on the
+changed checkout and green on the original passes. Anything else fails and comes back with both
+runners' output plus a line naming the shape of the failure (green on both, red on both,
+backwards), up to four attempts — one submission and three revisions.
+
+The gate, not the model's prose, produces the answer:
+
+- a passed gate is answered as a defect, carrying the exact test that passed
+- `defect: false` stands as the model wrote it, when no gate attempt ever passed
+- a defect claim that never passed the gate is withheld, and the run scores `no-verdict`
+
+`run-eval.mjs` then re-runs the double run itself to score the answer. Both call the same
+`doubleRun` in `eval/workspace.mjs`; the scorer never takes a candidate's word for its own gate.
+
+### The numbers
+
+| arm | single-run proof rates | proved in ALL 3 | false alarms | claim-unproved | cost (3 reps) | wall |
+|---|---|---|---|---|---|---|
+| baseline 1, flash | 11/12, 11/12, 9/12 | 7/12 | 0/3 every rep | 1, 1, 3 | $0.0162 | 1.8 min |
+| **stage 1, flash** | 11/12, 12/12, 11/12 | **10/12** | 0/3 every rep | 0, 0, 0 | $0.0249 | 3.6 min |
+| baseline 1, qwen | 5/10, 5/10, 5/10 | 5/10 | 2/2, 2/2, 0/2 | 5, 5, 4 | $0.0671 | 11.4 min |
+| **stage 1, qwen** | 5/10, 6/10, 5/10 | **4/10** | 0/2 every rep | 0, 0, 0 | $0.0709 | 5.2 min |
+
+Flash gained three cases on the primary metric. Qwen lost one and gave up every false alarm it had.
+Neither engine produced a single unproved claim in any of the 81 runs. That is close to free: the
+only way one can occur now is if the scorer's independent re-run disagrees with the gate, and it
+never did.
+
+### What the gate changed, case by case, on flash
+
+The five cases that flipped under baseline 1 were `bytes-52`, `js-yaml-15`, `js-yaml-18`, `ms-12`
+and `ms-30`. Four of them are now proved in all three repetitions. From `gate-audit.mjs`, the
+exit-code pairs per attempt:
+
+- **`bytes-52`** — P P P. Rep 1 passed first try. Rep 2 submitted a test green on both, then passed.
+  Rep 3 took three attempts: red on both twice, then red/green. Two of the three repetitions needed
+  a revision the baseline had no way to ask for.
+- **`js-yaml-18`** — P P P. Rep 1 needed three attempts (green on both, green on both, then
+  red/green), rep 2 two, rep 3 one.
+- **`ms-12`** — P P P. Rep 2 submitted a test red on both and fixed it on the second attempt.
+- **`js-yaml-15`** — P P P, one attempt each time. The case the plan designated as hard never
+  needed the gate on this engine; its baseline flip was a bad draw, not a hard case.
+- **`ms-30`** — P P ?. Still not stable. Rep 3 spent all four attempts on tests that were red on
+  both checkouts and was withheld. The failure changed shape rather than disappearing: under the
+  baseline it shipped as an unproved claim, here it ships as nothing.
+
+One case moved the other way. **`ms-170`** was stable under baseline 1 and misses in stage 1's
+rep 1, where the model answered `defect: false` without submitting anything. That is a real cost of
+the arm, not noise in the gate: the gate can only reject a test, it cannot make the model look.
+
+Flash submitted 48 gate attempts across the three repetitions. Eight runs revised at least once and
+seven of those revisions ended in a proof. Seven of the arm's 34 proofs exist only because the gate
+rejected a first answer.
+
+### Qwen's always-true verdict bit: intact, and now harmless
+
+The bit survives. Qwen submitted a test on both controls in all three repetitions — 24 of its 103
+gate attempts were spent trying to prove a defect in an equivalent refactor. What changed is that
+none of them got through. Every one of the 24 came back green on both or red on both, and in five
+of the six control runs the model then answered `defect: false` (scored `correct`); in the sixth it
+used all four attempts and was withheld. False alarms went from 2/2, 2/2, 0/2 to 0/2, 0/2, 0/2, and
+the 0/2 in the baseline's third repetition was two runaway generations, not an answer.
+
+So the gate does not fix the model's judgment, it stops the judgment from reaching the output. That
+distinction matters for stage 2: a hypothesizer that still believes every change is a defect will
+still burn four gate attempts per control.
+
+The cost of that on the buggy half is visible. Baseline 1 qwen claimed a defect on all ten buggy
+cases and proved five, with zero misses; stage 1 proves four in all three repetitions and acquires
+misses (3, 1, 2 per rep) and no-verdicts (2, 3, 4). `bytes-15` is the case it lost — proved in all
+three baseline repetitions, and in stage 1 it goes withheld, proved, miss. `ms-12` and `bytes-12`
+are cases it gained in some repetitions. The pattern is the same one the false alarms show: forced
+to prove itself, this model backs off things it used to assert, correct ones included.
+
+### The completion cap fired, and needed a harness fix to be useful
+
+`--max-tokens 4096` is pinned in `eval/run-stage1-k3.sh` and recorded in every `summary.json`'s
+`requestExtras`. It fired nine times across qwen's three repetitions, each at exactly 4,096
+completion tokens: `ms-30` in all three repetitions (twice in rep 1 and rep 3), `bytes-12`,
+`ms-control-lookup` twice, `bytes-control-loop`. It never fired on flash.
+
+The cap works on cost and wall time. Qwen's baseline repetitions ran $0.0027, $0.0028 and $0.0616,
+that last one 10.9 minutes with three generations at the provider's 65,536-token default. Stage 1's
+three repetitions ran $0.0256, $0.0240, $0.0213 at 1.7-1.8 minutes each. The runaway is gone as a
+cost event.
+
+It needed one change to the loop to be useful, made in `src/agent-loop.mjs`. A capped generation
+cuts a tool call off mid-argument. The truncated call was echoed back into the conversation
+verbatim, and CoreWeave rejected the next request with an HTTP 400 on the unterminated JSON, which
+ended the run as an `error` rather than a no-verdict. Now unparseable arguments never reach the
+tool, the model is told its call was cut off, and the history carries `{}` in place of the broken
+string. All nine truncations recovered into a normal turn.
+
+Worth knowing for anything that reads `finish_reason`: all nine came back as `tool_calls`, not
+`length`. On this endpoint the only reliable truncation signal was the arguments failing to parse.
+
+### Decision
+
+Keep the gate. On flash it moves the primary metric 7/12 → 10/12 at 1.5x the cost. On qwen it costs
+one case on the primary metric and buys the false-alarm rate outright, which is the metric the plan
+treats as hard-zero. Neither arm can emit an unproved claim any more.
+
+Stage 2 has a specific target from this. `ms-30` on flash (rep 3) and `ms-27` on qwen (all three
+repetitions) spent all four attempts on tests that were red on both checkouts: the model asserts
+behaviour the library never had, is told exactly that, and asserts it again. `ms-30` and `bytes-52`
+on qwen are the same shape with some green-on-both mixed in. That is a hypothesis problem, not a
+verification problem, which is what the hypothesizer/prover split is for.
+
+### Spend
+
+$0.1028 for stage 1: $0.0958 for the six k=3 runs ($0.0249 flash, $0.0709 qwen) and $0.0070 for the
+two live smoke runs that pinned the config. 1.50M tokens.
