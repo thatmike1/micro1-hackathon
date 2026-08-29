@@ -11,8 +11,9 @@ Agent reviews a diff against a green-suite library and proves the bug: a test th
 - [x] stage 0b: baseline 2 (agent with read/bash tools, no verification contract) — record
 - [x] stage 0 re-measure: both baselines, both engines, pinned configs, k=3 reps each — record
 - [x] stage 1: prover loop with double-run gate, max 3 retries — measure, record
-- [ ] stage 2: hypothesizer/prover split — measure, record
-- [ ] stage 3: cross-case memory file — measure, record, keep the on/off ablation
+- [x] stage 2: hypothesizer/prover split — measured, recorded (kept on flash, dropped on qwen)
+- [ ] stage 3: cross-case memory file — measure, record, keep the on/off ablation (stage 2 left the
+      flash arm at 12/12 in every repetition, so stage 3 has headroom only on qwen)
 - [ ] review-package HTML per case (diff, hypothesis ledger, both runner outputs, retries)
 - [ ] eval runner + scoreboard (baseline vs stages, same cases, exit-code scored)
 - [ ] repro guide, tested from a clean clone (setup, exact commands, versions, runtime, cost)

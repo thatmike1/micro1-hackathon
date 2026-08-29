@@ -442,3 +442,138 @@ verification problem, which is what the hypothesizer/prover split is for.
 
 $0.1028 for stage 1: $0.0958 for the six k=3 runs ($0.0249 flash, $0.0709 qwen) and $0.0070 for the
 two live smoke runs that pinned the config. 1.50M tokens.
+
+## Stage 2: the hypothesizer/prover split (2026-08-29)
+
+`eval/candidates/stage-2.mjs`, measured with `eval/run-stage2-k3.sh <flash|qwen>` at the same
+pinned configs, case slices and k=3 as stage 1. `node eval/analyze-k3.mjs stage2-` prints the
+scores, `node eval/gate-audit.mjs stage2-` the gate underneath them, and `node
+eval/ledger-audit.mjs stage2-` the ledger above it.
+
+Stage 1 is one agent that reads and proves. Stage 2 splits that in two:
+
+- the **hypothesizer** sees exactly what stage 1 saw — the changed file and the diff, no gate, no
+  checkout — and records a ranked ledger of candidate defects, each naming a concrete call, what
+  the original returns for it, and what the changed build returns instead. It may record the
+  ledger **empty**, which is the assertion that the change is an equivalent refactor and ends the
+  review without a single gate attempt.
+- the **prover** takes the ledger one entry at a time, in rank order, and tries to prove that
+  entry through the stage-1 gate. Two attempts per entry out of the same total of four; when they
+  are spent the entry is abandoned and the next one is taken up, with the failed exit-code pairs
+  carried forward so the next prover does not resubmit a test already ruled out.
+
+The gate is unchanged, and that is now enforced rather than asserted: it moved into `eval/gate.mjs`
+and both stages import it. The tool description, the rules the agent reads, the failure-shape
+diagnosis and the pass condition are one definition; only the attempt budget is a parameter. Stage
+1's request body is byte-identical after the extraction, checked by running both the old and the
+new module against a mock transport and comparing the serialised bodies.
+
+Total gate budget stayed at four. Splitting the roles must not buy extra attempts, or the row
+measures the budget instead of the split.
+
+### The numbers
+
+| arm | single-run proof rates | proved in ALL 3 | false alarms | miss | no-verdict | cost (3 reps) | tokens | wall |
+|---|---|---|---|---|---|---|---|---|
+| stage 1, flash | 11/12, 12/12, 11/12 | 10/12 | 0/3 every rep | 1, 0, 0 | 0, 0, 1 | $0.0249 | 0.85M | 3.6 min |
+| **stage 2, flash** | 12/12, 12/12, 12/12 | **12/12** | 0/3 every rep | 0, 0, 0 | 0, 0, 0 | $0.0613 | 1.55M | 7.8 min |
+| stage 1, qwen | 5/10, 6/10, 5/10 | 4/10 | 0/2 every rep | 3, 1, 2 | 2, 3, 4 | $0.0709 | 0.55M | 5.2 min |
+| **stage 2, qwen** | 4/10, 4/10, 5/10 | **3/10** | 0/2 every rep | 6, 6, 5 | 0, 0, 0 | $0.0407 | 0.36M | 1.1 min |
+
+The two engines answer the open question in opposite directions, which is why the row's decision is
+a split rather than a keep or a drop.
+
+### Flash: the split closes the arm
+
+Twelve of twelve buggy cases proved in all three repetitions, no case flipping, no false alarm, no
+no-verdict, no error. Stage 1 left two cases open and stage 2 closed both:
+
+- **`ms-30`** — stage 1's rep 3 spent all four attempts on tests that were red on both checkouts
+  and was withheld. Under stage 2 it proves on the first attempt of the first hypothesis in all
+  three repetitions, with a single-entry ledger each time.
+- **`ms-170`** — stage 1's rep 1 answered `defect: false` without submitting anything. Under stage
+  2 the hypothesizer ranks it (four entries in rep 1, one in rep 2, four in rep 3) and the prover
+  proves it every time.
+
+Both were the shape stage 1's notes predicted the split would help: a hypothesis problem rather
+than a verification problem. Writing the candidate down before writing a test is what changed, and
+in `ms-170`'s case simply having to write a ledger stopped the model from walking away.
+
+The gate got cheaper per proof, not more expensive. Flash submitted 45 attempts against stage 1's
+48, and 34 of its 36 proofs came from the first-ranked hypothesis. Two came from the second, and
+both are cases where the fall-through did work stage 1 had no mechanism for: `bytes-52` rep 3 spent
+both attempts on hypothesis 1 (red on both, twice), fell through, and proved hypothesis 2 on its
+second attempt; `js-yaml-15` rep 3's prover declined to submit anything against hypothesis 1 at
+all, and the fall-through proved hypothesis 2 on its first attempt.
+
+Flash ranked 1.84 hypotheses per run. All nine control runs recorded an empty ledger and spent zero
+gate attempts — but stage 1's flash arm never flagged a control either, so this is a cost saving
+rather than an accuracy gain on that engine.
+
+What this also means: the flash arm has no headroom left. Stage 3 cannot be measured on it.
+
+### Qwen: the empty ledger works, and then works too well
+
+The mechanism did exactly what it was built to do. Qwen spent 24 of its 103 stage-1 gate attempts
+trying to prove a defect in an equivalent refactor. Under stage 2 that number is **zero**: all six
+control runs recorded an empty ledger on the first turn and ended. Total gate attempts fell from
+103 to 41, and the arm got 43% cheaper and 4.7x faster in wall time.
+
+The problem is that the empty ledger is the cheapest exit in the whole candidate, and this model
+takes it without reading. Eleven of the thirty buggy runs also ended on an empty ledger, recorded
+as the very first tool call of the run:
+
+- **`bytes-12`**, empty in all three repetitions. The change deletes the `^` anchor from
+  `parseRegExp`. The hypothesizer's own summary afterwards: "the `^` anchor was redundant since the
+  regex is used with `exec` on a string that is expected to match the entire pattern".
+- **`ms-27`**, empty in two of three. "the error message content remains functionally identical,
+  and the test suite passes, confirming no breaking changes" — the suite passing is the one thing
+  the framing explicitly tells every candidate is not evidence.
+- **`bytes-15`** twice, **`ms-12`** twice, **`ms-30`** and **`ms-170`** once each.
+
+So the always-`true` verdict bit stage 1 documented has not gone away; it has flipped. Under
+baseline 1 this model claimed a defect on every case including both controls. Under stage 1 the
+gate stopped those claims from reaching the output and it produced no-verdicts. Under stage 2 the
+cheapest exit is "nothing to prove", so it answers clean instead. The bit tracks whichever answer
+costs least, and the split changed which one that is.
+
+The scoreboard consequence is that stage 1's no-verdicts became stage 2's misses. Qwen's 17 buggy
+runs that did not prove break down as 11 empty ledgers and 6 provers that retracted after failing
+the gate — all 17 scored `miss`, against stage 1's 6 misses and 8 no-verdicts over the same 30
+runs. For this product that is the wrong direction. A withheld claim tells a maintainer the review
+found nothing it could prove; a miss tells them the change is fine.
+
+Where the split did help on qwen it helped the way it was supposed to: `ms-30` rep 3 spent both
+attempts on hypothesis 1 (red on both, then backwards), fell through, and proved hypothesis 2 on
+its second attempt — a case stage 1 could not prove in any repetition on this engine.
+
+### Two config notes
+
+- **The completion cap never fired.** `--max-tokens 4096` is pinned as in stage 1, and across 146
+  model runs and 318 steps on both engines no generation reached it, so the truncated-tool-call
+  path added for stage 1 was never exercised here. Each role's turn is shorter than the combined
+  one it replaced; the cap is still pinned because the runaway it exists to stop is a property of
+  the model, not of the candidate.
+- **A recorded-empty ledger and a missing ledger are scored differently.** An empty ledger is a
+  clean verdict; a hypothesizer that produced no ledger at all is withheld as a no-verdict. Reading
+  silence as "equivalent refactor" would have handed the arm free control scores. It never came up
+  in these runs — every one of the 81 hypothesizer turns recorded a ledger through the tool — but
+  the distinction is in `settle` and under test.
+
+### Decision
+
+Split. Keep stage 2 on flash, where it moves the primary metric 10/12 → 12/12 and closes the arm
+for 1.8x the tokens and 2.5x the cost. Keep stage 1 as the shipped configuration on qwen, where
+stage 2 costs a case on the primary metric and converts the failure mode from a withheld claim
+into a silent miss.
+
+The general reading is narrower than "the split works". A ranked ledger with a cheap empty exit is
+a lever on which way a model's verdict bias points, not a fix for the bias. On an engine whose
+judgment is good enough that the ledger is honest, it buys reliability outright. On one that will
+assert whatever the contract makes cheapest, it moves the failure rather than removing it, and the
+direction it moves in is the thing to check before shipping.
+
+### Spend
+
+$0.1044 for stage 2: $0.1020 for the six k=3 runs ($0.0613 flash, $0.0407 qwen) and $0.0024 for
+the two live smoke runs that pinned the config. 1.94M tokens.
