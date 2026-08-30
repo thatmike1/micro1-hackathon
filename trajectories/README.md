@@ -22,6 +22,13 @@ rules that say so. That gap is the whole point of the set.
 Read them in order — the arc runs from a confident claim with nothing behind it to a memory that
 teaches the next review the wrong thing.
 
+The set is exhaustive over the solution's agents: all five candidates in `eval/candidates/`, and
+all three roles they contain — hypothesizer, prover and scribe. No entry holds a `checkpoint`
+event because no run pauses for a person by design; the human decision point sits downstream, in
+the review package a maintainer opens after the verdict. The coding assistants used to build this
+repository are development tooling, not agents of the solution — every agent whose instructions
+this repo ships is represented here.
+
 ---
 
 ## Stage 0 — the agent asserts

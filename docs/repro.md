@@ -118,7 +118,7 @@ It exits non-zero on any failure. Pass case ids to check a subset:
 checkout existing and silently do not register without one.
 
 ```bash
-npm test        # 57 passing in 3.1s with the corpus present; 49 without it
+npm test        # 87 passing in ~1.1s with the corpus present; 79 without it
 npm run demo    # offline scripted run against a mock transport, no network at all
 ```
 
@@ -204,6 +204,27 @@ sweep measured this model at 0/58 on them (row 0d).
 Note the price difference on the same case: $0.0024 on qwen against $0.0005 on flash. The frontier
 engine is roughly five times the cost per case and proves fewer of them; that trade is what rows 0d
 through 3 are about.
+
+The baseline, for the third leg of the comparison — one prompt, no tools, scored by the same
+re-run of its returned test:
+
+```bash
+node eval/run-eval.mjs \
+  --candidate baseline-1 \
+  --model z-ai/glm-5.3-flash \
+  --provider "Z.AI" --require-parameters --reasoning low \
+  --max-tokens 4096 \
+  --cases ms-170 \
+  --out runs/try-baseline-ms-170
+```
+
+```
+proved         ms-170                  8.9s  1782 tok  $0.000185
+```
+
+On one case the baseline is indistinguishable from stage 2 — which is the point the changelog
+keeps making: single-run rates cannot separate the candidates; the k=3 arms can (rows 0f
+through 2).
 
 ### the flags
 
