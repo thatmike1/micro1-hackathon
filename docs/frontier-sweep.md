@@ -115,7 +115,9 @@ result: of the 19 js-yaml cases that did answer, none proved.
 
 ## The frontier: qwen3-30b-a3b on ms+bytes
 
-Restricted to the 41 buggy ms+bytes cases and 2 controls it can actually engage with:
+Restricted to the 41 buggy ms+bytes cases and 3 controls it can actually engage with — the
+js-yaml control stayed in the arm even though the js-yaml buggy cases were set aside, so the
+false-alarm denominator here is 3 rather than the 2 the later k=3 qwen arms use:
 
 | rep | proved | claim-unproved | miss | false alarms | no-verdict |
 |---|---|---|---|---|---|

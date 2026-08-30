@@ -62,11 +62,12 @@ never did.
 
 The strongest single result is on the weaker engine. `qwen/qwen3-30b-a3b-instruct-2507` believes
 every diff is a defect; under the baseline it false-alarmed on both controls in two of three
-repetitions. Under the gate it still tried, spending 24 gate attempts trying to prove a defect in
-an equivalent refactor, and **not one of them got through**. False alarms went to **0/2 in every
-repetition**. The gate does not fix the model's judgement, it stops the judgement from reaching the
-output. Stage 2 then cut those 24 wasted control attempts to **0**, because a hypothesizer allowed
-to record an empty ledger ends the review before any test is written.
+repetitions. Under the gate it still tried, spending 24 gate attempts across the two equivalent
+refactors trying to prove a defect in one of them, and **not one of them got through**. False
+alarms went to **0/2 in every repetition**. The gate does not fix the model's judgement, it stops
+the judgement from reaching the output. Stage 2 then cut those 24 wasted control attempts to **0**,
+because a hypothesizer allowed to record an empty ledger ends the review before any test is
+written.
 
 Stage 3 gave every role a markdown notebook of lessons from earlier cases in the queue. It was
 measured as an on/off ablation on both engines and **dropped on both**: on flash the notebook is

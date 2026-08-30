@@ -230,7 +230,9 @@ eval/run-stage3-k3.sh    flash|qwen [on|off]
 ```
 
 Each script hardcodes its engine's pins, case slice and `--max-tokens 4096`, so the engine argument
-is the only decision. `REPS` and `CONCURRENCY` override the defaults (3 and 4).
+is the only decision. `REPS` overrides the repetition count (default 3) in all four; `CONCURRENCY`
+overrides the default of 4 in the baseline, stage 1 and stage 2 scripts only, since stage 3 pins
+`--concurrency 1`.
 
 **The scripts skip a repetition whose `summary.json` already exists**, and this repo ships all of
 them, so on a fresh clone `eval/run-stage2-k3.sh flash` prints three "already done" lines and
