@@ -224,6 +224,17 @@ describe('stage 1 gate', () => {
     assert.equal(t.written[0].resolution, 'withheld');
     assert.equal(t.written[0].attempts, 4);
   });
+
+  it('passes a transport error through, so it scores error rather than no-verdict', () => {
+    const t = trace();
+    const answer = { text: '', stopReason: 'error', error: 'HTTP 502 after 4 retries' };
+    const attempts = [{ attempt: 1, passed: false, content: 'x', result: gate(0, 0) }];
+    const settled = settle(answer, attempts, runner, t);
+    assert.equal(settled, answer);
+    assert.equal(settled.stopReason, 'error');
+    assert.equal(settled.error, 'HTTP 502 after 4 retries');
+    assert.deepEqual(t.written, []);
+  });
 });
 
 // the whole prover loop against a real checkout with a scripted model: a test that does not
@@ -394,6 +405,22 @@ describe('stage 2 settle', () => {
     assert.equal(parseVerdict(settled.text).ok, false);
     assert.equal(t.written[0].resolution, 'withheld');
     assert.equal(t.written[0].attempts, 4);
+  });
+
+  it('passes a transport error through, so it scores error rather than no-verdict', () => {
+    const t = trace();
+    const answer = { text: '', stopReason: 'error', error: 'HTTP 502 after 4 retries' };
+    const settled = settleStage2({
+      answer,
+      attempts: [],
+      ledger: [entry('first')],
+      runner,
+      trajectory: t,
+    });
+    assert.equal(settled, answer);
+    assert.equal(settled.stopReason, 'error');
+    assert.equal(settled.error, 'HTTP 502 after 4 retries');
+    assert.deepEqual(t.written, []);
   });
 });
 

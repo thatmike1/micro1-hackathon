@@ -144,6 +144,10 @@ export async function run({ record, workspace, trajectory, model, apiKey, reques
  * withheld rather than shipped.
  */
 export function settle(answer, attempts, runner, trajectory) {
+  // a transport error is not a verdict: pass it through so run-eval scores it as an error
+  // rather than rewriting it into a withheld `final` the parser then reports as a no-verdict
+  if (answer.stopReason === 'error') return answer;
+
   const passed = attempts.find((a) => a.passed) ?? null;
   const parsed = parseVerdict(answer.text);
   const note = parsed.ok && parsed.verdict.note ? parsed.verdict.note : '';
