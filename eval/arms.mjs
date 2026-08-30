@@ -164,8 +164,8 @@ export const ARMS = [
     row: '0f',
     against: null,
     claims: [
-      // row 0f words this arm's controls as a single figure, with no repetition qualifying it
-      { row: '0f', single: [5, 5, 5], all: 5, misses: [0, 0, 0], falseAlarms: [2, 2, 2] },
+      // row 0f states this arm's controls per repetition since 90851fe
+      { row: '0f', single: [5, 5, 5], all: 5, misses: [0, 0, 0], falseAlarms: [2, 2, 0] },
       // row 1 quotes the same arm's controls again, per repetition, while arguing stage 1 against it
       { row: '1', falseAlarms: [2, 2, 0] },
     ],
