@@ -22,6 +22,16 @@ describe('verdict parsing', () => {
     assert.deepEqual(parsed.verdict.testFile, { path: 'p.js', content: 'x' });
   });
 
+  it('takes the last of two unfenced objects, as it does with fenced blocks', () => {
+    const parsed = parseVerdict(
+      'First guess: {"defect": false, "note": "equivalent"}\nOn reflection: ' +
+        '{"defect": true, "testFile": {"path": "p.js", "content": "x"}, "note": "off by one"}',
+    );
+    assert.equal(parsed.ok, true);
+    assert.equal(parsed.verdict.defect, true);
+    assert.equal(parsed.verdict.note, 'off by one');
+  });
+
   it('reads a bare object and treats a missing test file as none', () => {
     const parsed = parseVerdict('{"defect": false, "note": "equivalent"}');
     assert.equal(parsed.ok, true);

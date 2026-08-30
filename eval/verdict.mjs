@@ -35,7 +35,9 @@ export function parseVerdict(text) {
 
 /**
  * Every plausible JSON payload in `text`, most-likely first: fenced blocks last-to-first, then
- * brace-balanced spans starting at each `{`, longest first.
+ * brace-balanced spans starting at each `{`, also last-to-first. Both orderings prefer the
+ * latest payload, so a model that reasons in JSON before writing its verdict is read as
+ * verdict-last rather than verdict-first.
  * @param {string} text
  */
 function* jsonCandidates(text) {
@@ -44,7 +46,7 @@ function* jsonCandidates(text) {
 
   const starts = [];
   for (let i = 0; i < text.length; i += 1) if (text[i] === '{') starts.push(i);
-  for (const start of starts) {
+  for (const start of starts.reverse()) {
     const end = matchingBrace(text, start);
     if (end !== -1) yield text.slice(start, end + 1);
   }
