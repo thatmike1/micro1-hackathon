@@ -60,6 +60,11 @@ Stage 1 produced **no unproved claim in any of its 81 runs on either engine**: o
 the only way one can occur is if the scorer's independent re-run disagrees with the gate, and it
 never did.
 
+What the gate verifies is that a test separates the two builds, not that it separates them for the
+reason the review gives — a test that sniffed which checkout it was in could pass it with no
+behavioural content, which is why the review package puts the test in front of a human
+([CHANGELOG.md](CHANGELOG.md#where-this-fails) has the detail).
+
 The strongest single result is on the weaker engine. `qwen/qwen3-30b-a3b-instruct-2507` believes
 every diff is a defect; under the baseline it false-alarmed on both controls in two of three
 repetitions. Under the gate it still tried, spending 24 gate attempts across the two equivalent

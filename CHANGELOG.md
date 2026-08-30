@@ -44,12 +44,42 @@ design makes: it converts most of the reviewer's false positives into silence. S
 a false positive is not, but silence is still not a review, and a run that withholds every case has
 told the maintainer nothing while looking exactly like a run that found nothing wrong.
 
+**The gate proves separation, not intent.** It runs the submitted test on two checkouts and reads
+exit codes, so what it verifies is that the test separates the builds — not that it separates them
+for the reason the review claims. The checkouts sit at `<tmp>/mutant` and `<tmp>/pristine`
+(`eval/workspace.mjs`), each with the source checkout's `node_modules` symlinked back in, and the
+test runs with the harness's full process rights. A test could therefore read `__dirname`, grep the
+entry file for the diff it was handed, write into the sibling checkout, or touch the shared
+`node_modules`, and come back red on one side and green on the other with no behavioural content in
+it at all. That is the honest boundary of the claim this repo makes: the engines here are
+cooperative, and the review package puts the test in front of a human precisely because the gate
+cannot read intent. A timeout is the same shape of gap in miniature — `capture` returns
+`code: null` when a run is killed (`corpus/exec.mjs`) and the pass condition is
+`mutant.code !== 0 && pristine.code === 0`, so a test that hangs on the changed checkout and exits
+clean on the original proves. Arguably the right behaviour, but "exit codes and nothing else"
+slightly overstates what is being read. Neutral directory names, a `node_modules` per side, and
+running the submitted test under a sandbox would close most of the first gap; all three rewrite the
+substrate every arm above was measured on, so none was changed inside the event.
+
+**Three harness fixes landed after the last measurement, none of them on a measured path.** Both
+`settle` functions overwrote `stopReason` with `final`, so a transport error surviving retries would
+have been scored as a no-verdict with a parser message instead of an error, losing the API error
+from `summary.json`; `parseVerdict` scanned unfenced JSON candidates first-to-last while scanning
+fenced ones last-to-first; and the `.env` reader stored a garbage entry for a line with no `=`. The
+first is the only one that could have touched a number, and no committed run reached it: no
+trajectory under `runs/stage1-*`, `runs/stage2-*` or `runs/stage3-*` contains
+`"stopReason":"error"`, and the baseline candidates that did see transport errors never call
+`settle`. The second is unreachable while a model honours the fence contract, which every shipped
+path does. Nothing above was re-run, and none of the three changes a request body.
+
 **What we would build next, in order.** A discriminability probe that scores a candidate case
 *before* it enters the corpus, so the build day spends itself on the thin band instead of
 discovering it afterwards. Then a second gate direction — a test that must pass on the mutant and
 fail on pristine — which would catch the backwards proofs that stage 0 shipped and stage 1 only
 rejects. Then the ablation this run could not afford: the same ladder against a frontier model, to
-separate what the gate contributes from what the engine does.
+separate what the gate contributes from what the engine does. Cheapest of the four and not done
+only because it moves the substrate: neutral checkout directory names and a `node_modules` per
+side, so a test cannot tell which checkout it is in without doing behavioural work.
 
 **The hot take.** An LLM's confident output is not evidence of anything, including its own
 reliability, and the industry's habit of quoting a single run as a capability number is how a 7/12
