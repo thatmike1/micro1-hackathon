@@ -231,7 +231,7 @@ function readDotEnv(path = '.env') {
       readFileSync(path, 'utf8')
         .split('\n')
         .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'))
+        .filter((line) => line && !line.startsWith('#') && line.indexOf('=') > 0)
         .map((line) => {
           const at = line.indexOf('=');
           return [line.slice(0, at).trim(), line.slice(at + 1).trim().replace(/^["']|["']$/g, '')];
