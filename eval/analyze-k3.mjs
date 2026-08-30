@@ -25,8 +25,26 @@ const MARK = {
   error: 'E',
 };
 
-const runs = readdirSync(RUNS_DIR, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && entry.name.startsWith(PREFIX))
+/**
+ * A warning about the inputs, not the results. It goes to stderr so the report on stdout stays
+ * exactly what it is on a complete set of runs — `docs/repro.md` quotes that output verbatim.
+ * @param {string} message
+ */
+function warn(message) {
+  process.stderr.write(`[analyze-k3] ${message}\n`);
+}
+
+const matching = readdirSync(RUNS_DIR, { withFileTypes: true }).filter(
+  (entry) => entry.isDirectory() && entry.name.startsWith(PREFIX),
+);
+
+for (const entry of matching) {
+  if (!existsSync(join(RUNS_DIR, entry.name, 'summary.json'))) {
+    warn(`${entry.name} has no summary.json and is not counted; the k below is short by one`);
+  }
+}
+
+const runs = matching
   .filter((entry) => existsSync(join(RUNS_DIR, entry.name, 'summary.json')))
   .map((entry) => {
     const summary = JSON.parse(readFileSync(join(RUNS_DIR, entry.name, 'summary.json'), 'utf8'));
@@ -83,6 +101,15 @@ for (const [arm, reps] of arms) {
       byCase.get(record.id).outcomes.push(record.outcome);
     }
   }
+  for (const [id, c] of byCase) {
+    if (c.outcomes.length !== reps.length) {
+      warn(
+        `${arm}: ${id} appears in ${c.outcomes.length} of ${reps.length} reps, ` +
+          'so its row below is judged over fewer outcomes than the others',
+      );
+    }
+  }
+
   const buggy = [...byCase].filter(([, c]) => c.kind === 'buggy');
   const controls = [...byCase].filter(([, c]) => c.kind === 'control');
   const allProved = buggy.filter(([, c]) => c.outcomes.every((o) => o === 'proved'));
