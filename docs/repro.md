@@ -11,8 +11,8 @@ shipped configuration, is about six cents.
 
 | | needs a key | wall time |
 |---|---|---|
-| `npm run corpus:setup` + `corpus:verify` | no | ~70s (network) |
-| `npm test`, `npm run demo` | no | ~3s |
+| `pnpm run corpus:setup` + `corpus:verify` | no | ~70s (network) |
+| `pnpm test`, `pnpm run demo` | no | ~3s |
 | read the shipped runs (`analyze-k3.mjs`, `gate-audit.mjs`, …) | no | instant |
 | render a trajectory or a review package | no | instant |
 | one live case | **yes** | ~20s, $0.0005 on flash / $0.0024 on qwen |
@@ -27,15 +27,17 @@ Where a number is from that run it says so; where it is from a measured arm it n
 | | version used | notes |
 |---|---|---|
 | Node | **v22.22.3** | `package.json` requires `>=20`. The corpus manifest records the version it was built with |
-| npm | 10.9.8 | only used to invoke scripts and to install inside the corpus checkouts |
+| pnpm | 12.15.0 | pinned in `packageManager`; invokes root scripts |
+| npm | 10.9.8 | only used to install and build inside the corpus checkouts |
 | git | 2.43.0 | `corpus/setup.mjs` shallow-clones three repos and `git apply`s the case diffs |
 | network | github.com, registry.npmjs.org | corpus setup only |
 | OS | Linux x86-64, 2 cores, 4 GB | wall times below are from this box |
 
-**There is nothing to `npm install` at the top level.** This repo has zero dependencies, runtime or
-dev; `package-lock.json` holds no packages. `npm install` was never run in the clean clone and
-nothing needed it. The only installs that happen are the ones `corpus/setup.mjs` performs inside
-`corpus/.work/`, which is gitignored.
+**Run `pnpm install --frozen-lockfile` at the top level.** This repo has zero dependencies, runtime
+or dev; `pnpm-lock.yaml` holds no application packages. `pnpm-workspace.yaml` includes only the
+root. The fixture installs that `corpus/setup.mjs` performs inside the gitignored `corpus/.work/`
+keep npm and their own lockfiles. Root tests explicitly select `test/*.test.mjs` and
+`eval/*.test.mjs`, so fixture suites are never discovered as root tests.
 
 ```bash
 git clone <this repo> silent-mutant
@@ -45,7 +47,7 @@ node --version    # expect v20 or newer
 
 ## the API key
 
-Only the live paths need one: `npm run smoke`, `scripts/tool-call-probe.mjs`, and any
+Only the live paths need one: `pnpm run smoke`, `scripts/tool-call-probe.mjs`, and any
 `eval/run-eval.mjs` invocation. Get a key at <https://openrouter.ai/keys> and put credit on it.
 
 `eval/run-eval.mjs` reads `OPENROUTER_API_KEY` from the environment first and falls back to a `.env`
@@ -73,8 +75,8 @@ A run with no usable key fails immediately with
 builds a library from source.
 
 ```bash
-npm run corpus:setup     # clone 3 pinned tags, install, build js-yaml, assert every pristine suite green
-npm run corpus:verify    # apply all 15 case diffs, run each suite, run the differential probe
+pnpm run corpus:setup     # clone 3 pinned tags, install, build js-yaml, assert every pristine suite green
+pnpm run corpus:verify    # apply all 15 case diffs, run each suite, run the differential probe
 ```
 
 Measured on the clean clone:
@@ -105,7 +107,7 @@ It exits non-zero on any failure. Pass case ids to check a subset:
   That is expected. What matters is which fields changed: on the clean-clone run only
   `generatedAt`, `node` and the three `setupSeconds` moved. The three commit SHAs were byte
   identical, which is the actual check that the tag pins still resolve to the same code.
-- **`corpus/.work/` is gitignored and disposable.** `npm run corpus:setup -- --fresh` deletes the
+- **`corpus/.work/` is gitignored and disposable.** `pnpm run corpus:setup --fresh` deletes the
   checkouts and starts over; without it an existing checkout at the pinned SHA is reused. The
   `--fresh` rebuild took 50.4s, within a second of the first build, and landed on the same three
   SHAs again.
@@ -118,8 +120,8 @@ It exits non-zero on any failure. Pass case ids to check a subset:
 checkout existing and silently do not register without one.
 
 ```bash
-npm test        # 87 passing in ~1.1s with the corpus present; 79 without it
-npm run demo    # offline scripted run against a mock transport, no network at all
+pnpm test        # 87 passing in ~1.1s with the corpus present; 79 without it
+pnpm run demo    # offline scripted run against a mock transport, no network at all
 ```
 
 The gated blocks are the ones that matter most for this project's claims: the double-run gate
@@ -127,7 +129,7 @@ against a real checkout, and stage 1, stage 2 and stage 3 driven end to end agai
 responses. The stage-3 pair is the byte-for-byte comparison that holds a memory-off run to sending
 exactly what the shipped stage sends.
 
-`npm run demo` writes `runs/demo.jsonl` and `demo.html`, exercising all six trajectory event types
+`pnpm run demo` writes `runs/demo.jsonl` and `demo.html`, exercising all six trajectory event types
 including a retry and a checkpoint. It is the fastest way to see what a trajectory page looks like
 without a key.
 
@@ -135,7 +137,7 @@ Both of those files are committed, so the demo leaves `git status` dirty, and in
 ways. `runs/demo.jsonl` is **appended to**, not replaced: after one demo it holds two runs, which
 is deliberate and is what the renderer's multi-run keying is exercised against. `demo.html` is
 **stale in the repo** — it was committed before the renderer's design pass, so re-rendering it
-rewrites most of the file. The page you get from `npm run demo` is the current one; the committed
+rewrites most of the file. The page you get from `pnpm run demo` is the current one; the committed
 copy is not. `git checkout demo.html runs/demo.jsonl` puts both back.
 
 ## running one case
@@ -447,13 +449,13 @@ two exit codes, `proof.command` is the runner, and both `tail` fields hold the r
 ## rendering
 
 **Free.** Both renderers read a committed run and write one self-contained HTML file: no external
-requests, no script tag, verified by a test in `npm test`.
+requests, no script tag, verified by a test in `pnpm test`.
 
 A trajectory page is the run step by step — what the agent did, how the tools answered, where it
 retried, where a checkpoint was witnessed:
 
 ```bash
-npm run render -- runs/stage2-flash-rep1/ms-170.jsonl -o out/ms-170.html
+pnpm run render runs/stage2-flash-rep1/ms-170.jsonl -o out/ms-170.html
 ```
 
 A review package is what a human opens for **one case**: the diff under review, the hypothesis
@@ -463,9 +465,9 @@ that proved it. The corpus's own record of the case, ground truth the agent neve
 at the end.
 
 ```bash
-npm run render:review -- runs/stage2-flash-rep1 ms-170 -o out/ms-170-review.html
+pnpm run render:review runs/stage2-flash-rep1 ms-170 -o out/ms-170-review.html
 # or, defaulting the output next to the trajectory:
-npm run render:review -- runs/stage2-flash-rep1 ms-170
+pnpm run render:review runs/stage2-flash-rep1 ms-170
 ```
 
 Four packages are committed in `review/`, chosen to cover the shapes:
@@ -527,7 +529,7 @@ That is about **$1.89** for the whole measured programme, and the frontier sweep
 of it. The twelve k=3 arms in the table above — every number the stage rows are argued from — are
 $0.805 together. The rest is engine selection.
 
-Two live checks are cheap enough to be worth naming even though they are paid: `npm run smoke` is
+Two live checks are cheap enough to be worth naming even though they are paid: `pnpm run smoke` is
 $0.000143 for one three-step run (`docs/dev-notes.md`), and `scripts/tool-call-probe.mjs` cost
 $0.0010 for all six endpoint probes in row 0e. Either is a fine way to confirm a key works before
 committing to an arm.

@@ -134,12 +134,12 @@ with `passed: true`. A confident summary, a final answer, or even a `proved` sco
 space. With no passing attempt the page prints an empty rule and says so. The page cannot show you
 a proof that did not happen.
 
-Regenerate one with `npm run render:review -- <run-dir> <case-id> -o out.html`.
+Regenerate one with `pnpm run render:review <run-dir> <case-id> -o out.html`.
 
 ## How the corpus is built
 
 Every case is a real mutation in a real library that the library's own full suite does not catch.
-Nothing is asserted by hand: `npm run corpus:verify` re-establishes every claim from the checked-in
+Nothing is asserted by hand: `pnpm run corpus:verify` re-establishes every claim from the checked-in
 diffs on a fresh clone.
 
 1. **StrykerJS** generates mutants over the entry module through its command runner and reports the
@@ -167,7 +167,7 @@ method, the survivor yields per library, and the equivalent-mutant argument.
   `corpus/verify.mjs` never calls it, and the shipped cases carry their own diffs.
 - **mocha**, as each library's own test runner at its pinned tag (`ms` and `bytes`). `js-yaml` uses
   `node --test`. The gate runs the library's own command, never one of ours.
-- **The libraries under review**, cloned at pinned tags by `npm run corpus:setup`, all MIT:
+- **The libraries under review**, cloned at pinned tags by `pnpm run corpus:setup`, all MIT:
   [vercel/ms](https://github.com/vercel/ms) 2.1.3, [nodeca/js-yaml](https://github.com/nodeca/js-yaml)
   5.4.1, [visionmedia/bytes.js](https://github.com/visionmedia/bytes.js) 3.1.2.
 
@@ -197,5 +197,5 @@ result that replaced it.
 | [`corpus/README.md`](corpus/README.md) | how the 15 cases were generated and verified |
 | [`docs/dev-notes.md`](docs/dev-notes.md) | the long version, per stage, including what broke |
 
-Everything runs from `npm test`, `npm run corpus:setup`, `npm run corpus:verify` and
-`npm run eval:run`; `docs/repro.md` has the exact invocations.
+Everything runs from `pnpm test`, `pnpm run corpus:setup`, `pnpm run corpus:verify` and
+`pnpm run eval:run`; `docs/repro.md` has the exact invocations.

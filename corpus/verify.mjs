@@ -7,7 +7,7 @@ import { checkoutDir, library, pristineEntry } from './libraries.mjs';
 import { runProbe } from './probe.mjs';
 
 /**
- * CLI: `npm run corpus:verify` (`node corpus/verify.mjs [caseId...]`)
+ * CLI: `pnpm run corpus:verify` (`node corpus/verify.mjs [caseId...]`)
  *
  * Re-establishes every claim the corpus makes, from the checked-in diffs alone.
  *
@@ -27,7 +27,7 @@ async function main(argv) {
   if (cases.length === 0) throw new Error('no matching cases');
   for (const lib of new Set(cases.map((c) => c.library))) {
     if (!existsSync(pristineEntry(lib))) {
-      throw new Error(`${lib} is not set up; run \`npm run corpus:setup\` first`);
+      throw new Error(`${lib} is not set up; run \`pnpm run corpus:setup\` first`);
     }
   }
 

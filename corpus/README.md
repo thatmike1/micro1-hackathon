@@ -4,14 +4,14 @@
 a diff that the library's own full test suite does not notice. Every control is a diff that looks
 like a behaviour change and is not one.
 
-Nothing here is asserted by hand. `npm run corpus:verify` re-establishes every claim from the
+Nothing here is asserted by hand. `pnpm run corpus:verify` re-establishes every claim from the
 checked-in diffs on a fresh clone.
 
 ## Quick start
 
 ```bash
-npm run corpus:setup     # clone, install, build, assert every pristine suite green   (~22s)
-npm run corpus:verify    # apply every case, run each suite, run the probe            (~5s)
+pnpm run corpus:setup     # clone, install, build, assert every pristine suite green   (~22s)
+pnpm run corpus:verify    # apply every case, run each suite, run the probe            (~5s)
 ```
 
 `corpus:setup` clones into the gitignored `corpus/.work/` and writes clone URLs and commit SHAs
@@ -38,7 +38,7 @@ Each case is `corpus/cases/<id>/`:
   distinguishing input, and the expected pristine and mutant observations at that input.
 - **`mutation.diff`** — applies to the pinned checkout with `git apply -p1`.
 
-`case.json` is the source of truth; the diff is derived from it. `npm run corpus:make-case`
+`case.json` is the source of truth; the diff is derived from it. `pnpm run corpus:make-case`
 regenerates every diff from the recorded replacement and fails if the recorded `original` text no
 longer matches the span it claims, so the two can never silently drift apart.
 
@@ -174,7 +174,7 @@ whole premise.
 
 Per control: the suite is green and the probe is silent across the full corpus.
 
-`npm run corpus:verify` prints one verdict line per case and exits non-zero on any failure. Pass
+`pnpm run corpus:verify` prints one verdict line per case and exits non-zero on any failure. Pass
 case ids to check a subset: `node corpus/verify.mjs js-yaml-15 ms-170`.
 
 ## Files
@@ -184,7 +184,7 @@ case ids to check a subset: `node corpus/verify.mjs js-yaml-15 ms-170`.
 | `setup.mjs` | clone, install, build, assert pristine suites green, write `manifest.json` |
 | `probe.mjs` | the differential probe; also a CLI for probing a checkout you patched by hand |
 | `probe-corpus.mjs` | the probe inputs, per library |
-| `verify.mjs` | `npm run corpus:verify` |
+| `verify.mjs` | `pnpm run corpus:verify` |
 | `screen.mjs` | generation only: Stryker run plus probe screen of every survivor |
 | `make-case.mjs` | generation only: regenerate `mutation.diff` from `case.json` |
 | `libraries.mjs` | the pinned library table |
