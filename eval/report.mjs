@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 
 /**
- * CLI: `npm run eval:report -- runs/stage0-baseline-1-<stamp>/summary.json`
+ * CLI: `pnpm run eval:report runs/stage0-baseline-1-<stamp>/summary.json`
  *
  * Plain-text table of one run's metrics. The HTML scoreboard that compares runs is a later phase;
  * this is the reading surface until then.

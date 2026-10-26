@@ -6,7 +6,7 @@ import { renderScoreboardPage } from './scoreboard-page.mjs';
 import { readSummary } from './summary-format.mjs';
 
 /**
- * CLI: `npm run eval:scoreboard [-- --html <path>] [--runs <dir>] [--no-html]`
+ * CLI: `pnpm run eval:scoreboard [--html <path>] [--runs <dir>] [--no-html]`
  *
  * Every candidate in the programme, side by side on the same cases, from the run directories
  * already committed under `runs/`. Nothing here calls a model and nothing needs a key: the runs

@@ -135,7 +135,7 @@ describe('checkout sandbox', () => {
   });
 });
 
-// the double-run gate against a real checkout; skipped until `npm run corpus:setup` has run
+// the double-run gate against a real checkout; skipped until `pnpm run corpus:setup` has run
 describe('double-run gate', { skip: !existsSync(pristineEntry('ms')) }, () => {
   it('scores a real test red on the mutant and green on pristine', async () => {
     const record = loadCases().find((c) => c.id === 'ms-12');

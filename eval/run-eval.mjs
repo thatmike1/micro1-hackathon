@@ -12,7 +12,7 @@ const DEFAULT_MODEL = 'z-ai/glm-5.3-flash';
 const PROOF_TIMEOUT_MS = 60_000;
 
 /**
- * CLI: `npm run eval:run -- --candidate baseline-1 [--model <id>] [--cases <id>...] [--out <dir>]
+ * CLI: `pnpm run eval:run --candidate baseline-1 [--model <id>] [--cases <id>...] [--out <dir>]
  *       [--concurrency <n>] [--reasoning <off|effort>] [--provider <name>] [--require-parameters] [--max-tokens <n>]
  *       [--option <key=value>...]`
  *

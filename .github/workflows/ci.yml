@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v6
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run corpus:setup
+      - run: pnpm run corpus:verify
+      - run: pnpm test
+      - run: pnpm run demo

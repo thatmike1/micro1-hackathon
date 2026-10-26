@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "engines": { "node": ">=20" },
+  "packageManager": "pnpm@12.15.0",
   "scripts": {
     "demo": "node scripts/demo.mjs",
     "smoke": "node scripts/smoke.mjs",
-    "test": "node --test",
+    "test": "node --test test/*.test.mjs eval/*.test.mjs",
     "render": "node src/render-trajectory.mjs",
     "render:review": "node src/render-review-package.mjs",
     "corpus:setup": "node corpus/setup.mjs",
